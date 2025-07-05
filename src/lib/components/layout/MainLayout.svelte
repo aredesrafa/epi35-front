@@ -8,7 +8,8 @@
     ChartOutline,
     ArrowRightAltOutline,
     FolderOpenOutline,
-    CogOutline
+    CogOutline,
+    BuildingOutline
   } from 'flowbite-svelte-icons';
   import Header from './Header.svelte';
   import { page } from '$app/stores';
@@ -30,6 +31,7 @@
       icon: FolderOpenOutline,
       dropdown: [
         { href: '/estoque', label: 'Estoque' },
+        { href: '/devolucoes-v2', label: 'Devoluções Avançadas' },
         { href: '/notas', label: 'Notas' },
         { href: '/catalogo', label: 'Catálogo' }
       ]
@@ -38,6 +40,14 @@
       href: '/relatorios', 
       label: 'Relatórios', 
       icon: ChartOutline 
+    },
+    { 
+      label: 'Administração', 
+      icon: BuildingOutline,
+      dropdown: [
+        { href: '/contratadas-v2', label: 'Contratadas' },
+        { href: '/estoque-v2', label: 'Estoque v2 (Demo)' }
+      ]
     }
   ];
   

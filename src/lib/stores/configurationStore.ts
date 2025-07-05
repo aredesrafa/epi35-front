@@ -102,7 +102,11 @@ export async function initializeConfiguration(): Promise<SystemConfiguration> {
     return mergedConfig;
     
   } catch (error) {
-    console.warn('⚠️ Falha ao carregar configurações do backend, usando padrões:', error);
+    // Em desenvolvimento, endpoint pode não existir ainda - isso é normal
+    const isDevMode = process.env.NODE_ENV === 'development';
+    const logLevel = isDevMode ? 'info' : 'warn';
+    
+    console[logLevel](`${isDevMode ? 'ℹ️' : '⚠️'} Backend configuration endpoint não disponível, usando configurações padrão${isDevMode ? ' (normal em desenvolvimento)' : ''}:`);
     
     // Em caso de erro, usa configurações padrão
     configurationStore.set(DEFAULT_CONFIGURATION);
