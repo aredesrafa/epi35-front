@@ -58,8 +58,8 @@
   } from 'flowbite-svelte-icons';
   
   // Componentes locais
-  import ContratadaFormModal from '$lib/components/contratadas/ContratadaFormModal.svelte';
-  import ContratadaDeleteModal from '$lib/components/contratadas/ContratadaDeleteModal.svelte';
+  import ContratadaFormModal from '$lib/components/modals/ContratadaFormModal.svelte';
+  import ContratadaDeleteModal from '$lib/components/modals/ContratadaDeleteModal.svelte';
   import StatsCard from '$lib/components/common/StatsCard.svelte';
   
   // ==================== ESTADO LOCAL ====================
@@ -553,13 +553,30 @@
 <!-- Modal de Criação/Edição -->
 <ContratadaFormModal 
   bind:show={showCreateModal}
-  bind:show={showEditModal}
   contratada={selectedContratada}
   on:success={() => {
     showCreateModal = false;
+    selectedContratada = null;
+    loadContratadas(); // Reload data
+  }}
+  on:cancel={() => {
+    showCreateModal = false;
+    selectedContratada = null;
+  }}
+/>
+
+<!-- Modal de Edição -->
+<ContratadaFormModal 
+  bind:show={showEditModal}
+  contratada={selectedContratada}
+  on:success={() => {
     showEditModal = false;
     selectedContratada = null;
     loadContratadas(); // Reload data
+  }}
+  on:cancel={() => {
+    showEditModal = false;
+    selectedContratada = null;
   }}
 />
 
