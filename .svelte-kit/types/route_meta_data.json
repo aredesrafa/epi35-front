@@ -9,6 +9,9 @@
 	"/catalogo": [
 		"src/routes/+layout.ts"
 	],
+	"/contratadas-v2": [
+		"src/routes/+layout.ts"
+	],
 	"/estoque": [
 		"src/routes/+layout.ts"
 	],
