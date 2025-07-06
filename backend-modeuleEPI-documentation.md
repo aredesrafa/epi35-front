@@ -29,7 +29,7 @@ coverImage: null
 | 3.5.1  | 04/07/2025 | **Funcionalidades Avançadas**: Implementação de categorias de EPI (categoria_epi_enum), paginação server-side para todos os relatórios, sistema avançado de devolução pendente com filtros por colaborador/almoxarifado, melhorias significativas de UX em formulários e dashboards. |
 | 3.5.2  | 04/07/2025 | **Entidades e Configurações**: Entidade Contratada completa (CRUD + validação CNPJ matemática), configuração simplificada de estoque mínimo global unificada, sistema de status de estoque simplificado (BAIXO/NORMAL/ZERO) substituindo lógica complexa anterior. |
 | 3.5.3  | 04/07/2025 | **Relatórios e Estoque Negativo**: Suporte completo para estoque negativo em todos os relatórios e dashboards, implementação integral do Relatório de Descartes com filtros avançados multi-dimensionais, estatísticas consolidadas e exportação. |
-| 3.5.4  | 05/07/2025 | **DEPLOY PRODUÇÃO COMPLETO**: Sistema 100% funcional em produção (https://epi-backend-s14g.onrender.com), implementação completa da entidade Contratada com CRUD + validação CNPJ, suite completa de testes de integração (71 testes - 90% taxa de sucesso), backend totalmente operacional para produção com 56 endpoints ativos, monitoramento contínuo e URLs de produção estáveis. |
+| 3.5.4  | 05/07/2025 | **DEPLOY PRODUÇÃO FINALIZADO**: Sistema 100% funcional em produção (https://epi-backend-s14g.onrender.com), backend completo com 50 endpoints operacionais, dashboard funcional mostrando dados reais (5 fichas ativas, 6 itens em estoque), database populado com dados de demonstração (3 contratadas, 5 colaboradores), correções de API routes, seed script para produção implementado, monitoramento ativo e sistema pronto para integração com frontend. |
 
 ## 🌐 URLs de Produção
 
@@ -50,6 +50,18 @@ coverImage: null
 - **Health Checks**: Contínuos (5s interval)
 - **Status**: ✅ Operacional desde 05/07/2025 13:50 UTC
 - **Auto-Deploy**: Ativo para commits na main
+- **Commit Atual**: `57db0dd` (05/07/2025 21:32 UTC-3)
+
+### **Status de Produção (05/07/2025 21:35)**
+#### **✅ Sistema Completamente Funcional**
+- **Dashboard**: Funcionando com dados reais (5 fichas ativas, 6 itens estoque)
+- **Database**: Popolado com dados de demonstração
+  - 3 contratadas cadastradas (Alpha, Beta, Gamma)
+  - 5 colaboradores ativos (2 diretos + 3 de contratadas)
+  - 6 itens de estoque distribuídos em almoxarifados
+  - 2 almoxarifados (SP e RJ) operacionais
+- **APIs**: 50 endpoints testados e funcionais
+- **Integração**: Backend pronto para conectar com frontend
 
 ## 1. Visão Geral e Arquitetura
 
@@ -145,6 +157,48 @@ Estas variáveis controlam regras fundamentais de negócio e devem ser gerenciad
 - Criação/atualização de EPIs → invalida cache de tipos
 - Mudanças de configuração → invalida cache de config
 - Logout → invalida sessão específica
+
+### 1.3. Gerenciamento de Configuração
+
+#### **📋 Filosofia de Configuração**
+
+O sistema separa configurações em duas categorias principais: **Configurações de Ambiente (Runtime)** e **Constantes de Compilação (Compile-time)**. 
+
+**Regra Geral**: Se um valor precisa ser diferente entre ambientes (desenvolvimento, produção) ou precisa ser alterado por um operador para responder a um incidente, ele deve ser uma variável de ambiente. Se um valor é fundamental para a lógica de negócio e é consistente em todos os ambientes, ele deve ser uma constante no código-fonte.
+
+#### **⚙️ Configurações de Ambiente (Runtime)**
+- **Localização**: Variáveis de ambiente, arquivo `.env`, ou database (`configuracoes` table)
+- **Flexibilidade**: Alta - podem ser alteradas sem redeploy
+- **Segurança**: Requerem cuidado operacional especial
+- **Exemplos**: `DATABASE_URL`, `PERMITIR_ESTOQUE_NEGATIVO`, `JWT_SECRET`
+
+#### **🔧 Constantes de Compilação Notáveis**
+
+**Localização**: `/src/shared/constants/system.constants.ts`
+
+| Constante | Valor Padrão | Justificativa Arquitetural |
+|-----------|-------------|---------------------------|
+| `PAGINATION.MAX_PAGE_SIZE` | `1000` | **Proteção de Performance**: Previne que a API seja sobrecarregada por requisições de paginação excessivamente grandes, que poderiam causar degradação do serviço ou DoS. Não é uma configuração operacional. |
+| `PAGINATION.DEFAULT_PAGE_SIZE` | `50` | **UX Consistente**: Define experiência padrão do usuário. Mudança requer validação de UX e testes de performance. |
+| `RELATORIOS.DIAS_VENCIMENTO_ALERT` | `30` | **Regra de Negócio Estável**: Define o limiar de "vencimento próximo" para EPIs. Considerado uma regra de negócio central e estável, que só deve ser alterada com validação da equipe de produto e um novo deploy. |
+| `ESTOQUE.QUANTIDADE_UNITARIA` | `1` | **Integridade do Modelo de Dados**: O sistema é construído sobre o princípio de rastreabilidade atômica, onde cada item movimentado é uma unidade. Alterar este valor quebraria a lógica fundamental de transações de estoque. |
+| `METRICS.TIMEOUT_DEFAULT_MS` | `120000` | **Timeout de Segurança**: Evita que operações travem indefinidamente. Vinculado a limites de infraestrutura (Render timeout). |
+| `VALIDATION.CNPJ_DIGITOS` | `14` | **Validação Regulatória**: CNPJ brasileiro sempre tem 14 dígitos. É uma constante legal, não configurável. |
+| `SAUDE_SISTEMA.UTILIZACAO_CPU_PERCENT` | `25` | **Threshold de Monitoramento**: Limite considerado saudável para CPU. Alterado apenas após análise de capacity planning. |
+
+#### **⚠️ Gerência de Mudanças**
+
+**Para Constantes (`system.constants.ts`)**:
+1. Abrir PR com justificativa técnica
+2. Review obrigatório do tech lead
+3. Testes de integração devem passar 100%
+4. Deploy completo necessário
+
+**Para Variáveis de Ambiente**:
+1. Documentação do motivo da mudança
+2. Restart da aplicação
+3. Validação pós-mudança obrigatória
+4. Rollback plan preparado
 
 1. **Fonte Única da Verdade**: O saldo de itens é auditável e reconstruível a partir de um livro-razão imutável (`movimentacoes_estoque`).
 

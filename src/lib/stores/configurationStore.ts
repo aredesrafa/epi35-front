@@ -86,7 +86,7 @@ export async function initializeConfiguration(): Promise<SystemConfiguration> {
   configurationError.set(null);
   
   try {
-    // Tenta carregar configurações do backend
+    // Carrega configurações diretas (hardcoded conforme backend)
     const backendConfig = await apiClient.getConfiguration();
     
     // Mescla com valores padrão
@@ -98,15 +98,11 @@ export async function initializeConfiguration(): Promise<SystemConfiguration> {
     configurationStore.set(mergedConfig);
     configurationLoading.set(false);
     
-    console.log('✅ Configurações carregadas com sucesso:', mergedConfig);
+    console.log('✅ Configurações carregadas diretamente do cliente API:', mergedConfig);
     return mergedConfig;
     
   } catch (error) {
-    // Em desenvolvimento, endpoint pode não existir ainda - isso é normal
-    const isDevMode = process.env.NODE_ENV === 'development';
-    const logLevel = isDevMode ? 'info' : 'warn';
-    
-    console[logLevel](`${isDevMode ? 'ℹ️' : '⚠️'} Backend configuration endpoint não disponível, usando configurações padrão${isDevMode ? ' (normal em desenvolvimento)' : ''}:`);
+    console.warn('⚠️ Erro inesperado ao carregar configurações, usando padrão:', error);
     
     // Em caso de erro, usa configurações padrão
     configurationStore.set(DEFAULT_CONFIGURATION);

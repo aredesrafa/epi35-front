@@ -238,8 +238,27 @@ export async function checkHealth(): Promise<ApiResponse<'/health', 'get'>> {
 
 // -------------------- CONFIGURAÇÕES --------------------
 export async function getConfiguration(): Promise<any> {
-  // TODO: Implementar quando endpoint estiver disponível
-  return apiGet('/api/v1/configuration');
+  // ⚠️ BACKEND NÃO POSSUI ENDPOINT DE CONFIGURAÇÃO
+  // Configurações são hardcoded conforme documentação v3.5.4
+  // Ver backend-modeuleEPI-documentation.md linhas 107-109
+  return Promise.resolve({
+    success: true,
+    data: {
+      // Configurações padrão conforme backend documentation
+      PERMITIR_ESTOQUE_NEGATIVO: false,
+      PERMITIR_AJUSTES_FORCADOS: false,
+      ESTOQUE_MINIMO_EQUIPAMENTO: 10,
+      
+      // Feature flags do frontend
+      useV2Routes: false,
+      enableAdvancedReports: true,
+      
+      // Configurações adicionais
+      enableRealTimeUpdates: true,
+      cacheTimeoutMs: 300000, // 5 minutos
+      pageSizeDefault: 20
+    }
+  });
 }
 
 // -------------------- CONTRATADAS --------------------
