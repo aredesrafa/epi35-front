@@ -1,18 +1,29 @@
 <!--
-  Notes Container - Componente "Inteligente"
+  Notes Container - Componente "Inteligente" (Refatorado)
+  
+  Container para notas de movimentação usando arquitetura Container/Presenter
+  similar ao FichasContainer, conectado ao backend PostgreSQL real.
   
   Responsabilidades:
-  - Gerenciar estado das notas de movimentação
-  - Integração com notesAdapter
-  - Lógica de filtros e paginação
+  - Gerenciar estado das notas com enhanced paginated store
+  - Integração com notasMovimentacaoAdapter (backend real)
+  - Lógica de filtros, busca e paginação
   - Event handlers para CRUD
   - Delegação de UI para presenter
 -->
 
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  import { notesAdapter, type Nota, type NotesFilterParams, type CreateNotaData } from '$lib/services/entity/notesAdapter';
-  import { createPaginatedStore } from '$lib/stores/paginatedStore';
+  import { notasMovimentacaoAdapter } from '$lib/services/process/notasMovimentacaoAdapter';
+  import type { 
+    NotaMovimentacao, 
+    NotasMovimentacaoFilterParams,
+    CriarNotaMovimentacaoRequest,
+    TipoNotaEnum,
+    StatusNotaEnum,
+    NotasFilterOptions
+  } from '$lib/services/process/notasMovimentacaoAdapter';
+  import { createEnhancedPaginatedStore } from '$lib/stores/enhancedPaginatedStore';
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
   import NotesTablePresenter from '$lib/components/presenters/NotesTablePresenter.svelte';
@@ -20,59 +31,68 @@
 
   // ==================== PROPS ====================
   
-  export let initialPageSize = 10;
+  export let initialPageSize = 20;
   export let autoRefresh = false;
 
   // ==================== EVENT DISPATCHER ====================
   
   const dispatch = createEventDispatcher<{
-    notaCreated: Nota;
-    notaUpdated: Nota;
+    notaCreated: NotaMovimentacao;
+    notaUpdated: NotaMovimentacao;
     notaDeleted: string;
-    notaProcessed: Nota;
+    notaConcluida: NotaMovimentacao;
+    notaCancelada: string;
   }>();
 
-  // ==================== STORES ====================
+  // ==================== ENHANCED STORE ====================
   
-  // Store paginado para notas
-  const notesStore = createPaginatedStore(
-    (params: NotesFilterParams) => notesAdapter.getNotas(params),
-    initialPageSize
-  );
+  // Enhanced store para notas com paginação server-side e cache
+  const notesStore = createEnhancedPaginatedStore<NotaMovimentacao>({
+    baseEndpoint: '/notas-movimentacao',
+    defaultPageSize: initialPageSize,
+    debounceDelay: 300,
+    cacheTimeout: 3 * 60 * 1000, // 3 minutos
+    autoRefresh,
+    refreshInterval: autoRefresh ? 30000 : undefined,
+    // Função customizada de fetch usando o adapter
+    customFetch: async (params: any) => {
+      return notasMovimentacaoAdapter.listarNotas(params as NotasMovimentacaoFilterParams);
+    }
+  });
 
   // ==================== STATE ====================
   
   // Filtros
   let searchTerm = '';
-  let tipoFilter = 'todas'; // 'todas', 'entrada', 'saida'
-  let statusFilter = 'todos'; // 'todos', 'pendente', 'processada', 'cancelada'
+  let tipoFilter: TipoNotaEnum | 'todas' = 'todas';
+  let statusFilter: StatusNotaEnum | 'todos' = 'todos';
   let responsavelFilter = 'todos';
+  let almoxarifadoFilter = 'todos';
   let dataInicioFilter = '';
   let dataFimFilter = '';
 
   // Tab state
-  let activeTab = 0; // 0 = Todas, 1 = Entrada, 2 = Saída
+  let activeTab = 0; // 0 = Todas, 1 = Rascunhos, 2 = Concluídas, 3 = Canceladas
 
   // Modal state
   let showNotaModal = false;
   let modalMode: 'create' | 'edit' | 'view' = 'create';
-  let modalTipo: 'entrada' | 'saida' = 'entrada';
-  let selectedNota: Nota | null = null;
+  let modalTipo: TipoNotaEnum = 'ENTRADA';
+  let selectedNota: NotaMovimentacao | null = null;
   let notaFormLoading = false;
 
-  // Filter options
-  let responsavelOptions: Array<{ value: string; label: string }> = [
-    { value: 'todos', label: 'Todos os Responsáveis' }
-  ];
-
-  let statusOptions: Array<{ value: string; label: string }> = [
-    { value: 'todos', label: 'Todos os Status' }
-  ];
+  // Filter options (carregadas dinamicamente)
+  let filterOptions: NotasFilterOptions = {
+    responsaveis: [{ value: 'todos', label: 'Todos os Responsáveis' }],
+    almoxarifados: [{ value: 'todos', label: 'Todos os Almoxarifados' }],
+    tipos: [],
+    status: []
+  };
 
   // ==================== LIFECYCLE ====================
   
   onMount(async () => {
-    console.log('📋 NotesContainer: Inicializando...');
+    console.log('📋 NotesContainer: Inicializando com Enhanced Store...');
     
     // Aguardar configurações de negócio
     await businessConfigStore.initialize();
@@ -80,42 +100,37 @@
     // Carregar opções de filtros
     await loadFilterOptions();
     
-    // Carregar dados iniciais
-    await loadNotesData();
+    // Inicializar enhanced store (carrega dados automaticamente)
+    await notesStore.initialize();
     
-    console.log('✅ NotesContainer: Inicializado com sucesso');
+    console.log('✅ NotesContainer: Inicializado com Enhanced Store');
+  });
+
+  onDestroy(() => {
+    notesStore.destroy();
   });
 
   // ==================== DATA LOADING ====================
   
-  async function loadNotesData(): Promise<void> {
-    const params: NotesFilterParams = {
-      search: searchTerm || undefined,
-      tipo: getFilteredTipo(),
-      status: statusFilter !== 'todos' ? statusFilter as any : undefined,
-      responsavel: responsavelFilter !== 'todos' ? responsavelFilter : undefined,
-      dataInicio: dataInicioFilter || undefined,
-      dataFim: dataFimFilter || undefined,
-      page: $notesStore.currentPage,
-      pageSize: $notesStore.pageSize
-    };
-
-    await notesStore.load(params);
-  }
-
   async function loadFilterOptions(): Promise<void> {
     try {
-      const options = await notesAdapter.getFilterOptions();
+      const options = await notasMovimentacaoAdapter.obterOpcoesFilters();
       
-      responsavelOptions = [
-        { value: 'todos', label: 'Todos os Responsáveis' },
-        ...options.responsaveis
-      ];
-      
-      statusOptions = [
-        { value: 'todos', label: 'Todos os Status' },
-        ...options.status
-      ];
+      filterOptions = {
+        responsaveis: [
+          { value: 'todos', label: 'Todos os Responsáveis' },
+          ...options.responsaveis
+        ],
+        almoxarifados: [
+          { value: 'todos', label: 'Todos os Almoxarifados' },
+          ...options.almoxarifados
+        ],
+        tipos: options.tipos,
+        status: [
+          { value: 'todos', label: 'Todos os Status' },
+          ...options.status.map(s => ({ value: s.value, label: s.label }))
+        ]
+      };
     } catch (error) {
       console.error('Erro ao carregar opções de filtros:', error);
     }
@@ -123,56 +138,90 @@
 
   // ==================== FILTER HELPERS ====================
   
-  function getFilteredTipo(): 'entrada' | 'saida' | undefined {
-    if (activeTab === 1) return 'entrada';
-    if (activeTab === 2) return 'saida';
-    return tipoFilter !== 'todas' ? tipoFilter as any : undefined;
+  function buildFilters(): NotasMovimentacaoFilterParams {
+    const filters: NotasMovimentacaoFilterParams = {
+      search: searchTerm || undefined,
+      dataInicio: dataInicioFilter || undefined,
+      dataFim: dataFimFilter || undefined
+    };
+
+    // Aplicar filtro de tipo
+    if (tipoFilter !== 'todas') {
+      filters.tipo = tipoFilter;
+    }
+
+    // Aplicar filtro de status baseado na aba ativa
+    switch (activeTab) {
+      case 1: // Rascunhos
+        filters.status = 'RASCUNHO';
+        break;
+      case 2: // Concluídas
+        filters.status = 'CONCLUIDA';
+        break;
+      case 3: // Canceladas
+        filters.status = 'CANCELADA';
+        break;
+      default: // Todas
+        if (statusFilter !== 'todos') {
+          filters.status = statusFilter;
+        }
+        break;
+    }
+
+    // Aplicar filtros adicionais
+    if (responsavelFilter !== 'todos') {
+      filters.responsavel_id = responsavelFilter;
+    }
+    
+    if (almoxarifadoFilter !== 'todos') {
+      filters.almoxarifado_id = almoxarifadoFilter;
+    }
+
+    return filters;
   }
 
   // ==================== TAB HANDLERS ====================
   
   function handleTabChange(tabIndex: number): void {
     activeTab = tabIndex;
-    notesStore.resetPage();
-    loadNotesData();
+    applyFiltersToStore();
   }
 
   // ==================== FILTER HANDLERS ====================
   
   function handleSearchChange(value: string): void {
     searchTerm = value;
-    notesStore.resetPage();
-    loadNotesData();
+    notesStore.search(value);
   }
 
   function handleTipoFilterChange(value: string): void {
-    tipoFilter = value;
-    notesStore.resetPage();
-    loadNotesData();
+    tipoFilter = value as TipoNotaEnum | 'todas';
+    applyFiltersToStore();
   }
 
   function handleStatusFilterChange(value: string): void {
-    statusFilter = value;
-    notesStore.resetPage();
-    loadNotesData();
+    statusFilter = value as StatusNotaEnum | 'todos';
+    applyFiltersToStore();
   }
 
   function handleResponsavelFilterChange(value: string): void {
     responsavelFilter = value;
-    notesStore.resetPage();
-    loadNotesData();
+    applyFiltersToStore();
+  }
+
+  function handleAlmoxarifadoFilterChange(value: string): void {
+    almoxarifadoFilter = value;
+    applyFiltersToStore();
   }
 
   function handleDataInicioChange(value: string): void {
     dataInicioFilter = value;
-    notesStore.resetPage();
-    loadNotesData();
+    applyFiltersToStore();
   }
 
   function handleDataFimChange(value: string): void {
     dataFimFilter = value;
-    notesStore.resetPage();
-    loadNotesData();
+    applyFiltersToStore();
   }
 
   function handleClearFilters(): void {
@@ -180,57 +229,59 @@
     tipoFilter = 'todas';
     statusFilter = 'todos';
     responsavelFilter = 'todos';
+    almoxarifadoFilter = 'todos';
     dataInicioFilter = '';
     dataFimFilter = '';
     activeTab = 0;
-    notesStore.resetPage();
-    loadNotesData();
+    notesStore.clearFilters();
+  }
+
+  function applyFiltersToStore(): void {
+    const filters = buildFilters();
+    notesStore.applyFilters(filters);
   }
 
   // ==================== PAGINATION HANDLERS ====================
   
   function handlePageChange(page: number): void {
-    notesStore.setPage(page);
-    loadNotesData();
+    notesStore.goToPage(page);
   }
 
   function handlePageSizeChange(pageSize: number): void {
-    notesStore.setPageSize(pageSize);
-    loadNotesData();
+    notesStore.loadData({ limit: pageSize, page: 1 });
   }
 
   // ==================== NOTA CRUD HANDLERS ====================
   
-  function handleNovaNota(tipo: 'entrada' | 'saida'): void {
+  function handleNovaNota(tipo: TipoNotaEnum): void {
     selectedNota = null;
     modalMode = 'create';
     modalTipo = tipo;
     showNotaModal = true;
   }
 
-  function handleEditarNota(nota: Nota): void {
+  function handleEditarNota(nota: NotaMovimentacao): void {
     selectedNota = nota;
     modalMode = 'edit';
-    modalTipo = nota.tipo;
+    modalTipo = nota.tipo_nota;
     showNotaModal = true;
   }
 
-  function handleVisualizarNota(nota: Nota): void {
+  function handleVisualizarNota(nota: NotaMovimentacao): void {
     selectedNota = nota;
     modalMode = 'view';
-    modalTipo = nota.tipo;
+    modalTipo = nota.tipo_nota;
     showNotaModal = true;
   }
 
-  async function handleExcluirNota(nota: Nota): Promise<void> {
+  async function handleExcluirNota(nota: NotaMovimentacao): Promise<void> {
     try {
-      await notesAdapter.deleteNota(nota.id);
+      await notasMovimentacaoAdapter.excluirNota(nota.id);
       
-      notify.success('Nota removida', `${nota.numeroNota} foi removida`);
+      notify.success('Nota removida', `Nota ${nota.numero_documento || nota.id.slice(0, 8)} foi removida`);
       
-      // Recarregar dados
-      await loadNotesData();
-      await loadFilterOptions(); // Atualizar opções de filtros
+      // Recarregar dados usando enhanced store
+      notesStore.reload();
       
       // Emitir evento
       dispatch('notaDeleted', nota.id);
@@ -240,44 +291,78 @@
     }
   }
 
-  async function handleProcessarNota(nota: Nota): Promise<void> {
+  async function handleConcluirNota(nota: NotaMovimentacao): Promise<void> {
     try {
-      const updatedNota = await notesAdapter.processarNota(nota.id);
+      const response = await notasMovimentacaoAdapter.concluirNota(nota.id);
       
-      notify.success('Nota processada', `${nota.numeroNota} foi processada`);
+      notify.success(
+        'Nota concluída', 
+        `Nota concluída com ${response.data.movimentacoes_criadas} movimentações criadas`
+      );
       
       // Recarregar dados
-      await loadNotesData();
+      notesStore.reload();
       
       // Emitir evento
-      dispatch('notaProcessed', updatedNota);
+      dispatch('notaConcluida', { ...nota, status: 'CONCLUIDA' });
     } catch (error) {
-      console.error('Erro ao processar nota:', error);
-      notify.error('Erro ao processar', 'Não foi possível processar a nota');
+      console.error('Erro ao concluir nota:', error);
+      notify.error('Erro ao concluir', 'Não foi possível concluir a nota');
+    }
+  }
+
+  async function handleCancelarNota(nota: NotaMovimentacao): Promise<void> {
+    try {
+      // Validar se pode cancelar
+      const validacao = await notasMovimentacaoAdapter.validarCancelamento(nota.id);
+      
+      if (!validacao.pode_cancelar) {
+        notify.error('Não é possível cancelar', validacao.motivo || 'Nota não pode ser cancelada');
+        return;
+      }
+
+      await notasMovimentacaoAdapter.cancelarNota(nota.id);
+      
+      notify.success('Nota cancelada', `Nota ${nota.numero_documento || nota.id.slice(0, 8)} foi cancelada`);
+      
+      // Recarregar dados
+      notesStore.reload();
+      
+      // Emitir evento
+      dispatch('notaCancelada', nota.id);
+    } catch (error) {
+      console.error('Erro ao cancelar nota:', error);
+      notify.error('Erro ao cancelar', 'Não foi possível cancelar a nota');
     }
   }
 
   // ==================== FORM MODAL HANDLERS ====================
   
-  async function handleFormSave(formData: CreateNotaData): Promise<void> {
+  async function handleFormSave(formData: CriarNotaMovimentacaoRequest): Promise<void> {
     notaFormLoading = true;
     
     try {
-      let result: Nota;
+      let result: NotaMovimentacao;
       
       if (modalMode === 'create') {
-        result = await notesAdapter.createNota(formData, modalTipo);
-        notify.success('Nota criada', `${result.numeroNota} foi criada`);
+        const createResponse = await notasMovimentacaoAdapter.criarNota(formData);
+        // Buscar a nota criada para obter dados completos
+        result = await notasMovimentacaoAdapter.obterNota(createResponse.data.id);
+        
+        notify.success('Nota criada', `Nota ${createResponse.data.numero} foi criada`);
         dispatch('notaCreated', result);
       } else {
-        result = await notesAdapter.updateNota(selectedNota!.id, formData);
-        notify.success('Nota atualizada', `${result.numeroNota} foi atualizada`);
+        result = await notasMovimentacaoAdapter.atualizarNota(selectedNota!.id, formData);
+        
+        notify.success('Nota atualizada', `Nota foi atualizada`);
         dispatch('notaUpdated', result);
       }
       
-      // Recarregar dados
-      await loadNotesData();
-      await loadFilterOptions(); // Atualizar opções de filtros
+      // Recarregar dados usando enhanced store
+      notesStore.reload();
+      
+      // Recarregar opções de filtros para incluir novos dados
+      await loadFilterOptions();
       
       // Fechar modal
       showNotaModal = false;
@@ -303,74 +388,71 @@
     tipoFilter !== 'todas' || 
     statusFilter !== 'todos' || 
     responsavelFilter !== 'todos' ||
+    almoxarifadoFilter !== 'todos' ||
     dataInicioFilter !== '' ||
-    dataFimFilter !== '';
+    dataFimFilter !== '' ||
+    activeTab !== 0;
 
-  $: modalTitle = modalMode === 'create' ? `Nova Nota de ${modalTipo === 'entrada' ? 'Entrada' : 'Saída'}` : 
-    modalMode === 'edit' ? `Editar Nota de ${modalTipo === 'entrada' ? 'Entrada' : 'Saída'}` : 
-    `Visualizar Nota de ${modalTipo === 'entrada' ? 'Entrada' : 'Saída'}`;
+  $: modalTitle = modalMode === 'create' ? `Nova Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}` : 
+    modalMode === 'edit' ? `Editar Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}` : 
+    `Visualizar Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}`;
 
-  // Auto-refresh
-  let refreshInterval: NodeJS.Timeout | null = null;
+  // ==================== PRESENTER PROPS ====================
   
-  $: if (autoRefresh && $notesStore.data) {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadNotesData, 60000); // 1 minuto
-  } else if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
-  
-  onDestroy(() => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval);
-    }
-  });
+  $: presentationData = {
+    items: $notesStore.items,
+    loading: $notesStore.loading,
+    error: $notesStore.error,
+    pagination: {
+      currentPage: $notesStore.pagination.page,
+      totalPages: $notesStore.pagination.totalPages,
+      pageSize: $notesStore.pagination.limit,
+      total: $notesStore.pagination.total,
+      hasNext: $notesStore.pagination.hasNextPage,
+      hasPrev: $notesStore.pagination.hasPreviousPage
+    },
+    filters: {
+      searchTerm,
+      tipoFilter,
+      statusFilter,
+      responsavelFilter,
+      almoxarifadoFilter,
+      dataInicioFilter,
+      dataFimFilter,
+      hasActiveFilters,
+      activeTab
+    },
+    filterOptions
+  };
 </script>
 
-<!-- Usar apenas o presenter para UI -->
+<!-- Usar presenter com dados do enhanced store -->
 <NotesTablePresenter
-  items={$notesStore.data?.items || []}
-  loading={$notesStore.loading}
-  error={$notesStore.error}
-  pagination={{
-    currentPage: $notesStore.currentPage,
-    totalPages: $notesStore.data?.totalPages || 1,
-    pageSize: $notesStore.pageSize,
-    total: $notesStore.data?.total || 0,
-    hasNext: $notesStore.data?.hasNext || false,
-    hasPrev: $notesStore.data?.hasPrev || false
-  }}
-  filters={{
-    searchTerm,
-    tipoFilter,
-    statusFilter,
-    responsavelFilter,
-    dataInicioFilter,
-    dataFimFilter,
-    hasActiveFilters,
-    activeTab
-  }}
-  filterOptions={{
-    responsaveis: responsavelOptions,
-    status: statusOptions
-  }}
+  items={presentationData.items}
+  loading={presentationData.loading}
+  error={presentationData.error}
+  pagination={presentationData.pagination}
+  filters={presentationData.filters}
+  filterOptions={presentationData.filterOptions}
   on:searchChange={(e) => handleSearchChange(e.detail)}
   on:tipoFilterChange={(e) => handleTipoFilterChange(e.detail)}
   on:statusFilterChange={(e) => handleStatusFilterChange(e.detail)}
   on:responsavelFilterChange={(e) => handleResponsavelFilterChange(e.detail)}
+  on:almoxarifadoFilterChange={(e) => handleAlmoxarifadoFilterChange(e.detail)}
   on:dataInicioChange={(e) => handleDataInicioChange(e.detail)}
   on:dataFimChange={(e) => handleDataFimChange(e.detail)}
   on:clearFilters={handleClearFilters}
   on:tabChange={(e) => handleTabChange(e.detail)}
   on:pageChange={(e) => handlePageChange(e.detail)}
   on:pageSizeChange={(e) => handlePageSizeChange(e.detail)}
-  on:novaNotaEntrada={() => handleNovaNota('entrada')}
-  on:novaNotaSaida={() => handleNovaNota('saida')}
+  on:novaNotaEntrada={() => handleNovaNota('ENTRADA')}
+  on:novaNotaTransferencia={() => handleNovaNota('TRANSFERENCIA')}
+  on:novaNotaDescarte={() => handleNovaNota('DESCARTE')}
   on:editarNota={(e) => handleEditarNota(e.detail)}
   on:visualizarNota={(e) => handleVisualizarNota(e.detail)}
   on:excluirNota={(e) => handleExcluirNota(e.detail)}
-  on:processarNota={(e) => handleProcessarNota(e.detail)}
+  on:concluirNota={(e) => handleConcluirNota(e.detail)}
+  on:cancelarNota={(e) => handleCancelarNota(e.detail)}
 />
 
 <!-- Modal de Formulário Nota -->

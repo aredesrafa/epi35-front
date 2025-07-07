@@ -8,12 +8,8 @@
 
 import { browser } from '$app/environment';
 
-// Configurações da API
-export const API_BASE_URL = browser 
-  ? (import.meta.env.PROD 
-      ? 'https://api.datalife-epi.com' 
-      : 'http://localhost:3000/api')
-  : '';
+// Configurações da API - URL direta sempre para evitar problemas de SSR
+export const API_BASE_URL = 'https://epi-backend-s14g.onrender.com/api';
 
 /**
  * Classe de erro customizada para APIs
@@ -97,16 +93,32 @@ export async function apiClient<T>(
   
   // Função para fazer a requisição com retry
   async function makeRequest(attempt: number = 1): Promise<T> {
+    // Durante SSR, retornar dados vazios ou erro para evitar CORS
+    if (!browser) {
+      throw new ApiError('API calls are only available in browser', 0, null, endpoint);
+    }
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
     try {
-      const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+      // Garantir URL absoluta sempre - SvelteKit requer URLs absolutas no SSR
+      let url: string;
+      if (endpoint.startsWith('http')) {
+        url = endpoint;
+      } else {
+        // Garantir que sempre temos uma URL absoluta
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+        url = `${API_BASE_URL}${cleanEndpoint}`;
+      }
+      
+      console.log(`🌐 Fazendo requisição para: ${url}`);
       
       const response = await fetch(url, {
         ...fetchOptions,
         headers,
-        signal: controller.signal
+        signal: controller.signal,
+        mode: 'cors' // Forçar modo CORS
       });
       
       clearTimeout(timeoutId);
@@ -233,7 +245,10 @@ export const api = {
  * Helper para criar URLs com query parameters
  */
 export function createUrlWithParams(baseUrl: string, params: Record<string, any>): string {
-  const url = new URL(baseUrl, 'http://dummy.com');
+  // Se baseUrl não tem protocolo, é um path relativo
+  const urlString = baseUrl.startsWith('/') ? baseUrl : '/' + baseUrl;
+  
+  const url = new URL(urlString, 'http://dummy.com');
   
   Object.entries(params).forEach(([key, value]) => {
     if (value !== null && value !== undefined && value !== '') {
@@ -245,6 +260,7 @@ export function createUrlWithParams(baseUrl: string, params: Record<string, any>
     }
   });
   
+  // Retornar apenas path + search (será combinado com API_BASE_URL no apiClient)
   return url.pathname + url.search;
 }
 

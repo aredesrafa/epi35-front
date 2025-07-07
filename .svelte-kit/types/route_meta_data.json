@@ -9,7 +9,7 @@
 	"/catalogo": [
 		"src/routes/+layout.ts"
 	],
-	"/contratadas": [
+	"/configuracoes": [
 		"src/routes/+layout.ts"
 	],
 	"/devolucoes": [
@@ -27,7 +27,20 @@
 	"/relatorios": [
 		"src/routes/+layout.ts"
 	],
-	"/test": [
+	"/relatorios/dashboard": [
+		"src/routes/relatorios/dashboard/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/relatorios/descartes": [
+		"src/routes/relatorios/descartes/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/relatorios/personalizados": [
+		"src/routes/relatorios/personalizados/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/relatorios/saude": [
+		"src/routes/relatorios/saude/+page.ts",
 		"src/routes/+layout.ts"
 	]
 }

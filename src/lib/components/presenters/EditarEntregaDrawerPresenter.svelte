@@ -190,7 +190,7 @@
   <div class="fixed inset-0 bg-black bg-opacity-50 z-55 transition-opacity"></div>
 
   <!-- Drawer -->
-  <div class="fixed top-0 right-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
+  <div class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
     
     <!-- Header -->
     <DrawerHeader 
@@ -200,7 +200,7 @@
 
     <!-- Content -->
     <div class="flex flex-col h-full">
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-6" style="height: calc(100% - 80px);">
         
         <!-- Info da Entrega Original -->
         {#if entrega}

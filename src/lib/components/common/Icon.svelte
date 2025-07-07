@@ -12,13 +12,15 @@
 
   // Mapeamento de ícones disponíveis
   const iconMap: Record<string, string> = {
-    'XMarkOutline': 'XMarkOutline',
+    'XMarkOutline': 'CloseOutline', // Fix: XMarkOutline doesn't exist, use CloseOutline
+    'CloseOutline': 'CloseOutline',
     'UserOutline': 'UserOutline', 
     'CalendarMonthOutline': 'CalendarMonthOutline',
     'ClipboardListOutline': 'ClipboardListOutline',
     'TruckOutline': 'TruckOutline',
     'ExclamationTriangleOutline': 'ExclamationCircleOutline', // Fallback
     'CheckCircleOutline': 'CheckCircleOutline',
+    'CheckOutline': 'CheckOutline', // Para botões de confirmação
     'ClockOutline': 'ClockOutline',
     'PlusOutline': 'PlusOutline',
     'SearchOutline': 'SearchOutline',

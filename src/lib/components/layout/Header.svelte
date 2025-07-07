@@ -55,13 +55,13 @@
   // Classes dos botões baseadas no tipo da empresa
   $: buttonClasses = (() => {
     if (isAdminCompany) {
-      return 'text-white hover:bg-gray-700';
+      return 'text-white hover:bg-gray-900 focus:ring-0 focus:outline-none';
     } else if (isHoldingCompany) {
-      return 'text-white hover:bg-primary-800';
+      return 'text-white hover:bg-black/20 focus:ring-0 focus:outline-none';
     } else if (isContratadaCompany) {
-      return 'text-white hover:bg-primary-700';
+      return 'text-white hover:bg-primary-900 focus:ring-0 focus:outline-none';
     } else {
-      return 'hover:bg-gray-100 dark:hover:bg-gray-700';
+      return 'hover:bg-gray-200 dark:hover:bg-gray-900 focus:ring-0 focus:outline-none';
     }
   })();
   
@@ -72,14 +72,13 @@
 <header class="px-4 h-16 fixed left-0 right-0 top-0 z-50 border-b {headerClasses}">
   <div class="flex items-center w-full h-full">
     <!-- Mobile menu button -->
-    <Button 
+    <button 
+      type="button" 
       class="lg:hidden rounded-sm p-2 {buttonClasses}" 
-      color={needsCustomColor ? 'none' : 'alternative'} 
-      size="sm"
       on:click={toggleSidebar}
     >
       <BarsOutline class="w-5 h-5" />
-    </Button>
+    </button>
     
     <!-- Logo -->
     <div class="flex items-center">
@@ -99,17 +98,16 @@
     
     <!-- Module Header - Componente único clicável -->
     <div class="hidden lg:flex items-center" style="margin-left: 108px;">
-      <Button 
+      <button 
+        type="button" 
         class="flex items-center gap-2 p-2 rounded-sm {buttonClasses}" 
-        color={needsCustomColor ? 'none' : 'alternative'} 
-        size="sm"
         on:click={handleAppsClick}
       >
         <GridOutline class="w-4 h-4" />
         <span class="text-base font-normal {needsCustomColor ? 'text-white' : 'text-gray-900 dark:text-white'}">
           Gestão de EPI
         </span>
-      </Button>
+      </button>
     </div>
     
     <!-- Spacer -->
@@ -119,26 +117,12 @@
     <div class="flex items-center space-x-3">
       <!-- Company Selector -->
       <CompanySelector headerType={companyBadge} />
-      <!-- Theme toggle -->
-      <Button 
-        class="rounded-sm p-2 {buttonClasses}" 
-        color={needsCustomColor ? 'none' : 'alternative'} 
-        size="sm"
-        on:click={toggleTheme}
-      >
-        {#if $themeStore === 'dark'}
-          <SunOutline class="w-5 h-5" />
-        {:else}
-          <MoonOutline class="w-5 h-5" />
-        {/if}
-      </Button>
       
       <!-- Notifications -->
       <div class="relative">
-        <Button 
+        <button 
+          type="button" 
           class="rounded-sm p-2 relative {buttonClasses}" 
-          color={needsCustomColor ? 'none' : 'alternative'} 
-          size="sm"
         >
           <BellOutline class="w-5 h-5" />
           {#if $unreadCount > 0}
@@ -146,7 +130,7 @@
               {$unreadCount > 9 ? '9+' : $unreadCount}
             </span>
           {/if}
-        </Button>
+        </button>
         <Dropdown placement="bottom-end" class="w-80">
         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 class="font-semibold text-gray-900 dark:text-white">Notificações</h3>
@@ -192,7 +176,7 @@
         <Avatar 
           src="" 
           alt="Usuário do Sistema" 
-          class="cursor-pointer ring-2 ring-transparent hover:ring-primary-300 transition-all duration-200" 
+          class="cursor-pointer ring-2 ring-transparent hover:ring-primary-500 transition-all duration-200 focus:ring-0 focus:outline-none" 
           size="sm"
         />
         <Dropdown placement="bottom-end" class="w-48">
@@ -204,9 +188,18 @@
             <div class="w-4 h-4 bg-gray-400 rounded"></div>
             Perfil
           </DropdownItem>
-          <DropdownItem class="flex items-center gap-2 text-sm">
-          <div class="w-4 h-4 bg-gray-400 rounded"></div>
+          <DropdownItem class="flex items-center gap-2 text-sm" href="/configuracoes">
+            <div class="w-4 h-4 bg-gray-400 rounded"></div>
             Configurações
+          </DropdownItem>
+          <DropdownItem class="flex items-center gap-2 text-sm" on:click={toggleTheme}>
+            {#if $themeStore === 'dark'}
+              <SunOutline class="w-4 h-4" />
+              Tema Claro
+            {:else}
+              <MoonOutline class="w-4 h-4" />
+              Tema Escuro
+            {/if}
           </DropdownItem>
           <DropdownDivider />
           <DropdownItem class="text-red-600 flex items-center gap-2 text-sm">

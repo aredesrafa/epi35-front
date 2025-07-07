@@ -30,8 +30,6 @@
   // ==================== LOCAL STATE ====================
   
   let motivo = '';
-  let devolucaoTotal = true;
-  let quantidadeDevolucao = 1;
 
   // Validation
   let errors: Record<string, string> = {};
@@ -47,8 +45,6 @@
   
   function resetForm(): void {
     motivo = '';
-    devolucaoTotal = true;
-    quantidadeDevolucao = equipamento?.quantidade || 1;
     errors = {};
   }
 
@@ -57,14 +53,6 @@
 
     if (!motivo.trim()) {
       newErrors.motivo = 'Motivo da devolução é obrigatório';
-    }
-
-    if (!devolucaoTotal && quantidadeDevolucao < 1) {
-      newErrors.quantidade = 'Quantidade deve ser maior que 0';
-    }
-
-    if (!devolucaoTotal && equipamento && quantidadeDevolucao > equipamento.quantidade) {
-      newErrors.quantidade = `Quantidade não pode ser maior que ${equipamento.quantidade}`;
     }
 
     errors = newErrors;
@@ -78,9 +66,8 @@
       return;
     }
 
-    const motivoCompleto = devolucaoTotal 
-      ? `Devolução total: ${motivo.trim()}`
-      : `Devolução parcial (${quantidadeDevolucao}/${equipamento?.quantidade}): ${motivo.trim()}`;
+    // Como cada equipamento é individual (quantidade = 1), sempre é devolução total do item
+    const motivoCompleto = `Devolução de item individual: ${motivo.trim()}`;
 
     dispatch('confirmar', { motivo: motivoCompleto });
   }
@@ -164,62 +151,23 @@
         </div>
       </div>
 
-      <!-- Opções de Devolução -->
+      <!-- Informação sobre a Devolução -->
       <div class="mb-6">
-        <Label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          Tipo de Devolução
-        </Label>
-        
-        <div class="space-y-3">
-          <!-- Devolução Total -->
-          <div class="flex items-center">
-            <Checkbox
-              bind:checked={devolucaoTotal}
-              id="devolucao-total"
-              class="rounded-sm"
-            />
-            <Label for="devolucao-total" class="ml-3 text-sm text-gray-900 dark:text-white">
-              Devolução total ({equipamento.quantidade} {equipamento.quantidade === 1 ? 'unidade' : 'unidades'})
-            </Label>
-          </div>
-
-          <!-- Devolução Parcial -->
-          {#if equipamento.quantidade > 1}
-            <div class="flex items-center">
-              <Checkbox
-                checked={!devolucaoTotal}
-                on:change={() => devolucaoTotal = false}
-                id="devolucao-parcial"
-                class="rounded-sm"
-              />
-              <Label for="devolucao-parcial" class="ml-3 text-sm text-gray-900 dark:text-white">
-                Devolução parcial
-              </Label>
-            </div>
-
-            <!-- Quantidade para devolução parcial -->
-            {#if !devolucaoTotal}
-              <div class="ml-6 mt-2">
-                <Label for="quantidade-devolucao" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Quantidade a devolver
-                </Label>
-                <Input
-                  id="quantidade-devolucao"
-                  type="number"
-                  min="1"
-                  max={equipamento.quantidade}
-                  bind:value={quantidadeDevolucao}
-                  class="w-32 rounded-sm {errors.quantidade ? 'border-red-500' : ''}"
-                  disabled={loading}
-                />
-                {#if errors.quantidade}
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.quantidade}
-                  </p>
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div class="flex items-start">
+                          <Icon name="ExclamationCircleOutline" className="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" size="w-4 h-4" />
+            <div>
+              <p class="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Devolução de Item Individual</strong>
+              </p>
+              <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Este equipamento será devolvido como uma unidade individual. 
+                {#if equipamento.quantidade === 1}
+                  Para devolver múltiplos itens do mesmo tipo, selecione cada um separadamente.
                 {/if}
-              </div>
-            {/if}
-          {/if}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -267,8 +215,8 @@
         </h4>
         <div class="text-sm text-blue-800 dark:text-blue-200">
           <p>• Equipamento: {equipamento.nomeEquipamento} (CA {equipamento.registroCA})</p>
-          <p>• Quantidade: {devolucaoTotal ? equipamento.quantidade : quantidadeDevolucao} {devolucaoTotal || quantidadeDevolucao === 1 ? 'unidade' : 'unidades'}</p>
-          <p>• Tipo: {devolucaoTotal ? 'Devolução total' : 'Devolução parcial'}</p>
+          <p>• Quantidade: 1 unidade (item individual)</p>
+          <p>• Tipo: Devolução de item individual</p>
           {#if motivo.trim()}
             <p>• Motivo: {motivo.trim()}</p>
           {/if}
@@ -294,7 +242,7 @@
         disabled={!canConfirm}
       >
         {#if loading}
-          <Icon name="SpinnerOutline" className="mr-2 animate-spin" size="w-4 h-4" />
+          <Icon name="ClockOutline" className="mr-2 animate-spin" size="w-4 h-4" />
           Processando...
         {:else}
           <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />

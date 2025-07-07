@@ -7,7 +7,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button, Modal, Alert } from 'flowbite-svelte';
-  import { ExclamationTriangleOutline } from 'flowbite-svelte-icons';
+  import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
   import type { Contratada } from '$lib/services/api/types';
 
   // Props
@@ -48,7 +48,7 @@
 <Modal bind:open={show} size="md" class="min-w-fit">
   <svelte:fragment slot="header">
     <div class="flex items-center gap-2">
-      <ExclamationTriangleOutline class="w-6 h-6 text-red-500" />
+      <ExclamationCircleOutline class="w-6 h-6 text-red-500" />
       <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
         Confirmar Exclusão
       </h3>
@@ -58,7 +58,7 @@
   {#if contratada}
     <div class="space-y-4">
       <Alert color="red" class="border-red-200">
-        <ExclamationTriangleOutline slot="icon" class="w-5 h-5" />
+        <ExclamationCircleOutline slot="icon" class="w-5 h-5" />
         <span class="font-medium">Atenção!</span> 
         Esta ação não pode ser desfeita.
       </Alert>
@@ -97,6 +97,7 @@
     <div class="flex justify-end gap-2">
       <Button
         color="light"
+        class="rounded-sm"
         on:click={handleCancel}
         disabled={isDeleting}
       >
@@ -104,6 +105,7 @@
       </Button>
       <Button
         color="red"
+        class="rounded-sm"
         on:click={handleConfirm}
         disabled={isDeleting}
       >

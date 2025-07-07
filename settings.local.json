@@ -1,6 +1,102 @@
 {
   "permissions": {
-    "allow": ["*"],
+    "allow": [
+      "*",
+      
+      // === COMANDOS GIT COMPLETOS ===
+      "Bash(git add:*)",
+      "Bash(git init:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)", 
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git merge:*)",
+      "Bash(git reset:*)",
+      "Bash(git stash:*)",
+      
+      // === PACKAGE MANAGEMENT COMPLETO ===
+      "Bash(npm install:*)",
+      "Bash(npm update:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run check:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run preview:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx:*)",
+      
+      // === FILE OPERATIONS COMPLETAS ===
+      "Bash(rm:*)",
+      "Bash(rmdir:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(diff:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(basename:*)",
+      "Bash(dirname:*)",
+      "Bash(realpath:*)",
+      
+      // === ANÁLISE E BUSCA ===
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(less:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      
+      // === PROCESS MANAGEMENT ===
+      "Bash(ps:*)",
+      "Bash(kill:*)",
+      "Bash(killall:*)",
+      "Bash(pkill:*)",
+      "Bash(timeout:*)",
+      "Bash(timeout 30s npm run build:*)",
+      
+      // === NETWORK E TESTING ===
+      "Bash(curl:*)",
+      "Bash(ping:*)",
+      "Bash(telnet:*)",
+      "Bash(nc:*)",
+      "WebFetch(domain:epi-backend-s14g.onrender.com)",
+      "WebFetch(domain:flowbite-svelte-icons.codewithshin.com)",
+      
+      // === BUILD TOOLS ===
+      "Bash(node:*)",
+      "Bash(tsc:*)",
+      "Bash(npx openapi-typescript:*)",
+      "Bash(node_modules/.bin/*)",
+      
+      // === BACKUP E SAFETY ===
+      "Bash(tar:*)",
+      "Bash(zip:*)",
+      "Bash(unzip:*)",
+      
+      // === UTILITIES ===
+      "Bash(true)",
+      "Bash(which:*)",
+      "Bash(du:*)",
+      "Bash(ls:*)",
+      "Bash(xargs:*)",
+      
+      // === MCP SERVICES ===
+      "mcp__figma__get_figma_data",
+      "mcp__deep-code-reasoning__escalate_analysis",
+      "mcp__deep-code-reasoning__start_conversation",
+      "mcp__deep-code-reasoning__continue_conversation",
+      "mcp__deep-code-reasoning__finalize_conversation"
+    ],
     "deny": []
   },
   "tools": {

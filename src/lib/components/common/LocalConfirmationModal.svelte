@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import { Modal } from 'flowbite-svelte';
-  import { ExclamationCircleOutline, InfoCircleOutline, CheckCircleOutline, ExclamationTriangleOutline } from 'flowbite-svelte-icons';
+  import { ExclamationCircleOutline, InfoCircleOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
   import StandardButton from './StandardButton.svelte';
   import { BUTTON_TEXTS, CONFIRMATION_MESSAGES } from '$lib/constants/content';
   import { semanticColors, type SemanticColor } from '$lib/theme';
@@ -53,7 +53,7 @@
       buttonVariant: 'danger' as const
     },
     warning: { 
-      icon: ExclamationTriangleOutline, 
+      icon: ExclamationCircleOutline, 
       colors: semanticColors.warning,
       buttonVariant: 'warning' as const
     },

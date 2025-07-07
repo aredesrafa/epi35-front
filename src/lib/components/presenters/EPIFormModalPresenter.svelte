@@ -1,9 +1,12 @@
 <!--
-  EPI Form Modal Presenter - Componente "Burro"
+  EPI Form Modal Presenter - Componente "Burro" (Recriado)
+  
+  Modal para criar/editar/visualizar tipos de EPI
+  Alinhado com a estrutura real da API do backend PostgreSQL
   
   Responsabilidades:
   - Renderizar UI do modal de formulário EPI
-  - Renderizar campos do formulário
+  - Renderizar campos conforme API real (sem fabricante)
   - Validação básica de UI
   - Emitir eventos para o Container
   - Zero lógica de negócio
@@ -33,55 +36,66 @@
   
   let formData: CreateTipoEPIData = {
     nomeEquipamento: '',
-    numeroCA: '',
-    categoria: '',
-    fabricante: '',
-    validadePadrao: undefined,
-    descricao: '',
-    observacoes: ''
+    numeroCa: '',
+    categoria: 'PROTECAO_CABECA',
+    vidaUtilDias: undefined,
+    descricao: ''
   };
 
   // Form validation
   let errors: Record<string, string> = {};
 
   // ==================== CATEGORIA OPTIONS ====================
+  // Baseado no enum categoria_epi_enum REAL do backend (conforme erro de validação)
   
   const categoriaOptions = [
-    { value: '', label: 'Selecione uma categoria' },
-    { value: 'Proteção da Cabeça', label: 'Proteção da Cabeça' },
-    { value: 'Proteção dos Olhos', label: 'Proteção dos Olhos' },
-    { value: 'Proteção das Mãos', label: 'Proteção das Mãos' },
-    { value: 'Proteção dos Pés', label: 'Proteção dos Pés' },
-    { value: 'Proteção Auditiva', label: 'Proteção Auditiva' },
-    { value: 'Proteção Respiratória', label: 'Proteção Respiratória' },
-    { value: 'Proteção contra Quedas', label: 'Proteção contra Quedas' },
-    { value: 'Proteção do Corpo', label: 'Proteção do Corpo' }
+    { value: 'PROTECAO_CABECA', label: 'Proteção da Cabeça' },
+    { value: 'PROTECAO_OLHOS_ROSTO', label: 'Proteção dos Olhos/Rosto' },
+    { value: 'PROTECAO_OUVIDOS', label: 'Proteção dos Ouvidos' },
+    { value: 'PROTECAO_MAOS_BRACCOS', label: 'Proteção das Mãos/Braços' },
+    { value: 'PROTECAO_PES', label: 'Proteção dos Pés' },
+    { value: 'PROTECAO_RESPIRATORIA', label: 'Proteção Respiratória' },
+    { value: 'PROTECAO_CLIMATICA', label: 'Proteção Climática' },
+    { value: 'ROUPA_APROXIMACAO', label: 'Roupa de Aproximação' }
   ];
 
   // ==================== LIFECYCLE ====================
   
-  $: if (show && epi && (mode === 'edit' || mode === 'view')) {
-    formData = {
-      nomeEquipamento: epi.nomeEquipamento,
-      numeroCA: epi.numeroCA,
-      categoria: epi.categoria,
-      fabricante: epi.fabricante,
-      validadePadrao: epi.validadePadrao,
-      descricao: epi.descricao || '',
-      observacoes: epi.observacoes || ''
-    };
+  // Função para resetar/preencher formulário
+  function resetForm() {
+    console.log('🔄 EPIFormModal: Resetando formulário:', { mode, epiNome: epi?.nomeEquipamento });
+    
+    if (mode === 'edit' || mode === 'view') {
+      if (epi) {
+        const newFormData = {
+          nomeEquipamento: epi.nomeEquipamento || '',
+          numeroCa: epi.numeroCa || epi.numeroCA || '',
+          categoria: epi.categoria || 'PROTECAO_CABECA',
+          vidaUtilDias: epi.vidaUtilDias || epi.validadePadrao || undefined,
+          descricao: epi.descricao || ''
+        };
+        
+        formData = newFormData;
+        console.log('✅ Formulário preenchido para edição:', newFormData);
+      }
+    } else {
+      formData = {
+        nomeEquipamento: '',
+        numeroCa: '',
+        categoria: 'PROTECAO_CABECA',
+        vidaUtilDias: undefined,
+        descricao: ''
+      };
+    }
     errors = {};
-  } else if (show && mode === 'create') {
-    formData = {
-      nomeEquipamento: '',
-      numeroCA: '',
-      categoria: '',
-      fabricante: '',
-      validadePadrao: undefined,
-      descricao: '',
-      observacoes: ''
-    };
-    errors = {};
+  }
+  
+  // Reativo: resetar formulário quando modal abre ou quando props mudam
+  $: if (show && (mode || epi)) {
+    // Usar setTimeout para garantir que a atualização aconteça no próximo tick
+    setTimeout(() => {
+      resetForm();
+    }, 50);
   }
 
   // ==================== VALIDATION ====================
@@ -93,20 +107,16 @@
       errors.nomeEquipamento = 'Nome do equipamento é obrigatório';
     }
 
-    if (!formData.numeroCA.trim()) {
-      errors.numeroCA = 'Número CA é obrigatório';
+    if (!formData.numeroCa.trim()) {
+      errors.numeroCa = 'Número CA é obrigatório';
     }
 
     if (!formData.categoria) {
       errors.categoria = 'Categoria é obrigatória';
     }
 
-    if (!formData.fabricante.trim()) {
-      errors.fabricante = 'Fabricante é obrigatório';
-    }
-
-    if (formData.validadePadrao !== undefined && formData.validadePadrao < 1) {
-      errors.validadePadrao = 'Validade deve ser maior que 0';
+    if (formData.vidaUtilDias !== undefined && formData.vidaUtilDias < 1) {
+      errors.vidaUtilDias = 'Vida útil deve ser maior que 0';
     }
 
     return Object.keys(errors).length === 0;
@@ -114,11 +124,28 @@
 
   // ==================== HANDLERS ====================
   
+  function handleInputChange(field: string, value: any) {
+    console.log(`🔄 Input change - ${field}:`, value);
+    formData = {
+      ...formData,
+      [field]: value
+    };
+  }
+  
   function handleSalvar(): void {
     if (mode === 'view') return;
 
+    console.log('💾 Salvando formulário:', formData);
+    
     if (validateForm()) {
-      dispatch('salvar', formData);
+      // Converter vidaUtilDias para number antes de enviar
+      const dataToSend: CreateTipoEPIData = {
+        ...formData,
+        vidaUtilDias: formData.vidaUtilDias ? Number(formData.vidaUtilDias) : undefined
+      };
+      
+      console.log('📤 Dados sendo enviados:', dataToSend);
+      dispatch('salvar', dataToSend);
     }
   }
 
@@ -137,6 +164,12 @@
   $: isReadonly = mode === 'view';
   $: saveButtonText = mode === 'create' ? 'Cadastrar' : mode === 'edit' ? 'Atualizar' : '';
   $: showSaveButton = mode !== 'view';
+
+  // Helper para obter label da categoria
+  function getCategoriaLabel(categoria: string): string {
+    const option = categoriaOptions.find(opt => opt.value === categoria);
+    return option ? option.label : categoria;
+  }
 </script>
 
 <Modal bind:open={show} size="lg" autoclose={false} outsideclose={!loading} on:close={handleModalClose}>
@@ -160,6 +193,7 @@
           bind:value={formData.nomeEquipamento}
           disabled={isReadonly || loading}
           class="rounded-sm {errors.nomeEquipamento ? 'border-red-500' : ''}"
+          on:input={(e) => handleInputChange('nomeEquipamento', e.target.value)}
         />
         {#if errors.nomeEquipamento}
           <p class="text-red-500 text-sm mt-1">{errors.nomeEquipamento}</p>
@@ -168,38 +202,24 @@
 
       <!-- Número CA -->
       <div>
-        <Label for="numeroCA" class="mb-2">
+        <Label for="numeroCa" class="mb-2">
           Número CA *
         </Label>
         <Input
-          id="numeroCA"
+          id="numeroCa"
           type="text"
           placeholder="Ex: 31469"
-          bind:value={formData.numeroCA}
+          bind:value={formData.numeroCa}
           disabled={isReadonly || loading}
-          class="rounded-sm {errors.numeroCA ? 'border-red-500' : ''}"
+          class="rounded-sm {errors.numeroCa ? 'border-red-500' : ''}"
+          on:input={(e) => handleInputChange('numeroCa', e.target.value)}
         />
-        {#if errors.numeroCA}
-          <p class="text-red-500 text-sm mt-1">{errors.numeroCA}</p>
+        {#if errors.numeroCa}
+          <p class="text-red-500 text-sm mt-1">{errors.numeroCa}</p>
         {/if}
-      </div>
-
-      <!-- Fabricante -->
-      <div>
-        <Label for="fabricante" class="mb-2">
-          Fabricante *
-        </Label>
-        <Input
-          id="fabricante"
-          type="text"
-          placeholder="Ex: SafetyTech"
-          bind:value={formData.fabricante}
-          disabled={isReadonly || loading}
-          class="rounded-sm {errors.fabricante ? 'border-red-500' : ''}"
-        />
-        {#if errors.fabricante}
-          <p class="text-red-500 text-sm mt-1">{errors.fabricante}</p>
-        {/if}
+        <p class="text-sm text-gray-500 mt-1">
+          Certificado de Aprovação do INMETRO
+        </p>
       </div>
 
       <!-- Categoria -->
@@ -207,39 +227,62 @@
         <Label for="categoria" class="mb-2">
           Categoria *
         </Label>
-        <Select
+        <select
           id="categoria"
-          items={categoriaOptions}
           bind:value={formData.categoria}
           disabled={isReadonly || loading}
-          class="rounded-sm {errors.categoria ? 'border-red-500' : ''}"
-        />
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 {errors.categoria ? 'border-red-500' : ''}"
+          on:change={(e) => handleInputChange('categoria', e.target.value)}
+        >
+          {#each categoriaOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
+        </select>
         {#if errors.categoria}
           <p class="text-red-500 text-sm mt-1">{errors.categoria}</p>
         {/if}
       </div>
 
-      <!-- Validade Padrão -->
+      <!-- Vida Útil -->
       <div>
-        <Label for="validadePadrao" class="mb-2">
-          Validade Padrão (dias)
+        <Label for="vidaUtilDias" class="mb-2">
+          Vida Útil (dias)
         </Label>
         <Input
-          id="validadePadrao"
+          id="vidaUtilDias"
           type="number"
           placeholder="Ex: 365"
-          bind:value={formData.validadePadrao}
+          bind:value={formData.vidaUtilDias}
           disabled={isReadonly || loading}
-          class="rounded-sm {errors.validadePadrao ? 'border-red-500' : ''}"
+          class="rounded-sm {errors.vidaUtilDias ? 'border-red-500' : ''}"
           min="1"
+          on:input={(e) => handleInputChange('vidaUtilDias', e.target.value ? Number(e.target.value) : undefined)}
         />
-        {#if errors.validadePadrao}
-          <p class="text-red-500 text-sm mt-1">{errors.validadePadrao}</p>
+        {#if errors.vidaUtilDias}
+          <p class="text-red-500 text-sm mt-1">{errors.vidaUtilDias}</p>
         {/if}
         <p class="text-sm text-gray-500 mt-1">
-          Deixe em branco se não houver validade padrão
+          Deixe em branco se não houver vida útil definida
         </p>
       </div>
+
+      <!-- Status (apenas para visualização/edição) -->
+      {#if mode !== 'create' && epi}
+        <div>
+          <Label class="mb-2">Status</Label>
+          <div class="mt-2">
+            {#if epi.status === 'ATIVO'}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                Ativo
+              </span>
+            {:else}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                Descontinuado
+              </span>
+            {/if}
+          </div>
+        </div>
+      {/if}
 
       <!-- Descrição -->
       <div class="md:col-span-2">
@@ -248,28 +291,46 @@
         </Label>
         <Textarea
           id="descricao"
-          placeholder="Descrição detalhada do equipamento..."
+          placeholder="Descrição técnica detalhada do equipamento..."
           rows="3"
           bind:value={formData.descricao}
           disabled={isReadonly || loading}
           class="rounded-sm"
+          on:input={(e) => handleInputChange('descricao', e.target.value)}
         />
       </div>
 
-      <!-- Observações -->
-      <div class="md:col-span-2">
-        <Label for="observacoes" class="mb-2">
-          Observações
-        </Label>
-        <Textarea
-          id="observacoes"
-          placeholder="Observações adicionais..."
-          rows="2"
-          bind:value={formData.observacoes}
-          disabled={isReadonly || loading}
-          class="rounded-sm"
-        />
-      </div>
+      <!-- Informações adicionais (apenas visualização) -->
+      {#if mode === 'view' && epi}
+        <div class="md:col-span-2 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Informações do Sistema</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Criado em:</span>
+              <p class="font-medium">{new Date(epi.createdAt || epi.dataCriacao || '').toLocaleDateString('pt-BR')}</p>
+            </div>
+            {#if epi.updatedAt || epi.dataAtualizacao}
+              <div>
+                <span class="text-gray-500 dark:text-gray-400">Atualizado em:</span>
+                <p class="font-medium">{new Date(epi.updatedAt || epi.dataAtualizacao || '').toLocaleDateString('pt-BR')}</p>
+              </div>
+            {/if}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Categoria:</span>
+              <p class="font-medium">{getCategoriaLabel(epi.categoria)}</p>
+            </div>
+            {#if epi.vidaUtilDias || epi.validadePadrao}
+              <div>
+                <span class="text-gray-500 dark:text-gray-400">Vida útil:</span>
+                <p class="font-medium">
+                  {Math.round((epi.vidaUtilDias || epi.validadePadrao || 0) / 30)} meses
+                  ({epi.vidaUtilDias || epi.validadePadrao} dias)
+                </p>
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
     </div>
   </form>
 

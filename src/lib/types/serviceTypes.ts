@@ -41,12 +41,16 @@ export interface ColaboradorDTO {
 
 export interface TipoEPIDTO {
   id: string;
-  numeroCA: string;
-  nomeEquipamento: string;
+  // ✅ COMPATIBILIDADE: Suporta ambas estruturas do backend
+  numeroCA?: string;        // v3.4 e anterior
+  codigo?: string;          // v3.5+ (novo campo)
+  nomeEquipamento?: string; // v3.4 e anterior  
+  nome?: string;            // v3.5+ (novo campo)
   descricao?: string;
-  fabricante: string;
+  fabricante?: string;
   categoria: string;
-  vidaUtilDias: number;
+  vidaUtilDias?: number;
+  validadeMeses?: number;   // v3.5+ (substitui vidaUtilDias)
   valorMedio?: number;
   observacoes?: string;
   ativo: boolean;
@@ -65,6 +69,9 @@ export interface AlmoxarifadoDTO {
   createdAt: string;
   updatedAt: string;
 }
+
+// Alias para compatibilidade com código existente
+export type Almoxarifado = AlmoxarifadoDTO;
 
 export interface UsuarioDTO {
   id: string;
@@ -112,6 +119,29 @@ export interface MovimentacaoEstoqueDTO {
   usuario?: UsuarioDTO;
 }
 
+// Interface para auditoria de movimentações com dados expandidos
+export interface Movimentacao {
+  id: string;
+  estoqueOrigemId: string | null;
+  estoqueDestinoId: string | null;
+  tipoMovimentacao: string;
+  quantidade: number;
+  responsavel: string;
+  motivo: string | null;
+  observacoes: string | null;
+  documentoOrigemId: string | null;
+  documentoTipo: string | null;
+  dataMovimentacao: string;
+  transacaoId: string | null;
+  createdAt: string;
+  itemEstoqueId: string | null;
+  itemFichaId: string | null;
+  nomeEstoqueOrigem?: string | null;
+  nomeEstoqueDestino?: string | null;
+  nomeEPI?: string | null;
+  nomeColaborador?: string | null;
+}
+
 export interface NotaMovimentacaoDTO {
   id: string;
   numero: string;
@@ -145,16 +175,107 @@ export interface NotaMovimentacaoItemDTO {
 export interface FichaEPIDTO {
   id: string;
   colaboradorId: string;
+  numeroFicha?: string; // Número da ficha formatado
   dataEmissao: string;
   dataValidade?: string;
   status: string; // Vem da configuração dinâmica
   observacoes?: string;
-  ativo: boolean;
-  createdAt: string;
-  updatedAt: string;
-  // Dados expandidos
-  colaborador?: ColaboradorDTO;
+  ativo?: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+  // Dados expandidos do colaborador
+  colaborador: {
+    id: string;
+    nome: string;
+    cpf: string;
+    matricula?: string;
+    cargo?: string;
+    empresa?: string;
+    setor?: string;
+  };
+  // ✨ NOVAS INFORMAÇÕES RICAS DO BACKEND
+  contratada?: {
+    id: string;
+    nome: string;
+    cnpj: string;
+  };
+  episInfo?: {
+    totalEpisAtivos: number;
+    episExpirados: number;
+    proximaDataVencimento?: string;
+    diasAteProximoVencimento?: number;
+    tiposEpisAtivos: Array<{
+      tipoEpiId: string;
+      tipoEpiNome: string;
+      quantidade: number;
+    }>;
+  };
+  // Dados legados para compatibilidade
   entregas?: EntregaDTO[];
+}
+
+// Interface para dados detalhados de uma ficha (usada nos modals/drawers)
+export interface FichaDetailData {
+  id: string;
+  colaboradorId: string;
+  dataEmissao: string;
+  status: string;
+  colaborador: {
+    id: string;
+    nome: string;
+    cpf: string;
+    matricula: string;
+    cargo: string;
+    empresa: string;
+  };
+  equipamentosEmPosse: EquipamentoEmPosseItem[];
+  entregas: any[];
+  devolucoes: DevolucaoItem[];
+  historico: HistoricoEventoItem[];
+  proximosVencimentos: any[];
+  // Campos opcionais para store reativo
+  totalEquipamentosEmPosse?: number;
+  totalDevolucoes?: number;
+}
+
+// Tipos auxiliares para FichaDetailData
+export interface EquipamentoEmPosseItem {
+  id: string;
+  entregaItemId?: string; // ✅ NOVO: ID real do item no backend para devolução
+  nomeEquipamento: string;
+  registroCA: string;
+  categoria: string;
+  dataEntrega: string;
+  status: string;
+  quantidade: number;
+  entregaId: string;
+  prazoMaximoDevolucao: string;
+  vencido: boolean;
+  diasVencido?: number;
+}
+
+export interface DevolucaoItem {
+  id: string;
+  equipamentoId: string;
+  nomeEquipamento: string;
+  registroCA: string;
+  dataDevolucao: string;
+  motivo: string;
+  observacoes?: string;
+  quantidade: number;
+  prazoOriginal: string;
+  noPrazo: boolean;
+  diasAtraso?: number;
+}
+
+export interface HistoricoEventoItem {
+  id: string;
+  tipo: 'entrega' | 'devolucao' | 'vencimento';
+  acao: string; // ✅ ALINHADO: Campo usado pelo FichaDetailPresenter
+  descricao: string;
+  dataEvento: string; // ✅ ALINHADO: Campo usado pelo FichaDetailPresenter  
+  responsavel: string;
+  detalhes?: any; // ✅ NOVO: Campo para detalhes do evento
 }
 
 export interface EntregaDTO {
@@ -181,12 +302,65 @@ export interface EntregaItemDTO {
   itemEstoqueId: string;
   quantidade: number;
   dataValidade?: string;
-  // Dados expandidos
+  // ✅ CAMPOS BACKEND v3.5 (top-level)
+  tipoEpiNome?: string;
+  tipoEpiCodigo?: string; 
+  tipoEpiCategoria?: string;
+  quantidadeEntregue?: number;
+  // Dados expandidos (v3.4 compatibilidade)
   tipoEPI?: TipoEPIDTO;
   itemEstoque?: ItemEstoqueDTO;
 }
 
 // ==================== REPORTING DTOs ====================
+
+// Interface para o relatório de movimentações (event source completo)
+// Baseada na documentação oficial do backend
+export interface RelatorioMovimentacaoDTO {
+  id: string;                    // UUID da movimentação
+  data: string;                  // ISO date-time da movimentação
+  almoxarifadoNome: string;      // Nome do almoxarifado
+  tipoEpiNome: string;           // Nome do equipamento/EPI
+  tipoMovimentacao: string;      // Tipo da operação (ENTRADA_NOTA, SAIDA_ENTREGA, etc.)
+  quantidade: number;            // Quantidade movimentada
+  usuarioNome: string;           // Nome do responsável
+  observacoes?: string;          // Observações (opcional)
+  documento?: string;            // Número do documento (opcional)
+  entregaId?: string;            // ID da entrega (correlacionado via timestamp para SAIDA_ENTREGA)
+  colaboradorNome?: string;      // Nome do colaborador (correlacionado via entrega para SAIDA_ENTREGA)
+}
+
+// Interface conforme documentação real do backend
+export interface ResumoAuditoria {
+  totalMovimentacoes: number;    // Total de registros
+  totalEntradas: number;         // Soma das entradas
+  totalSaidas: number;          // Soma das saídas
+  saldoInicialPeriodo: number;  // Saldo inicial
+  saldoFinalPeriodo: number;    // Saldo final
+  variacao: number;             // Variação no período
+}
+
+export interface RelatorioMovimentacoesResponse {
+  success: boolean;
+  data: {
+    movimentacoes: RelatorioMovimentacaoDTO[];
+    resumo: ResumoAuditoria;
+    dataGeracao: string;         // ISO date-time
+  };
+  message: string;
+}
+
+// Parâmetros para filtros de movimentações
+export interface RelatorioMovimentacoesParams {
+  almoxarifadoId?: string;
+  tipoEpiId?: string;
+  tipoMovimentacao?: string;
+  usuarioId?: string;
+  dataInicio?: string; // YYYY-MM-DD
+  dataFim?: string; // YYYY-MM-DD
+  page?: number;
+  limit?: number;
+}
 
 export interface RelatorioDescartesDTO {
   totalItens: number;
@@ -308,6 +482,19 @@ export interface MovementParams extends PaginationParams {
   dataFim?: string;
   usuarioId?: string;
   includeExpanded?: boolean;
+}
+
+/**
+ * Parâmetros específicos para auditoria de movimentações
+ */
+export interface AuditoriaParams extends PaginationParams {
+  estoqueOrigemId?: string;
+  estoqueDestinoId?: string;
+  tipoMovimentacao?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  almoxarifadoOrigemId?: string;
+  almoxarifadoDestinoId?: string;
 }
 
 /**

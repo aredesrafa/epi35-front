@@ -22,6 +22,24 @@ export function formatarData(date: string | Date | null | undefined, fallback = 
 }
 
 /**
+ * Formata uma data com hora para exibição no histórico
+ * @param date - Data para formatar (string ISO ou Date)
+ * @param fallback - Texto a exibir se a data for inválida
+ * @returns Data formatada com hora (dd/MM/yyyy • HH:mm)
+ */
+export function formatarDataComHora(date: string | Date | null | undefined, fallback = '-'): string {
+  if (!date) return fallback;
+  
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return format(dateObj, 'dd/MM/yyyy • HH:mm');
+  } catch (error) {
+    console.warn('Erro ao formatar data com hora:', date, error);
+    return fallback;
+  }
+}
+
+/**
  * Formata uma data com hora para exibição
  * @param date - Data para formatar (string ISO ou Date)
  * @param fallback - Texto a exibir se a data for inválida

@@ -12,11 +12,16 @@
   const statusColors = {
     // Fichas EPI
     ficha: {
-      ativo: '#00B8AA',        // green-500 - nossa paleta personalizada
-      vencido: '#FF4563',      // red-500 - nossa paleta personalizada  
-      suspenso: '#D98C29',     // yellow-500 - nossa paleta personalizada
-      arquivado: '#535D72',    // gray-500 - nossa paleta personalizada
-      inativo: '#535D72'       // gray-500
+      ativa: '#00B8AA',        // green-500 - nossa paleta personalizada
+      ativo: '#00B8AA',        // green-500 - nossa paleta personalizada (alias)
+      vencida: '#FF4563',      // red-500 - nossa paleta personalizada
+      vencido: '#FF4563',      // red-500 - nossa paleta personalizada (alias)
+      suspensa: '#D98C29',     // yellow-500 - nossa paleta personalizada
+      suspenso: '#D98C29',     // yellow-500 - nossa paleta personalizada (alias)
+      arquivada: '#535D72',    // gray-500 - nossa paleta personalizada
+      arquivado: '#535D72',    // gray-500 - nossa paleta personalizada (alias)
+      inativa: '#535D72',      // gray-500
+      inativo: '#535D72'       // gray-500 (alias)
     },
     // Colaboradores
     colaborador: {

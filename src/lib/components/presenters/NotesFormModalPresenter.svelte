@@ -1,9 +1,12 @@
 <!--
-  Notes Form Modal Presenter - Componente "Burro"
+  Notes Form Modal Presenter - Componente "Burro" (Refatorado para Backend Real)
+  
+  Modal para criar/editar/visualizar notas de movimentação baseado na estrutura real
+  do backend PostgreSQL (tabela notas_movimentacao)
   
   Responsabilidades:
   - Renderizar UI do modal de formulário de notas
-  - Renderizar campos específicos por tipo (entrada/saída)
+  - Renderizar campos conforme API real do backend
   - Validação básica de UI
   - Emitir eventos para o Container
   - Zero lógica de negócio
@@ -11,114 +14,88 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Modal, Button, Input, Textarea, Label, Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell } from 'flowbite-svelte';
-  import { PlusOutline, TrashBinOutline } from 'flowbite-svelte-icons';
-  import type { Nota, CreateNotaData, NotaItem } from '$lib/services/entity/notesAdapter';
+  import { Modal, Button, Input, Textarea, Label, Select } from 'flowbite-svelte';
+  import type { 
+    NotaMovimentacao, 
+    CriarNotaMovimentacaoRequest,
+    TipoNotaEnum 
+  } from '$lib/services/process/notasMovimentacaoAdapter';
 
   // ==================== PROPS ====================
   
   export let show = false;
   export let mode: 'create' | 'edit' | 'view' = 'create';
-  export let tipo: 'entrada' | 'saida' = 'entrada';
-  export let title = 'Nota';
-  export let nota: Nota | null = null;
+  export let tipo: TipoNotaEnum = 'ENTRADA';
+  export let title = 'Nota de Movimentação';
+  export let nota: NotaMovimentacao | null = null;
   export let loading = false;
 
   // ==================== EVENT DISPATCHER ====================
   
   const dispatch = createEventDispatcher<{
-    salvar: CreateNotaData;
+    salvar: CriarNotaMovimentacaoRequest;
     cancelar: void;
   }>();
 
   // ==================== FORM STATE ====================
   
-  let formData: CreateNotaData = {
-    numeroNota: '',
-    data: '',
-    responsavel: '',
-    motivo: '',
-    observacoes: '',
-    itens: []
+  let formData: CriarNotaMovimentacaoRequest = {
+    tipo_nota: 'ENTRADA',
+    almoxarifado_id: '',
+    numero_documento: '',
+    data_documento: '',
+    observacoes: ''
   };
 
   // Form validation
   let errors: Record<string, string> = {};
 
-  // Item being added/edited
-  let currentItem: Partial<NotaItem> = {
-    tipoEPIId: '',
-    quantidade: 1,
-    custoUnitario: undefined
-  };
-
-  let editingItemIndex = -1;
+  // Options para almoxarifados (mock por enquanto, deve vir do backend)
+  let almoxarifadoOptions = [
+    { value: '', label: 'Selecione um almoxarifado' },
+    { value: 'alm-001', label: 'Almoxarifado Central' },
+    { value: 'alm-002', label: 'Almoxarifado Filial 1' },
+    { value: 'alm-003', label: 'Almoxarifado Filial 2' }
+  ];
 
   // ==================== LIFECYCLE ====================
   
-  $: if (show && nota && (mode === 'edit' || mode === 'view')) {
-    formData = {
-      numeroNota: nota.numeroNota,
-      data: nota.data,
-      responsavel: nota.responsavel,
-      motivo: nota.motivo,
-      observacoes: nota.observacoes || '',
-      itens: nota.itens.map(item => ({
-        tipoEPIId: item.tipoEPIId,
-        quantidade: item.quantidade,
-        custoUnitario: item.custoUnitario
-      })),
-      // Campos específicos por tipo
-      ...(nota.tipo === 'entrada' ? {
-        fornecedor: nota.fornecedor || '',
-        notaFiscal: nota.notaFiscal || '',
-        valorTotal: nota.valorTotal
-      } : {
-        destinatario: nota.destinatario || '',
-        solicitante: nota.solicitante || ''
-      })
-    };
+  // Função para resetar/preencher formulário
+  function resetForm() {
+    console.log('🔄 NotesFormModal: Resetando formulário:', { mode, tipo, nota });
+    
+    if (mode === 'edit' || mode === 'view') {
+      if (nota) {
+        formData = {
+          tipo_nota: nota.tipo_nota,
+          almoxarifado_id: nota.almoxarifado_id,
+          almoxarifado_destino_id: nota.almoxarifado_destino_id,
+          numero_documento: nota.numero_documento || '',
+          data_documento: nota.data_documento,
+          observacoes: nota.observacoes || ''
+        };
+        console.log('✅ Formulário preenchido para edição:', formData);
+      }
+    } else {
+      // Modo create - usar valores padrão
+      formData = {
+        tipo_nota: tipo,
+        almoxarifado_id: '',
+        almoxarifado_destino_id: undefined,
+        numero_documento: '',
+        data_documento: new Date().toISOString().split('T')[0], // Data atual
+        observacoes: ''
+      };
+      console.log('✅ Formulário resetado para criação:', formData);
+    }
     errors = {};
-    resetCurrentItem();
-  } else if (show && mode === 'create') {
-    formData = {
-      numeroNota: generateNotaNumber(),
-      data: new Date().toISOString().split('T')[0],
-      responsavel: '',
-      motivo: '',
-      observacoes: '',
-      itens: [],
-      // Campos específicos por tipo
-      ...(tipo === 'entrada' ? {
-        fornecedor: '',
-        notaFiscal: '',
-        valorTotal: 0
-      } : {
-        destinatario: '',
-        solicitante: ''
-      })
-    };
-    errors = {};
-    resetCurrentItem();
   }
-
-  // ==================== HELPER FUNCTIONS ====================
   
-  function generateNotaNumber(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const prefix = tipo === 'entrada' ? 'NE' : 'NS';
-    const sequence = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}-${year}-${sequence}`;
-  }
-
-  function resetCurrentItem(): void {
-    currentItem = {
-      tipoEPIId: '',
-      quantidade: 1,
-      custoUnitario: tipo === 'entrada' ? 0 : undefined
-    };
-    editingItemIndex = -1;
+  // Reativo: resetar formulário quando modal abre ou quando props mudam
+  $: if (show && (mode || tipo || nota)) {
+    setTimeout(() => {
+      resetForm();
+    }, 50);
   }
 
   // ==================== VALIDATION ====================
@@ -126,116 +103,46 @@
   function validateForm(): boolean {
     errors = {};
 
-    if (!formData.numeroNota.trim()) {
-      errors.numeroNota = 'Número da nota é obrigatório';
+    if (!formData.almoxarifado_id) {
+      errors.almoxarifado_id = 'Almoxarifado é obrigatório';
     }
 
-    if (!formData.data) {
-      errors.data = 'Data é obrigatória';
+    if (!formData.data_documento) {
+      errors.data_documento = 'Data do documento é obrigatória';
     }
 
-    if (!formData.responsavel.trim()) {
-      errors.responsavel = 'Responsável é obrigatório';
-    }
-
-    if (!formData.motivo.trim()) {
-      errors.motivo = 'Motivo é obrigatório';
-    }
-
-    if (formData.itens.length === 0) {
-      errors.itens = 'Pelo menos um item deve ser adicionado';
-    }
-
-    // Validações específicas por tipo
-    if (tipo === 'entrada') {
-      const entradaData = formData as any;
-      if (!entradaData.fornecedor?.trim()) {
-        errors.fornecedor = 'Fornecedor é obrigatório para notas de entrada';
-      }
-    } else {
-      const saidaData = formData as any;
-      if (!saidaData.destinatario?.trim()) {
-        errors.destinatario = 'Destinatário é obrigatório para notas de saída';
+    // Validação específica para transferência
+    if (formData.tipo_nota === 'TRANSFERENCIA') {
+      if (!formData.almoxarifado_destino_id) {
+        errors.almoxarifado_destino_id = 'Almoxarifado de destino é obrigatório para transferências';
+      } else if (formData.almoxarifado_destino_id === formData.almoxarifado_id) {
+        errors.almoxarifado_destino_id = 'Almoxarifado de destino deve ser diferente do origem';
       }
     }
 
     return Object.keys(errors).length === 0;
   }
 
-  function validateCurrentItem(): boolean {
-    if (!currentItem.tipoEPIId) {
-      return false;
-    }
-    if (!currentItem.quantidade || currentItem.quantidade < 1) {
-      return false;
-    }
-    if (tipo === 'entrada' && (!currentItem.custoUnitario || currentItem.custoUnitario < 0)) {
-      return false;
-    }
-    return true;
-  }
-
-  // ==================== ITEM HANDLERS ====================
+  // ==================== HANDLERS ====================
   
-  function handleAddItem(): void {
-    if (!validateCurrentItem()) return;
-
-    const newItem = {
-      tipoEPIId: currentItem.tipoEPIId!,
-      quantidade: currentItem.quantidade!,
-      custoUnitario: currentItem.custoUnitario
+  function handleInputChange(field: string, value: any) {
+    console.log(`🔄 Input change - ${field}:`, value);
+    formData = {
+      ...formData,
+      [field]: value
     };
-
-    if (editingItemIndex >= 0) {
-      formData.itens[editingItemIndex] = newItem;
-    } else {
-      formData.itens = [...formData.itens, newItem];
-    }
-
-    // Recalcular valor total para entrada
-    if (tipo === 'entrada') {
-      const entradaData = formData as any;
-      entradaData.valorTotal = formData.itens.reduce((total, item) => 
-        total + (item.quantidade * (item.custoUnitario || 0)), 0
-      );
-    }
-
-    resetCurrentItem();
   }
-
-  function handleEditItem(index: number): void {
-    const item = formData.itens[index];
-    currentItem = { ...item };
-    editingItemIndex = index;
-  }
-
-  function handleRemoveItem(index: number): void {
-    formData.itens = formData.itens.filter((_, i) => i !== index);
-    
-    // Recalcular valor total para entrada
-    if (tipo === 'entrada') {
-      const entradaData = formData as any;
-      entradaData.valorTotal = formData.itens.reduce((total, item) => 
-        total + (item.quantidade * (item.custoUnitario || 0)), 0
-      );
-    }
-
-    if (editingItemIndex === index) {
-      resetCurrentItem();
-    }
-  }
-
-  function handleCancelEdit(): void {
-    resetCurrentItem();
-  }
-
-  // ==================== FORM HANDLERS ====================
   
   function handleSalvar(): void {
     if (mode === 'view') return;
 
+    console.log('💾 Salvando formulário:', formData);
+    
     if (validateForm()) {
+      console.log('📤 Dados sendo enviados:', formData);
       dispatch('salvar', formData);
+    } else {
+      console.warn('❌ Formulário inválido:', errors);
     }
   }
 
@@ -254,175 +161,156 @@
   $: isReadonly = mode === 'view';
   $: saveButtonText = mode === 'create' ? 'Criar Nota' : mode === 'edit' ? 'Atualizar Nota' : '';
   $: showSaveButton = mode !== 'view';
-  $: canAddItem = validateCurrentItem();
-  $: isEditingItem = editingItemIndex >= 0;
+  $: isTransferencia = formData.tipo_nota === 'TRANSFERENCIA';
 
-  // Formatar valor monetário
-  function formatarValor(valor?: number): string {
-    if (!valor) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
+  // Helper para obter label do tipo
+  function getTipoLabel(tipoNota: TipoNotaEnum): string {
+    const labels: Record<TipoNotaEnum, string> = {
+      'ENTRADA': 'Entrada',
+      'TRANSFERENCIA': 'Transferência',
+      'DESCARTE': 'Descarte',
+      'ENTRADA_AJUSTE': 'Entrada (Ajuste)',
+      'SAIDA_AJUSTE': 'Saída (Ajuste)'
+    };
+    return labels[tipoNota] || tipoNota;
   }
 
-  // Calcular total do item
-  $: totalItem = (currentItem.quantidade || 0) * (currentItem.custoUnitario || 0);
+  // Helper para obter cor do badge
+  function getTipoBadgeColor(tipoNota: TipoNotaEnum): string {
+    const colors: Record<TipoNotaEnum, string> = {
+      'ENTRADA': 'green',
+      'TRANSFERENCIA': 'blue', 
+      'DESCARTE': 'red',
+      'ENTRADA_AJUSTE': 'yellow',
+      'SAIDA_AJUSTE': 'orange'
+    };
+    return colors[tipoNota] || 'gray';
+  }
 </script>
 
-<Modal bind:open={show} size="xl" autoclose={false} outsideclose={!loading} on:close={handleModalClose}>
+<Modal bind:open={show} size="lg" autoclose={false} outsideclose={!loading} on:close={handleModalClose}>
   <div slot="header" class="flex items-center space-x-4">
     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
       {title}
     </h3>
-    {#if tipo === 'entrada'}
-      <span class="text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded-sm">Entrada</span>
-    {:else}
-      <span class="text-sm px-2 py-1 bg-purple-100 text-purple-800 rounded-sm">Saída</span>
-    {/if}
+    <span class="text-sm px-2 py-1 bg-{getTipoBadgeColor(formData.tipo_nota)}-100 text-{getTipoBadgeColor(formData.tipo_nota)}-800 rounded-sm">
+      {getTipoLabel(formData.tipo_nota)}
+    </span>
   </div>
 
   <form class="space-y-6" on:submit|preventDefault={handleSalvar}>
     <!-- Informações Básicas -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Número da Nota -->
-      <div>
-        <Label for="numeroNota" class="mb-2">
-          Número da Nota *
+      
+      <!-- Tipo da Nota (readonly para edit/view) -->
+      <div class="md:col-span-2">
+        <Label for="tipo_nota" class="mb-2">
+          Tipo da Nota *
         </Label>
-        <Input
-          id="numeroNota"
-          type="text"
-          bind:value={formData.numeroNota}
-          disabled={isReadonly || loading}
-          class="rounded-sm {errors.numeroNota ? 'border-red-500' : ''}"
-        />
-        {#if errors.numeroNota}
-          <p class="text-red-500 text-sm mt-1">{errors.numeroNota}</p>
-        {/if}
-      </div>
-
-      <!-- Data -->
-      <div>
-        <Label for="data" class="mb-2">
-          Data *
-        </Label>
-        <Input
-          id="data"
-          type="date"
-          bind:value={formData.data}
-          disabled={isReadonly || loading}
-          class="rounded-sm {errors.data ? 'border-red-500' : ''}"
-        />
-        {#if errors.data}
-          <p class="text-red-500 text-sm mt-1">{errors.data}</p>
-        {/if}
-      </div>
-
-      <!-- Responsável -->
-      <div>
-        <Label for="responsavel" class="mb-2">
-          Responsável *
-        </Label>
-        <Input
-          id="responsavel"
-          type="text"
-          placeholder="Nome do responsável"
-          bind:value={formData.responsavel}
-          disabled={isReadonly || loading}
-          class="rounded-sm {errors.responsavel ? 'border-red-500' : ''}"
-        />
-        {#if errors.responsavel}
-          <p class="text-red-500 text-sm mt-1">{errors.responsavel}</p>
-        {/if}
-      </div>
-
-      <!-- Campos específicos por tipo -->
-      {#if tipo === 'entrada'}
-        <!-- Fornecedor -->
-        <div>
-          <Label for="fornecedor" class="mb-2">
-            Fornecedor *
-          </Label>
-          <Input
-            id="fornecedor"
-            type="text"
-            placeholder="Nome do fornecedor"
-            bind:value={formData.fornecedor}
-            disabled={isReadonly || loading}
-            class="rounded-sm {errors.fornecedor ? 'border-red-500' : ''}"
-          />
-          {#if errors.fornecedor}
-            <p class="text-red-500 text-sm mt-1">{errors.fornecedor}</p>
-          {/if}
-        </div>
-
-        <!-- Nota Fiscal -->
-        <div>
-          <Label for="notaFiscal" class="mb-2">
-            Nota Fiscal
-          </Label>
-          <Input
-            id="notaFiscal"
-            type="text"
-            placeholder="Número da nota fiscal"
-            bind:value={formData.notaFiscal}
-            disabled={isReadonly || loading}
+        {#if mode === 'create'}
+          <Select
+            id="tipo_nota"
+            bind:value={formData.tipo_nota}
+            disabled={loading}
             class="rounded-sm"
-          />
+            on:change={(e) => handleInputChange('tipo_nota', e.target.value)}
+          >
+            <option value="ENTRADA">Entrada</option>
+            <option value="TRANSFERENCIA">Transferência</option>
+            <option value="DESCARTE">Descarte</option>
+            <option value="ENTRADA_AJUSTE">Entrada (Ajuste)</option>
+            <option value="SAIDA_AJUSTE">Saída (Ajuste)</option>
+          </Select>
+        {:else}
+          <div class="flex items-center h-10 px-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-sm">
+            <span class="text-sm">{getTipoLabel(formData.tipo_nota)}</span>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Almoxarifado Origem -->
+      <div>
+        <Label for="almoxarifado_id" class="mb-2">
+          Almoxarifado {isTransferencia ? 'Origem' : ''} *
+        </Label>
+        <Select
+          id="almoxarifado_id"
+          bind:value={formData.almoxarifado_id}
+          disabled={isReadonly || loading}
+          class="rounded-sm {errors.almoxarifado_id ? 'border-red-500' : ''}"
+          on:change={(e) => handleInputChange('almoxarifado_id', e.target.value)}
+        >
+          {#each almoxarifadoOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
+        </Select>
+        {#if errors.almoxarifado_id}
+          <p class="text-red-500 text-sm mt-1">{errors.almoxarifado_id}</p>
+        {/if}
+      </div>
+
+      <!-- Almoxarifado Destino (apenas para transferência) -->
+      {#if isTransferencia}
+        <div>
+          <Label for="almoxarifado_destino_id" class="mb-2">
+            Almoxarifado Destino *
+          </Label>
+          <Select
+            id="almoxarifado_destino_id"
+            bind:value={formData.almoxarifado_destino_id}
+            disabled={isReadonly || loading}
+            class="rounded-sm {errors.almoxarifado_destino_id ? 'border-red-500' : ''}"
+            on:change={(e) => handleInputChange('almoxarifado_destino_id', e.target.value)}
+          >
+            {#each almoxarifadoOptions as option}
+              <option value={option.value}>{option.label}</option>
+            {/each}
+          </Select>
+          {#if errors.almoxarifado_destino_id}
+            <p class="text-red-500 text-sm mt-1">{errors.almoxarifado_destino_id}</p>
+          {/if}
         </div>
       {:else}
-        <!-- Destinatário -->
-        <div>
-          <Label for="destinatario" class="mb-2">
-            Destinatário *
-          </Label>
-          <Input
-            id="destinatario"
-            type="text"
-            placeholder="Nome do destinatário"
-            bind:value={formData.destinatario}
-            disabled={isReadonly || loading}
-            class="rounded-sm {errors.destinatario ? 'border-red-500' : ''}"
-          />
-          {#if errors.destinatario}
-            <p class="text-red-500 text-sm mt-1">{errors.destinatario}</p>
-          {/if}
-        </div>
-
-        <!-- Solicitante -->
-        <div>
-          <Label for="solicitante" class="mb-2">
-            Solicitante
-          </Label>
-          <Input
-            id="solicitante"
-            type="text"
-            placeholder="Nome do solicitante"
-            bind:value={formData.solicitante}
-            disabled={isReadonly || loading}
-            class="rounded-sm"
-          />
-        </div>
+        <!-- Espaço vazio para manter grid layout -->
+        <div></div>
       {/if}
-    </div>
 
-    <!-- Motivo -->
-    <div>
-      <Label for="motivo" class="mb-2">
-        Motivo *
-      </Label>
-      <Textarea
-        id="motivo"
-        placeholder="Descreva o motivo da movimentação..."
-        rows="2"
-        bind:value={formData.motivo}
-        disabled={isReadonly || loading}
-        class="rounded-sm {errors.motivo ? 'border-red-500' : ''}"
-      />
-      {#if errors.motivo}
-        <p class="text-red-500 text-sm mt-1">{errors.motivo}</p>
-      {/if}
+      <!-- Número do Documento -->
+      <div>
+        <Label for="numero_documento" class="mb-2">
+          Número do Documento
+        </Label>
+        <Input
+          id="numero_documento"
+          type="text"
+          placeholder="Ex: NF-12345"
+          bind:value={formData.numero_documento}
+          disabled={isReadonly || loading}
+          class="rounded-sm"
+          on:input={(e) => handleInputChange('numero_documento', e.target.value)}
+        />
+        <p class="text-sm text-gray-500 mt-1">
+          Nota fiscal, código interno, etc.
+        </p>
+      </div>
+
+      <!-- Data do Documento -->
+      <div>
+        <Label for="data_documento" class="mb-2">
+          Data do Documento *
+        </Label>
+        <Input
+          id="data_documento"
+          type="date"
+          bind:value={formData.data_documento}
+          disabled={isReadonly || loading}
+          class="rounded-sm {errors.data_documento ? 'border-red-500' : ''}"
+          on:input={(e) => handleInputChange('data_documento', e.target.value)}
+        />
+        {#if errors.data_documento}
+          <p class="text-red-500 text-sm mt-1">{errors.data_documento}</p>
+        {/if}
+      </div>
     </div>
 
     <!-- Observações -->
@@ -432,192 +320,99 @@
       </Label>
       <Textarea
         id="observacoes"
-        placeholder="Observações adicionais..."
-        rows="2"
+        placeholder="Observações sobre a nota de movimentação..."
+        rows="3"
         bind:value={formData.observacoes}
         disabled={isReadonly || loading}
         class="rounded-sm"
+        on:input={(e) => handleInputChange('observacoes', e.target.value)}
       />
     </div>
 
-    <!-- Itens -->
-    <div>
-      <div class="flex items-center justify-between mb-4">
-        <Label class="text-base font-medium">
-          Itens da Nota *
-        </Label>
-        {#if tipo === 'entrada' && formData.valorTotal}
-          <span class="text-lg font-bold text-green-600">
-            Total: {formatarValor(formData.valorTotal)}
-          </span>
-        {/if}
+    <!-- Informações do Status (apenas para visualização/edição) -->
+    {#if mode !== 'create' && nota}
+      <div class="pt-4 border-t border-gray-200 dark:border-gray-600">
+        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Informações da Nota</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          
+          <!-- Status -->
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <div class="mt-1">
+              {#if nota.status === 'RASCUNHO'}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+                  Rascunho
+                </span>
+              {:else if nota.status === 'CONCLUIDA'}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                  Concluída
+                </span>
+              {:else if nota.status === 'CANCELADA'}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                  Cancelada
+                </span>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Responsável -->
+          {#if nota.responsavel}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Responsável:</span>
+              <p class="font-medium">{nota.responsavel.nome}</p>
+            </div>
+          {/if}
+
+          <!-- Data de Criação -->
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Criado em:</span>
+            <p class="font-medium">{new Date(nota.created_at).toLocaleDateString('pt-BR')}</p>
+          </div>
+
+          <!-- Total de Itens -->
+          {#if nota.total_itens || nota.itens}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Total de itens:</span>
+              <p class="font-medium">{nota.total_itens || nota.itens?.length || 0}</p>
+            </div>
+          {/if}
+
+          <!-- Valor Total -->
+          {#if nota.valor_total}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Valor total:</span>
+              <p class="font-medium">R$ {nota.valor_total.toFixed(2)}</p>
+            </div>
+          {/if}
+
+          <!-- Almoxarifado Origem -->
+          {#if nota.almoxarifado}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Almoxarifado origem:</span>
+              <p class="font-medium">{nota.almoxarifado.nome}</p>
+            </div>
+          {/if}
+
+          <!-- Almoxarifado Destino -->
+          {#if nota.almoxarifado_destino}
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Almoxarifado destino:</span>
+              <p class="font-medium">{nota.almoxarifado_destino.nome}</p>
+            </div>
+          {/if}
+        </div>
       </div>
+    {/if}
 
-      {#if errors.itens}
-        <p class="text-red-500 text-sm mb-2">{errors.itens}</p>
-      {/if}
-
-      <!-- Adicionar/Editar Item -->
-      {#if !isReadonly}
-        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
-          <h4 class="text-sm font-medium mb-3">
-            {isEditingItem ? 'Editar Item' : 'Adicionar Item'}
-          </h4>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Tipo EPI -->
-            <div>
-              <Label for="tipoEPI" class="mb-1 text-sm">
-                Tipo EPI *
-              </Label>
-              <Input
-                id="tipoEPI"
-                type="text"
-                placeholder="ID do tipo EPI"
-                bind:value={currentItem.tipoEPIId}
-                disabled={loading}
-                class="rounded-sm text-sm"
-              />
-            </div>
-
-            <!-- Quantidade -->
-            <div>
-              <Label for="quantidade" class="mb-1 text-sm">
-                Quantidade *
-              </Label>
-              <Input
-                id="quantidade"
-                type="number"
-                min="1"
-                bind:value={currentItem.quantidade}
-                disabled={loading}
-                class="rounded-sm text-sm"
-              />
-            </div>
-
-            <!-- Custo Unitário (apenas para entrada) -->
-            {#if tipo === 'entrada'}
-              <div>
-                <Label for="custoUnitario" class="mb-1 text-sm">
-                  Custo Unitário *
-                </Label>
-                <Input
-                  id="custoUnitario"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  bind:value={currentItem.custoUnitario}
-                  disabled={loading}
-                  class="rounded-sm text-sm"
-                />
-              </div>
-
-              <!-- Total do Item -->
-              <div>
-                <Label class="mb-1 text-sm">Total</Label>
-                <div class="flex items-center h-10 px-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-sm text-sm">
-                  {formatarValor(totalItem)}
-                </div>
-              </div>
-            {:else}
-              <div></div>
-            {/if}
-          </div>
-
-          <!-- Botões do Item -->
-          <div class="flex space-x-2 mt-3">
-            <Button
-              size="xs"
-              color="primary"
-              class="rounded-sm"
-              on:click={handleAddItem}
-              disabled={!canAddItem || loading}
-            >
-              {isEditingItem ? 'Atualizar' : 'Adicionar'}
-            </Button>
-            {#if isEditingItem}
-              <Button
-                size="xs"
-                color="alternative"
-                class="rounded-sm"
-                on:click={handleCancelEdit}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-            {/if}
-          </div>
-        </div>
-      {/if}
-
-      <!-- Lista de Itens -->
-      {#if formData.itens.length > 0}
-        <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-          <Table>
-            <TableHead>
-              <TableHeadCell>Tipo EPI</TableHeadCell>
-              <TableHeadCell>Quantidade</TableHeadCell>
-              {#if tipo === 'entrada'}
-                <TableHeadCell>Custo Unit.</TableHeadCell>
-                <TableHeadCell>Total</TableHeadCell>
-              {/if}
-              {#if !isReadonly}
-                <TableHeadCell>Ações</TableHeadCell>
-              {/if}
-            </TableHead>
-            <TableBody>
-              {#each formData.itens as item, index (index)}
-                <TableBodyRow>
-                  <TableBodyCell>
-                    <span class="font-mono text-sm">{item.tipoEPIId}</span>
-                  </TableBodyCell>
-                  <TableBodyCell>
-                    <span class="text-sm">{item.quantidade}</span>
-                  </TableBodyCell>
-                  {#if tipo === 'entrada'}
-                    <TableBodyCell>
-                      <span class="text-sm">{formatarValor(item.custoUnitario)}</span>
-                    </TableBodyCell>
-                    <TableBodyCell>
-                      <span class="text-sm font-medium">{formatarValor((item.quantidade * (item.custoUnitario || 0)))}</span>
-                    </TableBodyCell>
-                  {/if}
-                  {#if !isReadonly}
-                    <TableBodyCell>
-                      <div class="flex space-x-1">
-                        <Button
-                          size="xs"
-                          color="primary"
-                          class="rounded-sm p-1"
-                          on:click={() => handleEditItem(index)}
-                          disabled={loading}
-                          title="Editar"
-                        >
-                          <PlusOutline class="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="xs"
-                          color="red"
-                          class="rounded-sm p-1"
-                          on:click={() => handleRemoveItem(index)}
-                          disabled={loading}
-                          title="Remover"
-                        >
-                          <TrashBinOutline class="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </TableBodyCell>
-                  {/if}
-                </TableBodyRow>
-              {/each}
-            </TableBody>
-          </Table>
-        </div>
-      {:else}
-        <div class="text-center py-8 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
-          Nenhum item adicionado
-        </div>
-      {/if}
-    </div>
+    <!-- Aviso sobre itens -->
+    {#if mode === 'create'}
+      <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Próximo passo</h4>
+        <p class="text-sm text-blue-700 dark:text-blue-200">
+          Após criar a nota, você poderá adicionar os itens de movimentação específicos e depois processá-la.
+        </p>
+      </div>
+    {/if}
   </form>
 
   <div slot="footer" class="flex justify-end space-x-2">

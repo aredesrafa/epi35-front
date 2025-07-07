@@ -34,9 +34,9 @@
   import { 
     ClockOutline,
     CheckCircleOutline,
-    ExclamationTriangleOutline,
+    ExclamationCircleOutline,
     UserOutline,
-    DocumentTextOutline,
+    FileDocOutline,
     ArrowLeftOutline
   } from 'flowbite-svelte-icons';
   
@@ -264,7 +264,7 @@
   <!-- Erro Global -->
   {#if error}
     <Alert color="red" dismissable on:close={() => error = ''}>
-      <ExclamationTriangleOutline slot="icon" class="w-5 h-5" />
+      <ExclamationCircleOutline slot="icon" class="w-5 h-5" />
       {error}
     </Alert>
   {/if}
@@ -383,25 +383,23 @@
                           {formatDate(process.createdAt.toISOString())}
                         </TableBodyCell>
                         <TableBodyCell>
-                          <div class="flex gap-2">
+                          <div class="flex gap-1">
                             {#if process.status === StatusDevolucao.SOLICITADA}
-                              <Button
-                                size="sm"
-                                color="green"
+                              <button
+                                class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                                 on:click={() => openApprovalModal(process)}
+                                title="Aprovar"
                               >
-                                <CheckCircleOutline class="w-4 h-4 mr-1" />
-                                Aprovar
-                              </Button>
+                                <CheckCircleOutline class="w-4 h-4 text-green-600" />
+                              </button>
                             {:else if process.status === StatusDevolucao.APROVADA}
-                              <Button
-                                size="sm"
-                                color="blue"
+                              <button
+                                class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                                 on:click={() => openFinalizationModal(process)}
+                                title="Finalizar"
                               >
-                                <DocumentTextOutline class="w-4 h-4 mr-1" />
-                                Finalizar
-                              </Button>
+                                <FileDocOutline class="w-4 h-4" />
+                              </button>
                             {/if}
                           </div>
                         </TableBodyCell>
@@ -508,7 +506,7 @@
                 Devolução pode ser processada
               </span>
             {:else}
-              <ExclamationTriangleOutline class="w-5 h-5 text-red-500" />
+              <ExclamationCircleOutline class="w-5 h-5 text-red-500" />
               <span class="text-red-700 dark:text-red-400 font-medium">
                 Devolução bloqueada por restrições
               </span>
@@ -594,12 +592,13 @@
 
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="light" on:click={() => showDevolutionModal = false}>
+      <Button color="light" class="rounded-sm" on:click={() => showDevolutionModal = false}>
         Cancelar
       </Button>
       {#if devolutionValidation?.canReturn}
         <Button 
           color="primary" 
+          class="rounded-sm"
           on:click={submitDevolution}
           disabled={!devolutionForm.motivo || !devolutionForm.condicaoEquipamento}
         >
@@ -636,10 +635,10 @@
 
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="light" on:click={() => showApprovalModal = false}>
+      <Button color="light" class="rounded-sm" on:click={() => showApprovalModal = false}>
         Cancelar
       </Button>
-      <Button color="green" on:click={submitApproval}>
+      <Button color="green" class="rounded-sm" on:click={submitApproval}>
         Aprovar Devolução
       </Button>
     </div>
@@ -679,10 +678,10 @@
 
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="light" on:click={() => showFinalizationModal = false}>
+      <Button color="light" class="rounded-sm" on:click={() => showFinalizationModal = false}>
         Cancelar
       </Button>
-      <Button color="blue" on:click={submitFinalization}>
+      <Button color="blue" class="rounded-sm" on:click={submitFinalization}>
         Finalizar Processo
       </Button>
     </div>

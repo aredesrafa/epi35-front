@@ -156,18 +156,58 @@
         />
       </div>
 
-      <!-- Informações da Assinatura Digital -->
-      <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <div class="flex items-start">
-          <Icon name="ShieldCheckOutline" className="text-blue-600 dark:text-blue-400 mt-0.5 mr-3" size="w-5 h-5" />
-          <div>
-            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
-              Assinatura Digital Segura
-            </h4>
-            <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
-              Sua assinatura será registrada de forma segura e vinculada a esta entrega. 
-              Este processo confirma o recebimento dos EPIs listados acima.
-            </p>
+      <!-- Opções de Assinatura -->
+      <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Assinatura Digital -->
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div class="flex items-start">
+            <Icon name="DeviceTabletOutline" className="text-blue-600 dark:text-blue-400 mt-0.5 mr-3" size="w-5 h-5" />
+            <div>
+              <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Assinatura Digital
+              </h4>
+              <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
+                Assine digitalmente através do link ou QR Code
+              </p>
+              <div class="mt-3 space-y-2">
+                <Button size="xs" color="primary" class="rounded-sm w-full">
+                  <Icon name="GlobeOutline" className="mr-2" size="w-3 h-3" />
+                  Abrir Link de Assinatura
+                </Button>
+                <div class="flex items-center justify-center p-3 bg-white dark:bg-gray-700 rounded border">
+                  <div class="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                    <Icon name="QrCodeOutline" className="text-gray-400" size="w-8 h-8" />
+                  </div>
+                </div>
+                <p class="text-xs text-blue-700 dark:text-blue-300 text-center">
+                  Escaneie o QR Code para assinar
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Assinatura Manual -->
+        <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+          <div class="flex items-start">
+            <Icon name="DocumentTextOutline" className="text-green-600 dark:text-green-400 mt-0.5 mr-3" size="w-5 h-5" />
+            <div>
+              <h4 class="text-sm font-medium text-green-900 dark:text-green-100">
+                Assinatura Manual
+              </h4>
+              <p class="text-sm text-green-800 dark:text-green-200 mt-1">
+                Imprima o documento para assinatura física
+              </p>
+              <div class="mt-3 space-y-2">
+                <Button size="xs" color="alternative" class="rounded-sm w-full">
+                  <Icon name="PrinterOutline" className="mr-2" size="w-3 h-3" />
+                  Imprimir Documento
+                </Button>
+                <p class="text-xs text-green-700 dark:text-green-300 text-center">
+                  Após assinatura física, confirme abaixo
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -235,8 +275,8 @@
           <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />
           Assinatura Confirmada
         {:else}
-          <Icon name="PenOutline" className="mr-2" size="w-4 h-4" />
-          Assinar Digitalmente
+          <Icon name="CheckCircleOutline" className="mr-2" size="w-4 h-4" />
+          Foi assinado
         {/if}
       </Button>
     </div>

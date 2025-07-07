@@ -10,8 +10,9 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Button, Input, Select, Label } from 'flowbite-svelte';
-  import Icon from '$lib/components/common/Icon.svelte';
+  import { Button, Input, Label } from 'flowbite-svelte';
+  import { PlusOutline, TrashBinOutline, CheckOutline, CloseOutline } from 'flowbite-svelte-icons';
+  import SearchableDropdown from '$lib/components/common/SearchableDropdown.svelte';
   import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
   import type { 
     EPIDisponivel,
@@ -21,6 +22,7 @@
   // ==================== PROPS ====================
   
   export let episDisponiveis: EPIDisponivel[] = [];
+  export let usuarios: Array<{id: string; nome: string; email: string;}> = [];
   export let loading: boolean = false;
   export let show: boolean = false;
 
@@ -34,6 +36,7 @@
   // ==================== LOCAL STATE ====================
   
   let responsavelEntrega = '';
+  let usuarioResponsavelId = '';
   let itensSelecionados: Array<{
     episDisponivelId: string;
     nomeEquipamento: string;
@@ -41,22 +44,28 @@
     quantidade: number;
   }> = [];
 
-  // Validation state
-  let errors: Record<string, string> = {};
 
   // ==================== LIFECYCLE ====================
   
   // Reset form when drawer opens
-  $: if (show) {
+  $: if (show && itensSelecionados.length === 0) {
     resetForm();
+    // Adicionar automaticamente o primeiro item para melhor UX
+    adicionarItem();
+  }
+
+  // Auto-select first user when users are loaded
+  $: if (usuarios.length > 0 && !usuarioResponsavelId) {
+    usuarioResponsavelId = usuarios[0].id;
+    responsavelEntrega = usuarios[0].nome;
   }
 
   // ==================== FORM MANAGEMENT ====================
   
   function resetForm(): void {
     responsavelEntrega = '';
+    usuarioResponsavelId = '';
     itensSelecionados = [];
-    errors = {};
   }
 
   function adicionarItem(): void {
@@ -81,10 +90,6 @@
         nomeEquipamento: epiSelecionado.nomeEquipamento,
         registroCA: epiSelecionado.registroCA
       };
-      
-      // Clear validation error for this item
-      delete errors[`item-${index}`];
-      errors = { ...errors };
     }
   }
 
@@ -93,50 +98,34 @@
       ...itensSelecionados[index],
       quantidade
     };
-    
-    // Clear validation error
-    delete errors[`quantidade-${index}`];
-    errors = { ...errors };
+  }
+
+  function atualizarUsuario(usuarioId: string): void {
+    const usuarioSelecionado = usuarios.find(user => user.id === usuarioId);
+    if (usuarioSelecionado) {
+      usuarioResponsavelId = usuarioId;
+      responsavelEntrega = usuarioSelecionado.nome;
+    }
   }
 
   // ==================== VALIDATION ====================
   
   function validateForm(): boolean {
-    const newErrors: Record<string, string> = {};
-
-    // Validate responsavel
-    if (!responsavelEntrega.trim()) {
-      newErrors.responsavel = 'Responsável é obrigatório';
-    }
-
-    // Validate items
-    if (itensSelecionados.length === 0) {
-      newErrors.items = 'Adicione pelo menos um item';
-    }
-
-    // Validate each item
-    itensSelecionados.forEach((item, index) => {
-      if (!item.episDisponivelId) {
-        newErrors[`item-${index}`] = 'Selecione um EPI';
-      }
-      if (item.quantidade < 1) {
-        newErrors[`quantidade-${index}`] = 'Quantidade deve ser maior que 0';
-      }
-    });
-
-    errors = newErrors;
-    return Object.keys(newErrors).length === 0;
+    // Validação simples: verificar se usuário está selecionado e itens estão válidos
+    return usuarioResponsavelId.trim() && 
+           itensSelecionados.length > 0 && 
+           itensSelecionados.every(item => item.episDisponivelId && item.quantidade > 0);
   }
 
   // ==================== EVENT HANDLERS ====================
   
   function handleSalvar(): void {
-    if (!validateForm()) {
-      return;
-    }
-
+    console.log('📝 NovaEntregaDrawer: Preparando dados do formulário...');
+    console.log('📋 Itens selecionados originais:', itensSelecionados);
+    
     const formData: NovaEntregaFormData = {
       responsavel: responsavelEntrega.trim(),
+      usuarioResponsavelId: usuarioResponsavelId.trim(),
       itens: itensSelecionados.map(item => ({
         episDisponivelId: item.episDisponivelId,
         nomeEquipamento: item.nomeEquipamento,
@@ -144,6 +133,27 @@
         quantidade: item.quantidade
       }))
     };
+
+    console.log('✅ FormData montado:', {
+      responsavel: formData.responsavel,
+      usuarioId: formData.usuarioResponsavelId,
+      totalItens: formData.itens.length,
+      itens: formData.itens.map((item, index) => ({
+        index: index + 1,
+        id: item.episDisponivelId,
+        nome: item.nomeEquipamento,
+        ca: item.registroCA,
+        quantidade: item.quantidade
+      }))
+    });
+
+    // ✅ VALIDAÇÃO CRÍTICA: Verificar se temos diferentes tipos de EPI
+    const tiposUnicos = new Set(formData.itens.map(item => item.episDisponivelId));
+    console.log(`🎯 Verificação de tipos únicos: ${tiposUnicos.size} tipos únicos de ${formData.itens.length} itens totais`);
+    
+    if (tiposUnicos.size < formData.itens.length) {
+      console.warn('⚠️ ALERTA: Alguns itens têm o mesmo episDisponivelId - isso pode causar problemas na expansão');
+    }
 
     dispatch('salvar', formData);
   }
@@ -156,15 +166,21 @@
   
   $: episOptions = [
     { value: '', label: 'Selecione um EPI...' },
-    ...episDisponiveis
-      .filter(epi => epi.disponivel)
-      .map(epi => ({
-        value: epi.id,
-        label: `${epi.nomeEquipamento} (CA ${epi.registroCA})${epi.quantidade ? ` - ${epi.quantidade} disponíveis` : ''}`
-      }))
+    ...episDisponiveis.map(epi => ({
+      value: epi.id,
+      label: `${epi.nomeEquipamento} (CA ${epi.registroCA}) - ${epi.quantidadeDisponivel} disponíveis`
+    }))
   ];
 
-  $: canSave = responsavelEntrega.trim() && itensSelecionados.length > 0 && !loading;
+  $: usuarioOptions = [
+    { value: '', label: 'Selecione um responsável...' },
+    ...usuarios.map(user => ({
+      value: user.id,
+      label: `${user.nome} (${user.email})`
+    }))
+  ];
+
+  $: canSave = usuarioResponsavelId.trim() && itensSelecionados.length > 0 && !loading;
 </script>
 
 {#if show}
@@ -172,36 +188,42 @@
   <div class="fixed inset-0 bg-black bg-opacity-50 z-55 transition-opacity"></div>
 
   <!-- Drawer -->
-  <div class="fixed top-0 right-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
+  <div class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
     
     <!-- Header -->
     <DrawerHeader 
-      title="Nova Entrega de EPI" 
+      title="Nova Entrega de EPI"
+      objectType="NOVA ENTREGA"
+      iconName="PlusOutline"
+      primaryAction={{
+        text: loading ? 'Salvando...' : 'Criar Entrega',
+        icon: loading ? '' : 'CheckOutline',
+        disabled: !canSave
+      }}
+      secondaryAction={{
+        text: 'Cancelar',
+        disabled: loading
+      }}
       on:close={handleCancelar}
+      on:primaryAction={handleSalvar}
+      on:secondaryAction={handleCancelar}
     />
 
     <!-- Content -->
-    <div class="flex flex-col h-full">
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+    <div class="overflow-y-auto custom-scrollbar p-6" style="height: calc(100% - 80px);">
         
         <!-- Responsável -->
         <div class="mb-6">
           <Label for="responsavel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Responsável pela Entrega *
           </Label>
-          <Input
-            id="responsavel"
-            type="text"
-            placeholder="Nome do responsável pela entrega"
-            bind:value={responsavelEntrega}
-            class="rounded-sm {errors.responsavel ? 'border-red-500' : ''}"
+          <SearchableDropdown
+            options={usuarioOptions}
+            value={usuarioResponsavelId}
+            placeholder="Selecione um responsável..."
             disabled={loading}
+            on:change={(e) => atualizarUsuario(e.detail)}
           />
-          {#if errors.responsavel}
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {errors.responsavel}
-            </p>
-          {/if}
         </div>
 
         <!-- EPIs para Entrega -->
@@ -217,16 +239,11 @@
               on:click={adicionarItem}
               disabled={loading}
             >
-              <Icon name="PlusOutline" className="mr-2" size="w-4 h-4" />
+              <PlusOutline class="w-4 h-4 mr-2" />
               Adicionar Item
             </Button>
           </div>
 
-          {#if errors.items}
-            <p class="mb-3 text-sm text-red-600 dark:text-red-400">
-              {errors.items}
-            </p>
-          {/if}
 
           <div class="space-y-4">
             {#each itensSelecionados as item, index}
@@ -242,7 +259,7 @@
                       disabled={loading}
                       title="Remover item"
                     >
-                      <Icon name="TrashBinOutline" size="w-4 h-4" />
+                      <TrashBinOutline class="w-4 h-4" />
                     </button>
                   {/if}
                 </div>
@@ -253,19 +270,13 @@
                     <Label for="epi-{index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Equipamento
                     </Label>
-                    <Select
-                      id="epi-{index}"
-                      items={episOptions}
-                      bind:value={item.episDisponivelId}
-                      on:change={(e) => atualizarEPI(index, e.target.value)}
-                      class="rounded-sm {errors[`item-${index}`] ? 'border-red-500' : ''}"
+                    <SearchableDropdown
+                      options={episOptions}
+                      value={item.episDisponivelId}
+                      placeholder="Selecione um EPI..."
                       disabled={loading}
+                      on:change={(e) => atualizarEPI(index, e.detail)}
                     />
-                    {#if errors[`item-${index}`]}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors[`item-${index}`]}
-                      </p>
-                    {/if}
                   </div>
 
                   <!-- Quantidade -->
@@ -280,14 +291,9 @@
                       max="100"
                       bind:value={item.quantidade}
                       on:input={(e) => atualizarQuantidade(index, parseInt(e.target.value) || 1)}
-                      class="rounded-sm {errors[`quantidade-${index}`] ? 'border-red-500' : ''}"
+                      class="rounded-sm"
                       disabled={loading}
                     />
-                    {#if errors[`quantidade-${index}`]}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors[`quantidade-${index}`]}
-                      </p>
-                    {/if}
                   </div>
                 </div>
 
@@ -317,7 +323,7 @@
             <!-- Add first item button if no items -->
             {#if itensSelecionados.length === 0}
               <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <Icon name="PlusOutline" className="mx-auto mb-3 text-gray-400" size="w-8 h-8" />
+                <PlusOutline class="w-8 h-8 mx-auto mb-3 text-gray-400" />
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   Nenhum item adicionado
                 </p>
@@ -335,49 +341,6 @@
           </div>
         </div>
 
-        <!-- Summary -->
-        {#if itensSelecionados.length > 0}
-          <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-              Resumo da Entrega
-            </h4>
-            <div class="text-sm text-blue-800 dark:text-blue-200">
-              <p>• Total de itens: {itensSelecionados.length}</p>
-              <p>• Quantidade total: {itensSelecionados.reduce((sum, item) => sum + item.quantidade, 0)} unidades</p>
-              <p>• Responsável: {responsavelEntrega || 'Não informado'}</p>
-            </div>
-          </div>
-        {/if}
-
-      </div>
-
-      <!-- Footer Actions -->
-      <div class="flex-shrink-0 bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-end space-x-3">
-          <Button
-            color="alternative"
-            class="rounded-sm"
-            on:click={handleCancelar}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            color="primary"
-            class="rounded-sm"
-            on:click={handleSalvar}
-            disabled={!canSave}
-          >
-            {#if loading}
-              <Icon name="SpinnerOutline" className="mr-2 animate-spin" size="w-4 h-4" />
-              Salvando...
-            {:else}
-              <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />
-              Salvar Entrega
-            {/if}
-          </Button>
-        </div>
-      </div>
     </div>
   </div>
 {/if}

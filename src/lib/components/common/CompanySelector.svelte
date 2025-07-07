@@ -3,8 +3,8 @@
   import { ChevronDownOutline, BuildingOutline } from 'flowbite-svelte-icons';
   import { companies, selectedCompanyStore, type Company } from '$lib/stores/companyStore';
   
-  // Props para integração com o header
-  export const headerType: 'admin' | 'holding' | 'contratada' | 'default' = 'default';
+  // Props para integração com o header (usado pelo Header.svelte)
+  export let headerType: 'admin' | 'holding' | 'contratada' | 'default' = 'default';
 
   // Função para selecionar empresa
   function selectCompany(company: Company) {
@@ -41,16 +41,17 @@
   
   // Função para obter classes do botão baseado no header
   function getButtonClasses() {
-    const badge = selectedCompany.badge.toLowerCase();
-    
+    const badge = selectedCompany.badge.toLowerCase(); // Use selectedCompany.badge directly
+
     if (badge === 'admin') {
-      return 'text-white hover:bg-gray-700';
+      return 'text-white hover:bg-gray-900 focus:ring-0 focus:outline-none';
     } else if (badge === 'holding') {
-      return 'text-white hover:bg-primary-800';
+      return 'text-white hover:bg-black/20 focus:ring-0 focus:outline-none';
     } else if (badge === 'contratada') {
-      return 'text-white hover:bg-primary-700';
+      return 'text-white hover:bg-primary-900 focus:ring-0 focus:outline-none';
     } else {
-      return 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700';
+      // Default case, e.g., if no badge or unknown badge
+      return 'text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-900 focus:ring-0 focus:outline-none';
     }
   }
   
@@ -78,10 +79,9 @@
 </script>
 
 <div class="relative">
-  <Button 
-    color="none" 
-    size="sm" 
-    class="rounded-sm flex items-center gap-2 px-3 py-2 w-60 border-0 {getButtonClasses()}"
+  <button 
+    type="button" 
+    class="rounded-sm flex items-center gap-2 px-3 py-2 w-60 border-0 focus:ring-0 focus:outline-none {getButtonClasses()}"
   >
     <!-- Ícone (extremo esquerdo) -->
     <BuildingOutline class="w-4 h-4 flex-shrink-0 {getIconClasses()}" />
@@ -101,7 +101,7 @@
     
     <!-- Chevron (extremo direito) -->
     <ChevronDownOutline class="w-4 h-4 flex-shrink-0 {getIconClasses()}" />
-  </Button>
+  </button>
 
   <Dropdown placement="bottom-start" class="w-72">
     <div class="p-3 border-b border-gray-200 dark:border-gray-700">

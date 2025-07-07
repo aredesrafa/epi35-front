@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/teste-unificado/+page.svelte";

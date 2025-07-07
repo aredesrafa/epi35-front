@@ -8,8 +8,7 @@
     ChartOutline,
     ArrowRightAltOutline,
     FolderOpenOutline,
-    CogOutline,
-    BuildingOutline
+    CogOutline
   } from 'flowbite-svelte-icons';
   import Header from './Header.svelte';
   import { page } from '$app/stores';
@@ -37,15 +36,13 @@
       ]
     },
     { 
-      href: '/relatorios', 
       label: 'Relatórios', 
-      icon: ChartOutline 
-    },
-    { 
-      label: 'Administração', 
-      icon: BuildingOutline,
+      icon: ChartOutline,
       dropdown: [
-        { href: '/contratadas', label: 'Contratadas' }
+        { href: '/relatorios/dashboard', label: 'Dashboard Executivo' },
+        { href: '/relatorios/descartes', label: 'Relatório de Descartes' },
+        { href: '/relatorios/saude', label: 'Saúde do Sistema' },
+        { href: '/relatorios/personalizados', label: 'Relatórios Personalizados' }
       ]
     }
   ];
@@ -108,7 +105,7 @@
             {#if item.dropdown}
               <SidebarDropdownWrapper 
                 label={item.label}
-                btnClass="flex items-center w-full p-2 text-sm text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                btnClass="flex items-center w-full p-2 text-sm text-gray-900 transition duration-75 rounded-sm group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
                 <svelte:fragment slot="icon">
                   <svelte:component this={item.icon} class="w-5 h-5" />
@@ -144,7 +141,11 @@
     
     <!-- Footer -->
     <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
-      <a href="/configuracoes" class="flex items-center p-2 text-sm text-gray-900 hover:text-gray-700 rounded-lg hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+      <a 
+        href="/configuracoes" 
+        class="flex items-center p-2 text-sm rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-75 {currentPath === '/configuracoes' ? 'text-primary-600 dark:text-primary-400 bg-gray-100 dark:bg-gray-700' : 'text-gray-900 dark:text-white'}"
+        on:click={handleSidebarLinkClick}
+      >
         <CogOutline class="w-5 h-5 mr-3" />
         <span>Configurações</span>
       </a>

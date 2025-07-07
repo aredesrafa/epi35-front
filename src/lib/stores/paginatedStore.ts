@@ -179,8 +179,15 @@ export function createPaginatedStore<T>(
     
     try {
       const response = await fetchWithCache(currentParams);
+      console.log('🏪 PaginatedStore received response:', {
+        dataLength: response.data?.length || 0,
+        total: response.total,
+        page: response.page,
+        pageSize: response.pageSize,
+        totalPages: response.totalPages
+      });
       
-      set({
+      const newState = {
         items: response.data,
         total: response.total,
         page: response.page,
@@ -189,7 +196,15 @@ export function createPaginatedStore<T>(
         loading: false,
         error: null,
         lastFetch: Date.now()
+      };
+      
+      console.log('🏪 Setting new store state:', {
+        itemsLength: newState.items?.length || 0,
+        total: newState.total,
+        loading: newState.loading
       });
+      
+      set(newState);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';

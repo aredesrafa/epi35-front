@@ -17,9 +17,9 @@
     CheckCircleOutline,
     UsersOutline,
     ChartOutline,
-    DocumentOutline,
-    ExclamationTriangleOutline,
-    InformationCircleOutline
+    FileDocOutline,
+    ExclamationCircleOutline,
+    InfoCircleOutline
   } from 'flowbite-svelte-icons';
 
   // Props
@@ -36,9 +36,9 @@
     'check-circle': CheckCircleOutline,
     'users': UsersOutline,
     'chart': ChartOutline,
-    'document': DocumentOutline,
-    'warning': ExclamationTriangleOutline,
-    'info': InformationCircleOutline
+    'document': FileDocOutline,
+    'warning': ExclamationCircleOutline,
+    'info': InfoCircleOutline
   };
 
   // Color mapping

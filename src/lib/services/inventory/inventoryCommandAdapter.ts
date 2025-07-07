@@ -29,103 +29,140 @@ class InventoryCommandAdapter {
   
   /**
    * Busca itens de estoque com paginação e filtros
-   * TEMPORÁRIO: Usa dados mockados até integração com backend
+   * ✅ CONECTADO AO BACKEND REAL: /api/estoque/itens
+   * ⚠️ SEM FALLBACK: Sempre dados reais ou erro
    */
   async getInventoryItems(params: InventoryParams = {}): Promise<PaginatedItemEstoque> {
     try {
       console.log('📋 getInventoryItems chamado com params:', params);
       
-      // Usar dados mockados locais para evitar dependência da API
-      const mockData = this.getMockInventoryData();
-      console.log('📦 Dados mockados carregados:', mockData.length, 'itens');
+      // ✅ USAR ENDPOINT REAL DO BACKEND
+      const queryParams: Record<string, any> = {
+        page: params.page || 1,
+        limit: params.limit || 20
+      };
       
-      // Aplicar filtros se necessário
-      let filteredData = mockData;
-      
+      // Mapear filtros do frontend para o backend
       if (params.search) {
-        const searchLower = params.search.toLowerCase();
-        console.log('🔍 Aplicando busca:', searchLower);
-        filteredData = filteredData.filter(item => 
-          item.tipoEPI?.nomeEquipamento?.toLowerCase().includes(searchLower) ||
-          item.tipoEPI?.numeroCA?.includes(params.search!)
-        );
-        console.log('🔍 Itens após busca:', filteredData.length);
+        // Backend não suporta busca direta, será feita no frontend
+        console.log('🔍 Busca será aplicada no frontend:', params.search);
       }
       
       if (params.status && params.status !== 'todos') {
-        console.log('🏷️ Aplicando filtro de status:', params.status);
         if (params.status === 'disponivel') {
-          filteredData = filteredData.filter(item => 
-            item.status === 'disponivel' || item.status === 'baixo_estoque'
-          );
-        } else if (params.status === 'indisponivel') {
-          filteredData = filteredData.filter(item => 
-            item.status === 'esgotado' || item.status === 'vencido'
-          );
+          queryParams.apenasDisponiveis = true;
+          queryParams.apenasComSaldo = true;
         }
-        console.log('🏷️ Itens após filtro status:', filteredData.length);
+      }
+      
+      const url = createUrlWithParams('/estoque/itens', queryParams);
+      const response = await api.get(url);
+      
+      console.log('✅ Resposta do backend /api/estoque/itens:', response);
+      console.log('🔍 Primeiro item raw do backend:', response.data.items[0]);
+      
+      if (!response?.success || !response.data?.items || !Array.isArray(response.data.items)) {
+        console.error('❌ Estrutura de resposta inválida do backend:', response);
+        throw new Error(`Backend retornou estrutura inválida: ${JSON.stringify(response)}`);
+      }
+      
+      // Extrair itens da resposta do backend
+      let backendItems = response.data.items;
+      console.log('📦 Itens originais do backend:', backendItems.length);
+      
+      // Aplicar filtros no frontend (busca e categoria)
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        console.log('🔍 Aplicando busca no frontend:', searchLower);
+        backendItems = backendItems.filter((item: any) => 
+          item.tipoEpi?.nomeEquipamento?.toLowerCase().includes(searchLower) ||
+          item.tipoEpi?.numeroCa?.includes(params.search!)
+        );
+        console.log('🔍 Itens após busca:', backendItems.length);
       }
       
       if (params.categoria && params.categoria !== 'todas') {
-        console.log('📂 Aplicando filtro de categoria:', params.categoria);
-        filteredData = filteredData.filter(item => item.tipoEPI?.categoria === params.categoria);
-        console.log('📂 Itens após filtro categoria:', filteredData.length);
+        console.log('📂 Aplicando filtro de categoria no frontend:', params.categoria);
+        backendItems = backendItems.filter((item: any) => 
+          item.tipoEpi?.categoriaEpi === params.categoria
+        );
+        console.log('📂 Itens após filtro categoria:', backendItems.length);
       }
       
-      // Paginação simples
-      const page = params.page || 1;
-      const limit = params.limit || 20;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedItems = filteredData.slice(startIndex, endIndex);
-      
-      // Converter para DTO format
-      const items: ItemEstoqueDTO[] = paginatedItems.map(item => ({
+      // Converter itens do backend para formato DTO esperado pelo frontend
+      const items: ItemEstoqueDTO[] = backendItems.map((item: any) => ({
         id: item.id,
-        tipoEPIId: item.tipoEPIId,
+        tipoEPIId: item.tipoEpiId,
         almoxarifadoId: item.almoxarifadoId,
         quantidade: item.quantidade,
-        localizacao: item.localizacao,
-        status: item.status,
-        lote: item.lote,
-        dataValidade: item.dataValidade,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        tipoEPI: item.tipoEPI ? {
-          id: item.tipoEPI.id,
-          nomeEquipamento: item.tipoEPI.nomeEquipamento,
-          numeroCA: item.tipoEPI.numeroCA,
-          categoria: item.tipoEPI.categoria || 'PROTECAO_CABECA',
-          descricao: item.tipoEPI.descricao,
-          fabricante: item.tipoEPI.fabricante,
+        localizacao: 'N/A', // Backend não retorna localização específica
+        status: this.mapStatusBackendToFrontend(item.status),
+        lote: 'N/A', // Backend não retorna lote específico
+        dataValidade: null, // Backend não retorna data validade específica
+        createdAt: item.createdAt,
+        updatedAt: item.createdAt,
+        tipoEPI: item.tipoEpi ? {
+          id: item.tipoEpi.id,
+          nomeEquipamento: item.tipoEpi.nomeEquipamento,
+          numeroCA: item.tipoEpi.numeroCa,
+          categoria: item.tipoEpi.categoriaEpi,
+          descricao: item.tipoEpi.descricao,
+          fabricante: item.tipoEpi.fabricante || 'N/A',
+          ativo: item.tipoEpi.ativo !== false,
+          createdAt: item.createdAt,
+          updatedAt: item.createdAt
+        } : null,
+        almoxarifado: item.almoxarifado ? {
+          id: item.almoxarifado.id,
+          nome: item.almoxarifado.nome,
+          localizacao: item.almoxarifado.unidadeNegocio?.nome || 'N/A',
           ativo: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        } : undefined,
-        almoxarifado: {
-          id: item.almoxarifadoId,
-          nome: 'Almoxarifado Central',
-          localizacao: 'Setor A',
-          ativo: true,
-          unidadeNegocioId: '1',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
+          unidadeNegocioId: item.almoxarifado.unidadeNegocioId,
+          createdAt: item.almoxarifado.createdAt || item.createdAt,
+          updatedAt: item.almoxarifado.createdAt || item.createdAt
+        } : undefined
       }));
+      
+      console.log('✅ Itens convertidos do backend:', items.length);
+      console.log('📋 Primeiro item convertido:', {
+        id: items[0]?.id,
+        tipoEPI: items[0]?.tipoEPI,
+        nomeEquipamento: items[0]?.tipoEPI?.nomeEquipamento,
+        numeroCA: items[0]?.tipoEPI?.numeroCA
+      });
       
       return {
         data: items,
-        total: filteredData.length,
-        page: page,
-        pageSize: limit,
-        totalPages: Math.ceil(filteredData.length / limit)
+        total: response.data.pagination?.total || items.length,
+        page: response.data.pagination?.page || 1,
+        pageSize: response.data.pagination?.limit || 20,
+        totalPages: response.data.pagination?.totalPages || 1
       };
       
     } catch (error) {
-      console.error('❌ Erro ao buscar itens de estoque:', error);
+      console.error('❌ Erro ao buscar itens de estoque do backend:', error);
       throw error;
     }
   }
+  
+  /**
+   * Mapeia status do backend para frontend
+   */
+  private mapStatusBackendToFrontend(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'DISPONIVEL':
+        return 'disponivel';
+      case 'BAIXO_ESTOQUE':
+        return 'baixo_estoque';
+      case 'ESGOTADO':
+        return 'esgotado';
+      case 'VENCIDO':
+        return 'vencido';
+      default:
+        return 'disponivel';
+    }
+  }
+  
   
   /**
    * Busca item de estoque por ID
@@ -635,19 +672,19 @@ class InventoryCommandAdapter {
   /**
    * Dados mockados de inventário para demonstração
    */
-  private getMockInventoryData(): any[] {
+  getMockInventoryData(): any[] {
     return [
       {
-        id: 'item-001',
-        tipoEPIId: 'tipo-001',
-        almoxarifadoId: 'alm-001',
+        id: '11111111-1111-1111-1111-111111111111',
+        tipoEPIId: '21111111-1111-1111-1111-111111111111', 
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 15,
         localizacao: 'A1-001',
         status: 'disponivel',
         lote: 'LOTE2024001',
         dataValidade: '2025-12-31',
         tipoEPI: {
-          id: 'tipo-001',
+          id: '21111111-1111-1111-1111-111111111111',
           nomeEquipamento: 'Capacete de Segurança',
           numeroCA: '31469',
           categoria: 'PROTECAO_CABECA',
@@ -657,16 +694,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-002',
-        tipoEPIId: 'tipo-002',
-        almoxarifadoId: 'alm-001',
+        id: '22222222-2222-2222-2222-222222222222',
+        tipoEPIId: '22222222-2222-2222-2222-222222222222',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 25,
         localizacao: 'A1-002',
         status: 'disponivel',
         lote: 'LOTE2024002',
         dataValidade: '2025-06-30',
         tipoEPI: {
-          id: 'tipo-002',
+          id: '22222222-2222-2222-2222-222222222222',
           nomeEquipamento: 'Luvas de Proteção',
           numeroCA: '15276',
           categoria: 'PROTECAO_MAOS',
@@ -676,16 +713,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-003',
-        tipoEPIId: 'tipo-003',
-        almoxarifadoId: 'alm-001',
+        id: '33333333-3333-3333-3333-333333333333',
+        tipoEPIId: '33333333-3333-3333-3333-333333333333',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 8,
         localizacao: 'A1-003',
         status: 'baixo_estoque',
         lote: 'LOTE2024003',
         dataValidade: '2025-09-15',
         tipoEPI: {
-          id: 'tipo-003',
+          id: '33333333-3333-3333-3333-333333333333',
           nomeEquipamento: 'Óculos de Proteção',
           numeroCA: '19420',
           categoria: 'PROTECAO_OLHOS',
@@ -695,16 +732,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-004',
-        tipoEPIId: 'tipo-004',
-        almoxarifadoId: 'alm-001',
+        id: '44444444-4444-4444-4444-444444444444',
+        tipoEPIId: '44444444-4444-4444-4444-444444444444',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 30,
         localizacao: 'A1-004',
         status: 'disponivel',
         lote: 'LOTE2024004',
         dataValidade: '2025-11-20',
         tipoEPI: {
-          id: 'tipo-004',
+          id: '44444444-4444-4444-4444-444444444444',
           nomeEquipamento: 'Protetor Auricular',
           numeroCA: '5674',
           categoria: 'PROTECAO_AUDITIVA',
@@ -714,16 +751,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-005',
-        tipoEPIId: 'tipo-005',
-        almoxarifadoId: 'alm-001',
+        id: '55555555-5555-5555-5555-555555555555',
+        tipoEPIId: '55555555-5555-5555-5555-555555555555',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 0,
         localizacao: 'A1-005',
         status: 'esgotado',
         lote: 'LOTE2024005',
         dataValidade: '2025-08-10',
         tipoEPI: {
-          id: 'tipo-005',
+          id: '55555555-5555-5555-5555-555555555555',
           nomeEquipamento: 'Cinto de Segurança',
           numeroCA: '18392',
           categoria: 'PROTECAO_QUEDAS',
@@ -733,16 +770,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-006',
-        tipoEPIId: 'tipo-006',
-        almoxarifadoId: 'alm-001',
+        id: '66666666-6666-6666-6666-666666666666',
+        tipoEPIId: '66666666-6666-6666-6666-666666666666',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 20,
         localizacao: 'A1-006',
         status: 'disponivel',
         lote: 'LOTE2024006',
         dataValidade: '2025-07-25',
         tipoEPI: {
-          id: 'tipo-006',
+          id: '66666666-6666-6666-6666-666666666666',
           nomeEquipamento: 'Botina de Segurança',
           numeroCA: '12845',
           categoria: 'PROTECAO_PES',
@@ -752,16 +789,16 @@ class InventoryCommandAdapter {
         }
       },
       {
-        id: 'item-007',
-        tipoEPIId: 'tipo-007',
-        almoxarifadoId: 'alm-001',
+        id: '77777777-7777-7777-7777-777777777777',
+        tipoEPIId: '77777777-7777-7777-7777-777777777777',
+        almoxarifadoId: '31111111-1111-1111-1111-111111111111',
         quantidade: 50,
         localizacao: 'A1-007',
         status: 'disponivel',
         lote: 'LOTE2024007',
         dataValidade: '2025-03-30',
         tipoEPI: {
-          id: 'tipo-007',
+          id: '77777777-7777-7777-7777-777777777777',
           nomeEquipamento: 'Máscara PFF2',
           numeroCA: '42987',
           categoria: 'PROTECAO_RESPIRATORIA',

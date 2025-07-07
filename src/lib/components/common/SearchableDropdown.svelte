@@ -8,7 +8,7 @@
   export let placeholder: string = 'Selecione uma opção';
   export let searchPlaceholder: string = 'Buscar...';
   export let disabled: boolean = false;
-  export const size: 'sm' | 'md' | 'lg' = 'sm';
+  // Note: size prop removida - não é válida para este componente customizado
   export let color: 'light' | 'dark' | 'red' | 'blue' | 'green' | 'yellow' | 'none' | 'purple' | 'primary' | 'alternative' = 'alternative';
   export let noOptionsText: string = 'Nenhuma opção encontrada';
   export let allowClear: boolean = false;

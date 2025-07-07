@@ -38,15 +38,13 @@
   import { 
     CheckCircleOutline,
     ClockOutline,
-    XCircleOutline,
-    ExclamationTriangleOutline,
-    DocumentTextOutline,
+    CloseOutline,
+    ExclamationCircleOutline,
+    FileDocOutline,
     EyeSlashOutline,
-    QuestionMarkCircleOutline,
+    InfoCircleOutline,
     UserOutline,
-    ArchiveBoxOutline,
-    ShieldCheckOutline,
-    ShieldExclamationOutline
+    FolderOutline
   } from 'flowbite-svelte-icons';
   
   // ==================== PROPS ====================
@@ -98,7 +96,7 @@
       [StatusEntrega.CANCELADA]: {
         color: 'red',
         label: 'Cancelada',
-        icon: XCircleOutline
+        icon: CloseOutline
       }
     },
     entrega_item: {
@@ -110,14 +108,14 @@
       [StatusEntregaItem.DEVOLVIDO]: {
         color: 'gray',
         label: 'Devolvido',
-        icon: ArchiveBoxOutline
+        icon: FolderOutline
       }
     },
     nota: {
       [StatusNota.RASCUNHO]: {
         color: 'gray',
         label: 'Rascunho',
-        icon: DocumentTextOutline
+        icon: FileDocOutline
       },
       [StatusNota.CONCLUIDA]: {
         color: 'green',
@@ -127,7 +125,7 @@
       [StatusNota.CANCELADA]: {
         color: 'red',
         label: 'Cancelada',
-        icon: XCircleOutline
+        icon: CloseOutline
       }
     },
     estoque_item: {
@@ -144,19 +142,19 @@
       [StatusEstoqueItem.QUARENTENA]: {
         color: 'orange',
         label: 'Em Quarentena',
-        icon: ExclamationTriangleOutline
+        icon: ExclamationCircleOutline
       }
     },
     tipo_epi: {
       [StatusTipoEPI.ATIVO]: {
         color: 'green',
         label: 'Ativo',
-        icon: ShieldCheckOutline
+        icon: CheckCircleOutline
       },
       [StatusTipoEPI.DESCONTINUADO]: {
         color: 'red',
         label: 'Descontinuado',
-        icon: ShieldExclamationOutline
+        icon: ExclamationCircleOutline
       }
     },
     contratada: {
@@ -173,7 +171,7 @@
       'SUSPENSA': {
         color: 'red',
         label: 'Suspensa',
-        icon: XCircleOutline
+        icon: CloseOutline
       }
     }
   };
@@ -182,11 +180,11 @@
   $: config = overrideColor || overrideLabel || overrideIcon ? {
     color: overrideColor || 'gray',
     label: overrideLabel || status,
-    icon: overrideIcon || QuestionMarkCircleOutline
+    icon: overrideIcon || InfoCircleOutline
   } : statusConfigs[type]?.[status] || {
     color: 'gray',
     label: status,
-    icon: QuestionMarkCircleOutline
+    icon: InfoCircleOutline
   };
   
   // Classes CSS do Flowbite Badge baseadas na variante

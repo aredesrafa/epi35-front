@@ -276,6 +276,7 @@
         <Button 
           size="sm" 
           color="light"
+          class="rounded-sm"
           on:click={() => filtersExpanded = !filtersExpanded}
         >
           <FilterOutline class="w-4 h-4 mr-2" />
@@ -493,22 +494,20 @@
                 
                 <!-- Ações -->
                 <div class="movement-actions">
-                  <Button 
-                    size="xs" 
-                    color="light"
+                  <button 
+                    class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                     on:click={() => handleMovementClick(movement)}
                   >
                     Detalhes
-                  </Button>
+                  </button>
                   
                   {#if !isEstorno(movement.tipoMovimentacao)}
-                    <Button 
-                      size="xs" 
-                      color="red"
+                    <button 
+                      class="p-2 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900"
                       on:click={() => handleEstornoClick(movement)}
                     >
                       Estornar
-                    </Button>
+                    </button>
                   {/if}
                 </div>
               </div>
@@ -528,6 +527,7 @@
             <Button 
               size="sm" 
               color="light"
+              class="rounded-sm"
               disabled={currentPage === 1}
               on:click={() => handlePageChange(currentPage - 1)}
             >
@@ -537,6 +537,7 @@
             <Button 
               size="sm" 
               color="light"
+              class="rounded-sm"
               disabled={currentPage === totalPages}
               on:click={() => handlePageChange(currentPage + 1)}
             >

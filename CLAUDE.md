@@ -1,19 +1,77 @@
 # CLAUDE.md - DataLife EPI Svelte
 
+**Agora temos uma tarefa importante (eu fiz um backup então não se preocupe), mas preciso que voce siga ininterruptamente executando todo plano @plano-refatoracao-unificado-070725.md /frontend-svelt/plano-refatoracao-unificado-070725.md até que conclua.**    
+
+
 Este arquivo fornece orientações para desenvolvimento no frontend Svelte do DataLife EPI.
+
+## ⚠️ Status do Projeto (Janeiro 2025)
+
+**Estado Atual**: Sistema funcional em transição entre arquitetura legada e moderna
+- ✅ **Base técnica sólida**: Dependências corretas, configurações adequadas
+- ⚠️ **Arquitetura híbrida**: ~30% migrado para Container/Presenter pattern
+- ⚠️ **Integração backend**: Parcialmente conectado (~60% dos endpoints)
+- ❌ **382 erros TypeScript** pendentes (principalmente Flowbite types)
 
 ## Comandos de Desenvolvimento
 
-- `npm run dev` - Inicia o servidor de desenvolvimento (geralmente porta 5177 se 5175/5176 estiverem ocupadas)
-- `npm run build` - Cria uma build de produção
+- `npm run dev` - Inicia o servidor de desenvolvimento (porta 5173)
+- `npm run build` - Cria uma build de produção (⚠️ falha devido a erros TS)
 - `npm run preview` - Inicia o servidor de preview da build de produção
-- `npm run check` - Executa verificação de tipos TypeScript
+- `npm run check` - Executa verificação de tipos TypeScript (⚠️ 382 erros)
 - `npm run format` - Formata o código com Prettier
 - `npm run lint` - Verifica formatação do código
 
-### **🧪 Testando a Nova Arquitetura Modular**
-- Acesse: `http://localhost:5177/estoque-modular` (ou a porta que aparecer no terminal)
-- Interface de demonstração completa da arquitetura Container/Presenter implementada
+### **🚨 Problemas Conhecidos**
+- **Build falha**: Erros TypeScript impedem build de produção
+- **Badge colors**: Flowbite aceita apenas enum específico, não string
+- **Service mocks**: Vários serviços ainda usam dados mockados
+
+### **🔧 Comandos de Diagnóstico**
+```bash
+# Verificar erros TypeScript
+npm run check
+# Output: Error: Found 382 errors
+
+# Tentar build (vai falhar)
+npm run build
+# Falha devido aos erros TS
+
+# Verificar backend
+curl https://epi-backend-s14g.onrender.com/api/docs
+# Status: 200 OK (Swagger funcionando)
+
+# Verificar health (não existe)
+curl https://epi-backend-s14g.onrender.com/api/health
+# Status: 404 Not Found
+```
+
+### **⚡ Correções Prioritárias**
+
+#### **1. Corrigir Badge Colors (Alto Impacto)**
+```typescript
+// ❌ Errado (causa erro TS)
+const badgeColor = status === 'active' ? 'green' : 'red';
+
+// ✅ Correto (Flowbite enum)
+const badgeColor: "green" | "red" | "yellow" | "blue" = 
+  status === 'active' ? 'green' : 'red';
+```
+
+#### **2. Migrar Mocks para Backend Real**
+```typescript
+// configurationService.ts - linha 103
+// ❌ Atual
+return MOCK_BUSINESS_CONFIG;
+
+// ✅ Deve ser
+return await apiClient.get('/configuration');
+```
+
+### **🧪 Páginas de Teste**
+- `http://localhost:5173/fichas` - Nova arquitetura Container/Presenter ✅
+- `http://localhost:5173/estoque` - Arquitetura legada ⚠️
+- `http://localhost:5173/catalogo` - Arquitetura legada ⚠️
 
 ## Visão Geral da Arquitetura
 
@@ -137,7 +195,7 @@ src/
 
 ### **📐 Container/Presenter Pattern Implementado**
 
-**Status**: ✅ **COMPLETO** - Fase 2 do plano de modularização concluída com sucesso
+**Status**: ⚠️ **EM TRANSIÇÃO** - ~30% das páginas migradas para nova arquitetura
 
 #### **🧠 Containers (Componentes "Inteligentes")**
 
@@ -241,13 +299,24 @@ Implementada página `/estoque-modular` demonstrando:
 5. **Flexibilidade**: Service adapters facilitam troca entre mock e API real
 6. **Manutenibilidade**: Lógica centralizada nos Containers
 
-### **🔄 Estado de Transição**
+### **🔄 Estado de Transição (Status Real)**
 
-**Páginas Atuais:**
-- `estoque-modular/` ✅ **Nova arquitetura** (Container/Presenter)
-- `estoque/` ⚠️ **Arquitetura legacy** (será migrada)
-- `fichas/` ⚠️ **Arquitetura legacy** (será migrada)
-- `catalogo/` ⚠️ **Arquitetura legacy** (será migrada)
+**Páginas Migradas (Nova Arquitetura):**
+- `fichas/` ✅ **Container/Presenter implementado**
+
+**Páginas em Transição (Arquitetura Legacy):**
+- `estoque/` ⚠️ **Pendente migração**
+- `catalogo/` ⚠️ **Pendente migração** 
+- `auditoria/` ⚠️ **Pendente migração**
+- `notas/` ⚠️ **Pendente migração**
+- `devolucoes/` ⚠️ **Pendente migração**
+- `configuracoes/` ⚠️ **Pendente migração**
+- `relatorios/*` ⚠️ **Pendente migração**
+
+**Componentes Implementados:**
+- ✅ 9 Containers existem (`src/lib/components/containers/`)
+- ✅ 15 Presenters existem (`src/lib/components/presenters/`)
+- ⚠️ Nem todos estão sendo utilizados nas páginas
 
 ### **🧪 Como Testar a Nova Arquitetura**
 
@@ -287,12 +356,20 @@ Implementada página `/estoque-modular` demonstrando:
 - [x] HistoryModalPresenter.svelte (modal de histórico)
 - [x] Integração completa com eventos e estado
 
-#### **✅ Testes e Demonstração**
-- [x] Página `/estoque-modular` funcionando
-- [x] Filtros corrigidos (status e categoria apenas)
-- [x] Busca por nome/CA implementada
-- [x] Modal de histórico com períodos funcionando
-- [x] Documentação atualizada
+#### **⚠️ Fase 3: Integração Backend Real (PARCIAL)**
+- [x] Backend PostgreSQL em produção (https://epi-backend-s14g.onrender.com)
+- [x] ApiClient configurado para backend real
+- [x] Service adapters criados (estrutura completa)
+- [x] Proxy vite configurado corretamente
+- [ ] **Integração incompleta**: ~60% dos services ainda usam mocks
+- [ ] **ConfigurationService**: usa MOCK_BUSINESS_CONFIG
+- [ ] **InventoryCommandAdapter**: registerMovement() ainda mockado
+
+#### **⚠️ Testes e Demonstração (STATUS REAL)**
+- [x] Página `/fichas` com nova arquitetura Container/Presenter
+- [ ] **Backend real**: Integração parcial, vários endpoints mockados
+- [ ] **Build de produção**: Falha devido a 382 erros TypeScript
+- [ ] **Documentação**: Necessita atualização para refletir status real
 
 ## Arquitetura de Stores Svelte Otimizados
 
@@ -391,10 +468,12 @@ export default {
 ### **📋 Padrões de Uso Otimizados**
 
 **Styling Standards (Flowbite Svelte v0.48.6):**
-- Todos os componentes Flowbite devem usar `size="sm"` e `class="rounded-sm"` para consistência
+- **CRÍTICO**: Todos os botões devem usar `class="rounded-sm"` (border-radius: 2px) - padrão da aplicação
+- Todos os componentes Flowbite devem usar `size="sm"` para consistência
 - Usar props `color` do Flowbite ao invés de classes CSS hardcoded
 - Badges devem usar classe `w-fit` para auto-dimensionamento
 - **NUNCA usar** interpolação dinâmica de classes (bg-{color}-100) - usar condicionais
+- **NUNCA usar** `rounded-lg` ou outros radius - apenas `rounded-sm` para botões
 
 **Padrão de Componente Otimizado:**
 ```svelte
@@ -431,6 +510,167 @@ export default {
   </Button>
 </Card>
 ```
+
+## 🎨 Padrão de Layout de Tabelas (Janeiro 2025)
+
+### **📋 Componentes Padronizados Implementados**
+
+Para garantir consistência visual em toda a aplicação, foram criados componentes padronizados baseados no design do Figma:
+
+#### **TableContainer.svelte**
+Container padrão para todas as tabelas da aplicação:
+- Container único com bordas arredondadas e sombra sutil
+- Estados integrados: loading, erro, vazio
+- Suporte a filtros via slot
+- Paginação opcional
+- Design consistente com Figma
+
+#### **TableFilters.svelte** 
+Filtros padronizados integrados no topo da tabela:
+- Campo de busca expansível com ícone
+- Filtros dropdown com largura mínima consistente
+- Checkboxes inline
+- Informações de resultado na parte inferior
+- **CRÍTICO**: Filtros integrados dentro do container da tabela, não como card separado
+
+#### **Padrão de Uso:**
+```svelte
+<script>
+  import TableContainer from '$lib/components/common/TableContainer.svelte';
+  import TableFilters from '$lib/components/common/TableFilters.svelte';
+  
+  // Configuração de filtros
+  $: filterConfig = [
+    {
+      key: 'status',
+      value: statusFilter,
+      options: statusOptions,
+      placeholder: 'Status'
+    }
+  ];
+  
+  $: checkboxConfig = [
+    {
+      key: 'onlyActive',
+      checked: onlyActive,
+      label: 'Apenas ativos'
+    }
+  ];
+</script>
+
+<TableContainer {loading} {error} isEmpty={items.length === 0}>
+  <TableFilters
+    slot="filters"
+    searchValue={searchTerm}
+    filters={filterConfig}
+    checkboxFilters={checkboxConfig}
+    resultCount={filteredItems.length}
+    totalCount={totalItems}
+    on:searchChange={handleSearchChange}
+    on:filterChange={handleFilterChange}
+    on:checkboxChange={handleCheckboxChange}
+  />
+  
+  <Table hoverable>
+    <!-- Conteúdo da tabela -->
+  </Table>
+</TableContainer>
+```
+
+### **🎯 Benefícios do Padrão**
+1. **Consistência Visual**: Todas as tabelas seguem o mesmo design do Figma
+2. **Reutilização**: Componentes podem ser usados em qualquer página
+3. **Manutenibilidade**: Mudanças no design afetam toda a aplicação
+4. **Performance**: Filtros otimizados com debounce automático
+5. **Responsividade**: Layout adaptável a diferentes tamanhos de tela
+
+## 🎨 Padrão de Border Radius (Janeiro 2025)
+
+### **📏 Border Radius Padronizado**
+
+**REGRA CRÍTICA**: Todos os botões da aplicação devem usar `rounded-sm` (border-radius: 2px).
+
+#### **✅ Padrão Correto:**
+```svelte
+<!-- Flowbite Button -->
+<Button size="sm" color="primary" class="rounded-sm">
+  Ação
+</Button>
+
+<!-- Button customizado -->
+<button class="p-2 rounded-sm hover:bg-gray-100 transition-colors">
+  <Icon class="w-4 h-4" />
+</button>
+```
+
+#### **❌ Padrões Incorretos:**
+```svelte
+<!-- NUNCA usar rounded-lg ou outros radius -->
+<Button class="rounded-lg">Botão</Button>  <!-- ❌ Errado -->
+<Button class="rounded-md">Botão</Button>  <!-- ❌ Errado -->
+<Button class="rounded">Botão</Button>     <!-- ❌ Errado -->
+```
+
+#### **🎯 Elementos Afetados:**
+- Botões primários e secundários
+- Botões de ação em tabelas
+- Botões de paginação
+- Botões de modal (cancelar, confirmar)
+- Botões de navegação
+- Botões de formulário
+
+#### **📋 Verificação:**
+Todos os botões da aplicação foram atualizados para seguir este padrão. O design agora está 100% consistente com as especificações do Figma.
+
+## 🖱️ Padrão de Linhas Clicáveis em Tabelas (Janeiro 2025)
+
+### **📋 Linhas de Tabela Interativas**
+
+**REGRA CRÍTICA**: Todas as linhas de tabela devem ser clicáveis e executar a ação principal (geralmente "ver detalhes").
+
+#### **✅ Padrão Implementado:**
+```svelte
+<TableBodyRow 
+  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+  on:click={() => handleMainAction(item)}
+>
+  <!-- conteúdo da linha -->
+  
+  <TableBodyCell>
+    <!-- Botões de ação secundária com stopPropagation -->
+    <Button 
+      on:click={(e) => { 
+        e.stopPropagation(); 
+        handleSecondaryAction(); 
+      }}
+      class="rounded-sm"
+    >
+      Ação
+    </Button>
+  </TableBodyCell>
+</TableBodyRow>
+```
+
+#### **🎯 Ações Principais por Página:**
+- **Estoque**: Clique abre modal de ajuste de quantidade
+- **Fichas**: Clique abre detalhes da ficha do colaborador
+- **Catálogo**: Clique abre detalhes do EPI
+- **Notas**: Clique abre detalhes da nota
+- **Auditoria**: Clique mostra detalhes da movimentação
+- **Contratadas**: Clique navega para página de detalhes
+
+#### **🔧 Elementos Obrigatórios:**
+1. **Classe CSS**: `cursor-pointer` para indicar interatividade
+2. **Hover states**: Mudança de cor de fundo no hover
+3. **Transições**: `transition-colors` para animação suave
+4. **Event handling**: `e.stopPropagation()` em botões de ação
+5. **Acessibilidade**: Indicação visual clara de interatividade
+
+#### **📋 Benefícios:**
+- **UX intuitiva**: Usuários podem clicar em qualquer lugar da linha
+- **Eficiência**: Acesso rápido à ação principal
+- **Consistência**: Comportamento uniforme em todas as tabelas
+- **Acessibilidade**: Área de clique maior para dispositivos touch
 
 **⚠️ Problema Conhecido - Reatividade de Tabelas:**
 ```svelte
@@ -617,26 +857,32 @@ function createThemeStore() {
 export const themeStore = createThemeStore();
 ```
 
-## Preparado para Backend PostgreSQL
+## ⚠️ Backend PostgreSQL - Integração Parcial
 
-**Conceito: Mockado mas Preparado**
-- **APIs mockadas** que simulam o backend PostgreSQL real
-- **Estrutura de dados** idêntica ao backend
-- **Endpoints simulados** prontos para substituição
-- Dados hiperrealistas para desenvolvimento
-- Sistema de cache local para performance
-- **Migração fácil** para API real
+**Status: INTEGRAÇÃO PARCIAL** - https://epi-backend-s14g.onrender.com
+- **Backend em Produção**: Sistema funcional com documentação Swagger
+- **Frontend**: ~60% dos endpoints integrados, resto ainda mockado
+- **Problemas**: 382 erros TypeScript impedem build de produção
+- **ApiClient**: Configurado corretamente, mas nem todos os services o utilizam
 
-**APIs Mockadas (simulam localhost:3000/api):**
-- `/empresas` - Gestão de empresas
-- `/colaboradores` - Gestão de colaboradores
-- `/tipos-epi` - Catálogo de EPIs
-- `/estoques` - Controle de estoques
-- `/itens-estoque` - Gestão de itens de estoque
-- `/fichas` - Fichas dos colaboradores
-- `/entregas` - Entregas com assinatura
-- `/movimentacoes` - Histórico de movimentações
-- `/notificacoes` - Notificações do sistema
+**Endpoints Verificados:**
+- ✅ `/api/docs` - Documentação Swagger funcionando
+- ❌ `/api/health` - Endpoint não existe (404)
+- ⚠️ `/api/configuration` - Implementado mas frontend usa mock
+
+**Status por Service Adapter:**
+- ✅ `apiClient.ts` - Configurado para backend real
+- ⚠️ `configurationService.ts` - Usa MOCK_BUSINESS_CONFIG (linha 103)
+- ⚠️ `inventoryCommandAdapter.ts` - getInventoryItems() real, registerMovement() mock
+- ✅ Proxy Vite configurado corretamente
+
+**Documentação API**: https://epi-backend-s14g.onrender.com/api/docs
+
+### **🚨 Ações Necessárias**
+1. **Corrigir 382 erros TypeScript** (principalmente Badge colors)
+2. **Migrar services mockados** para APIs reais
+3. **Completar integração** do ConfigurationService
+4. **Testar endpoints** em ambiente de produção
 
 ## Otimizações de Performance Implementadas
 
@@ -776,40 +1022,38 @@ export function trackPerformance(name: string, fn: () => void) {
 
 O projeto agora representa o **estado da arte** em desenvolvimento Svelte 4, com **100% de feature parity** com a versão React original, mas com performance significativamente superior e melhor experiência de desenvolvimento. 🚀
 
-## 🔄 Estado Atual: Arquitetura Modular Implementada (Janeiro 2025)
+## ⚠️ Estado Atual: Sistema em Transição (Janeiro 2025)
 
-### **📊 Status: Frontend 92/100 → Arquitetura Modular COMPLETA ✅**
+### **📊 Status: Frontend Funcional → INTEGRAÇÃO BACKEND PARCIAL ⚠️**
 
 **Situação Atual:**
-Sistema frontend Svelte completamente funcional com **arquitetura modular implementada** e pronto para integração com backend PostgreSQL sem necessidade de refatoração.
+Sistema frontend Svelte **funcional mas em transição**, com base técnica sólida porém integração backend incompleta e arquitetura híbrida (legada + moderna).
 
-### **🎯 Implementação da Modularização: 95% COMPLETA**
+### **🎯 Status Real da Implementação**
 
-#### **✅ FASE 0: Configuração Dinâmica de Negócio (COMPLETA)**
-- ✅ ConfigurationService para ENUMs dinâmicos implementado
-- ✅ businessConfigStore para configurações globais funcionando
-- ✅ Endpoint `/api/v1/configuration` preparado (mockado, pronto para backend real)
-- ✅ Store global para configurações integrado
+#### **⚠️ FASE 0: Configuração Dinâmica de Negócio (PARCIAL)**
+- ✅ ConfigurationService criado com estrutura correta
+- ⚠️ businessConfigStore usa MOCK_BUSINESS_CONFIG (linha 103)
+- ❌ Endpoint `/api/configuration` não utilizado pelo frontend
+- ✅ Store global para configurações implementado
 
-#### **✅ FASE 1: Service Adapters Especializados (COMPLETA)**
-- ✅ **EntityManagementAdapter**: Gestão hierárquica (CONTRATADAS → COLABORADORES → FICHAS_EPI)
-- ✅ **InventoryCommandAdapter**: Event Sourcing para estoque com commands/queries separados
-- ✅ **ProcessLifecycleAdapter**: Workflows de assinaturas e devoluções
-- ✅ **ReportingQueryAdapter**: Queries especializadas para relatórios
-- ✅ **ApiClient Central**: Cliente HTTP com retry, timeout e tratamento de erros
-- ✅ **PaginatedStore Factory**: Paginação server-side com cache e debounce
+#### **✅ FASE 1: Service Adapters Especializados (ESTRUTURA COMPLETA)**
+- ✅ **Estrutura criada**: 13 adapters em 4 domínios especializados
+- ✅ **ApiClient Central**: Configurado para https://epi-backend-s14g.onrender.com
+- ⚠️ **Integração mista**: Alguns métodos usam backend real, outros mock
+- ✅ **PaginatedStore Factory**: Implementada corretamente
 
-#### **✅ FASE 2: Container/Presenter Pattern (COMPLETA)**
-- ✅ **InventoryContainer.svelte**: Componente "inteligente" com lógica de negócio
-- ✅ **InventoryTablePresenter.svelte**: Componente "burro" apenas para UI
-- ✅ **MovementModalPresenter.svelte**: Modal de movimentação puramente apresentacional
-- ✅ **Página demonstrativa**: `/estoque-modular` funcionando como exemplo completo
-- ✅ **Integração completa**: Container usa service adapters e stores reativos
+#### **⚠️ FASE 2: Container/Presenter Pattern (30% MIGRADO)**
+- ✅ **Componentes criados**: 9 Containers + 15 Presenters existem
+- ✅ **Página `/fichas`**: Única página 100% migrada para nova arquitetura
+- ❌ **Demais páginas**: Ainda usam arquitetura legada
+- ⚠️ **Componentes órfãos**: Containers/Presenters não utilizados
 
-#### **🔜 FASE 3: Integração Backend Real (PREPARADA)**
-- 🟡 **Aguardando backend**: Substituição de mocks por APIs reais
-- 🟡 **Migration Strategy**: Apenas trocar base URL - zero refatoração necessária
-- 🟡 **Tipos OpenAPI**: Geração automática quando backend disponível
+#### **⚠️ FASE 3: Integração Backend Real (60% COMPLETA)**
+- ✅ **Backend PostgreSQL**: Ativo com documentação Swagger
+- ⚠️ **Frontend**: Integração parcial, mix de real + mock
+- ❌ **Build de produção**: Falha devido a 382 erros TypeScript
+- ❌ **Health checks**: Endpoint não existe no backend
 
 ### **🏗️ Nova Arquitetura Implementada**
 
@@ -1071,15 +1315,72 @@ A implementação inclui logs detalhados no console:
 ✅ Movimentação registrada: mov-123
 ```
 
-### **🏆 Conquistas da Implementação**
+### **🏆 Status Real da Implementação**
 
-**Status Final:**
-- ✅ **95% da modularização implementada**
-- ✅ **Container/Presenter pattern funcionando**
-- ✅ **Service adapters especializados criados**  
-- ✅ **Backend integration ready**
-- ✅ **Zero breaking changes** na UI existente
-- ✅ **Performance mantida** ou melhorada
-- ✅ **Type safety** end-to-end
+**Conquistas Verificadas:**
+- ✅ **Base técnica sólida**: Dependências corretas, configurações adequadas
+- ✅ **Service adapters criados**: Estrutura completa com 13 adapters
+- ✅ **Container/Presenter**: Implementado na página de fichas
+- ✅ **ApiClient configurado**: Pronto para backend real
+- ⚠️ **Integração parcial**: ~60% conectado ao backend
+- ❌ **Build de produção**: Falha devido a erros TypeScript
 
-**Resultado:** Um frontend Svelte **moderno, escalável e preparado** para integração backend PostgreSQL sem necessidade de refatoração! 🎨✨🚀
+**Próximas Ações Críticas:**
+1. **Corrigir 382 erros TypeScript** (prioridade alta)
+2. **Migrar páginas restantes** para Container/Presenter
+3. **Completar integração backend** (40% restante)
+4. **Testar build de produção** após correções
+
+**Resultado:** Um frontend Svelte **bem estruturado mas que necessita finalização** para atingir o status enterprise-grade documentado.
+
+---
+
+## 🎯 Roadmap Realista (Janeiro 2025)
+
+### **⚡ Fase 1: Estabilização (1-2 semanas)**
+**Objetivo**: Sistema buildável e funcional
+1. **Corrigir 382 erros TypeScript** (2-3 dias)
+   - Badge colors: implementar tipos corretos
+   - ErrorDisplay props: padronizar interfaces  
+   - @apply CSS rules: resolver warnings
+2. **Testar build de produção** (1 dia)
+3. **Validar dev server** sem erros
+
+### **🔧 Fase 2: Integração Backend Completa (1 semana)**
+**Objetivo**: 100% conectado ao backend real
+1. **Migrar ConfigurationService** (1 dia)
+   - Remover MOCK_BUSINESS_CONFIG
+   - Conectar a `/api/configuration`
+2. **Completar InventoryCommandAdapter** (1 dia)
+   - Migrar registerMovement() para backend
+3. **Revisar todos os service adapters** (2 dias)
+   - Identificar e migrar mocks restantes
+4. **Testar endpoints em produção** (1 dia)
+
+### **🏗️ Fase 3: Arquitetura Modular Completa (2-3 semanas)**
+**Objetivo**: Todas as páginas usando Container/Presenter
+1. **Migrar páginas principais** (1.5 semanas)
+   - Estoque, Catálogo, Auditoria
+   - Notas, Devoluções
+2. **Migrar relatórios** (0.5 semana)
+   - Dashboard, Saúde, Personalizados, Descartes
+3. **Remover componentes órfãos** (2 dias)
+4. **Documentar padrões finais** (1 dia)
+
+### **📊 Métricas de Sucesso**
+| Critério | Estado Atual | Meta Fase 1 | Meta Fase 2 | Meta Fase 3 |
+|----------|--------------|-------------|-------------|-------------|
+| **Erros TS** | 382 | 0 | 0 | 0 |
+| **Build** | ❌ Falha | ✅ Sucesso | ✅ Sucesso | ✅ Sucesso |
+| **Backend** | 60% | 60% | 100% | 100% |
+| **Arquitetura** | 30% | 30% | 30% | 100% |
+| **Páginas migradas** | 1/13 | 1/13 | 1/13 | 13/13 |
+
+### **🎯 Resultado Esperado**
+Após 4-6 semanas: **Sistema enterprise-grade** com:
+- ✅ Zero erros TypeScript
+- ✅ Build de produção funcionando
+- ✅ 100% integrado com backend PostgreSQL
+- ✅ Arquitetura Container/Presenter completa
+- ✅ Performance otimizada
+- ✅ Documentação atualizada e precisa

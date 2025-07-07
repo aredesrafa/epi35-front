@@ -97,10 +97,10 @@
     </div>
     
     <div class="flex gap-2">
-      <Button size="sm" color="light" on:click={clearAll}>
+      <Button size="sm" color="light" class="rounded-sm" on:click={clearAll}>
         Limpar Tudo
       </Button>
-      <Button size="sm" color="light" on:click={selectRandomCategories}>
+      <Button size="sm" color="light" class="rounded-sm" on:click={selectRandomCategories}>
         Selecionar Aleatório (Chips)
       </Button>
     </div>

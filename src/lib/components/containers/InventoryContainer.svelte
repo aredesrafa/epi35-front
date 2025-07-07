@@ -1,15 +1,16 @@
 <!--
-  Inventory Container - Componente "Inteligente"
+  Inventory Container - Componente "Inteligente" com Enhanced Store
   
-  Este container demonstra a nova arquitetura modularizada:
-  - Usa service adapters especializados
-  - Implementa paginação server-side
-  - Gerencia estado com stores otimizados
-  - Separa lógica de negócio da apresentação
+  Responsabilidades:
+  - Gerenciar estado do estoque com arquitetura unificada
+  - Integração com enhanced store para performance otimizada
+  - Lógica de filtros e paginação com debounce automático
+  - Event handlers para movimentações de estoque
+  - Delegação de UI para presenter
 -->
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { 
     inventoryCommandAdapter, 
     entityManagementAdapter,
@@ -32,23 +33,22 @@
   
   // ==================== PROPS ====================
   
-  // Permitir configuração externa (opcional)
   export let initialPageSize: number = 20;
   export let autoRefresh: boolean = false;
-  export let refreshInterval: number = 30000; // 30 segundos
+  export let refreshInterval: number = 30000;
   
-  // ==================== STATE MANAGEMENT ====================
+  // ==================== ENHANCED STORE ====================
   
-  // Store paginado usando o service adapter
+  // Store paginado usando o service adapter para transformação correta dos dados
   const inventoryStore = createPaginatedStore(
     (params) => inventoryCommandAdapter.getInventoryItems({
       ...params,
       includeExpanded: true // Incluir dados de tipoEPI e almoxarifado
     }),
-    initialPageSize
+    { initialPageSize }
   );
   
-  // Estado local do container
+  // Estado local para modais
   let showMovementModal = false;
   let showHistoryModal = false;
   let selectedItem: ItemEstoqueDTO | null = null;
@@ -59,13 +59,6 @@
   let movimentacoes: MovimentacaoEstoqueDTO[] = [];
   let historyPeriod = '30';
   
-  // Filtros reativos - apenas status e categoria
-  let filters = {
-    status: 'todos',
-    categoria: 'todas'
-  };
-  let searchTerm = '';
-  
   // Dados auxiliares
   let tiposEPI: TipoEPIDTO[] = [];
   let almoxarifados: AlmoxarifadoDTO[] = [];
@@ -75,21 +68,14 @@
   onMount(async () => {
     console.log('🚀 InventoryContainer: Inicializando...');
     
-    // Carregar dados iniciais em paralelo
-    await Promise.all([
-      loadInventoryData(),
-      loadAuxiliaryData()
-    ]);
+    // Aguardar configurações de negócio
+    await businessConfigStore.initialize();
     
-    // Forçar aplicação de filtros iniciais (sem filtros aplicados)
-    setTimeout(() => {
-      applyFilters();
-    }, 100);
+    // Carregar dados auxiliares
+    await loadAuxiliaryData();
     
-    // Setup auto-refresh se habilitado
-    if (autoRefresh) {
-      setupAutoRefresh();
-    }
+    // Carregar dados iniciais
+    await loadInventoryData();
     
     console.log('✅ InventoryContainer: Inicializado com sucesso');
   });
@@ -128,35 +114,36 @@
     }
   }
   
-  /**
-   * Setup de auto-refresh
-   */
-  function setupAutoRefresh(): void {
-    const interval = setInterval(async () => {
-      if (!$inventoryStore.loading && !showMovementModal) {
-        console.log('🔄 Auto-refresh do inventário');
-        await inventoryStore.reload();
-      }
-    }, refreshInterval);
-    
-    // Cleanup no destroy
-    return () => clearInterval(interval);
+  // ==================== FILTER HANDLERS ====================
+  
+  // Filtros reativos
+  let filters = {
+    status: 'todos',
+    categoria: 'todas'
+  };
+  let searchTerm = '';
+
+  function handleSearchChange(value: string): void {
+    searchTerm = value;
+    applyFilters();
   }
-  
-  // ==================== REACTIVE STATEMENTS ====================
-  
-  // Aplicar filtros quando mudarem - debounce para evitar muitas requisições
-  let filterTimeout: ReturnType<typeof setTimeout>;
-  $: {
-    // Trigger quando searchTerm ou filters mudarem
-    if (searchTerm !== undefined || filters.status || filters.categoria) {
-      clearTimeout(filterTimeout);
-      filterTimeout = setTimeout(() => {
-        applyFilters();
-      }, 300);
-    }
+
+  function handleStatusFilterChange(value: string): void {
+    filters = { ...filters, status: value };
+    applyFilters();
   }
-  
+
+  function handleCategoriaFilterChange(value: string): void {
+    filters = { ...filters, categoria: value };
+    applyFilters();
+  }
+
+  function handleClearFilters(): void {
+    searchTerm = '';
+    filters = { status: 'todos', categoria: 'todas' };
+    applyFilters();
+  }
+
   /**
    * Aplica filtros de forma reativa
    */
@@ -181,13 +168,15 @@
     inventoryStore.setFilters(activeFilters);
   }
   
-  // ==================== EVENT HANDLERS ====================
+  // ==================== PAGINATION HANDLERS ====================
   
-  /**
-   * Handler para mudança de página
-   */
-  function handlePageChange(event: CustomEvent<{ page: number }>): void {
-    inventoryStore.goToPage(event.detail.page);
+  function handlePageChange(page: number): void {
+    inventoryStore.goToPage(page);
+  }
+
+  function handlePageSizeChange(pageSize: number): void {
+    // Funcionalidade complexa - pode ser implementada depois
+    console.log('Page size change solicitado:', pageSize);
   }
   
   /**
@@ -267,7 +256,7 @@
       selectedItem = null;
       
       // Recarregar dados
-      await inventoryStore.reload();
+      await loadInventoryData();
       
       notify.success(
         'Movimentação registrada', 
@@ -291,38 +280,7 @@
     console.log('❌ Movimentação cancelada');
   }
   
-  /**
-   * Handler para mudança de busca
-   */
-  function handleSearchChange(event: CustomEvent<{ value: string }>): void {
-    searchTerm = event.detail.value;
-    console.log('🔍 Busca alterada:', searchTerm);
-  }
-  
-  /**
-   * Handler para mudança de filtro
-   */
-  function handleFilterChange(event: CustomEvent<{ key: string; value: string }>): void {
-    filters = { ...filters, [event.detail.key]: event.detail.value };
-    console.log('🔧 Filtro alterado:', event.detail.key, '=', event.detail.value);
-  }
-  
-  /**
-   * Handler para limpar filtros
-   */
-  function handleClearFilters(): void {
-    // Reset filters to default values
-    filters = { status: 'todos', categoria: 'todas' };
-    searchTerm = '';
-    
-    // Clear any pending timeout to avoid race conditions
-    clearTimeout(filterTimeout);
-    
-    // Apply empty filters immediately
-    inventoryStore.setFilters({});
-    
-    console.log('🗑️ Filtros limpos - retornando ao estado inicial');
-  }
+  // Handlers duplicados removidos - usando os do enhanced store
 
   /**
    * Handler para fechar modal de histórico
@@ -356,30 +314,51 @@
   // ==================== COMPUTED PROPERTIES ====================
   
   // Opções para dropdowns baseadas em configuração dinâmica
-  $: statusOptions = $statusEstoqueOptions;
-  $: categoriaOptions = $categoriasEPIOptions;
+  $: statusOptions = [
+    { value: 'todos', label: 'Todos os Status' },
+    ...$statusEstoqueOptions
+  ];
+  
+  $: categoriaOptions = [
+    { value: 'todas', label: 'Todas as Categorias' },
+    ...$categoriasEPIOptions
+  ];
   
   // Opções de almoxarifado
   $: almoxarifadoOptions = [
     { value: '', label: 'Todos os Almoxarifados' },
     ...almoxarifados.map(alm => ({ value: alm.id, label: alm.nome }))
   ];
+
+  // Verificar se há filtros ativos
+  $: hasActiveFilters = searchTerm !== '' || 
+    filters.status !== 'todos' || 
+    filters.categoria !== 'todas';
   
-  // Verificar se configurações estão prontas
-  $: configReady = $businessConfigStore?.data !== null;
+  // ==================== PRESENTER PROPS ====================
   
-  // Estado consolidado para o presenter
-  $: containerState = {
-    items: $inventoryStore.items,
+  $: presentationData = {
+    items: $inventoryStore.items || [],
     loading: $inventoryStore.loading,
     error: $inventoryStore.error,
-    total: $inventoryStore.total,
-    page: $inventoryStore.page,
-    totalPages: $inventoryStore.totalPages,
-    searchTerm,
-    filters,
-    statusOptions,
-    categoriaOptions
+    pagination: {
+      currentPage: $inventoryStore.page,
+      totalPages: $inventoryStore.totalPages,
+      pageSize: $inventoryStore.pageSize,
+      total: $inventoryStore.total,
+      hasNext: inventoryStore.hasNext(),
+      hasPrev: inventoryStore.hasPrev()
+    },
+    filters: {
+      searchTerm,
+      statusFilter: filters.status,
+      categoriaFilter: filters.categoria,
+      hasActiveFilters
+    },
+    filterOptions: {
+      status: statusOptions,
+      categorias: categoriaOptions
+    }
   };
 </script>
 
@@ -388,49 +367,55 @@
   Todo o HTML fica no Presenter, que é "burro" e apenas recebe dados e emite eventos.
 -->
 
-{#if configReady}
-  <InventoryTablePresenter
-    {...containerState}
-    on:pageChange={handlePageChange}
-    on:itemEdit={handleItemEdit}
-    on:itemHistory={handleItemHistory}
-    on:searchChange={handleSearchChange}
-    on:filterChange={handleFilterChange}
-    on:clearFilters={handleClearFilters}
-    on:newMovement={handleNewMovement}
+<!-- Presenter com dados do store legado -->
+<InventoryTablePresenter
+  items={presentationData.items}
+  loading={presentationData.loading}
+  error={presentationData.error}
+  total={presentationData.pagination.total}
+  page={presentationData.pagination.currentPage}
+  totalPages={presentationData.pagination.totalPages}
+  searchTerm={presentationData.filters.searchTerm}
+  filters={{
+    status: presentationData.filters.statusFilter,
+    categoria: presentationData.filters.categoriaFilter
+  }}
+  categoriaOptions={presentationData.filterOptions.categorias}
+  on:searchChange={(e) => handleSearchChange(e.detail.value)}
+  on:filterChange={(e) => {
+    if (e.detail.key === 'status') {
+      handleStatusFilterChange(e.detail.value);
+    } else if (e.detail.key === 'categoria') {
+      handleCategoriaFilterChange(e.detail.value);
+    }
+  }}
+  on:clearFilters={handleClearFilters}
+  on:pageChange={(e) => handlePageChange(e.detail.page)}
+  on:itemEdit={(e) => handleItemEdit(e.detail.item)}
+  on:itemHistory={(e) => handleItemHistory(e.detail.item)}
+  on:newMovement={handleNewMovement}
+/>
+
+{#if showMovementModal}
+  <MovementModalPresenter
+    item={selectedItem}
+    {tiposEPI}
+    {almoxarifados}
+    loading={movementLoading}
+    show={showMovementModal}
+    on:save={handleMovementSave}
+    on:cancel={handleMovementCancel}
   />
+{/if}
 
-  {#if showMovementModal}
-    <MovementModalPresenter
-      item={selectedItem}
-      {tiposEPI}
-      {almoxarifados}
-      loading={movementLoading}
-      show={showMovementModal}
-      on:save={handleMovementSave}
-      on:cancel={handleMovementCancel}
-    />
-  {/if}
-
-  {#if showHistoryModal}
-    <HistoryModalPresenter
-      item={selectedItemForHistory}
-      {movimentacoes}
-      loading={historyLoading}
-      error={historyError}
-      show={showHistoryModal}
-      on:close={handleHistoryClose}
-      on:filterChange={handleHistoryPeriodChange}
-    />
-  {/if}
-{:else}
-  <!-- Loading state enquanto configurações carregam -->
-  <div class="flex items-center justify-center py-12">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
-      <p class="text-sm text-gray-600 dark:text-gray-400">
-        Carregando configurações...
-      </p>
-    </div>
-  </div>
+{#if showHistoryModal}
+  <HistoryModalPresenter
+    item={selectedItemForHistory}
+    {movimentacoes}
+    loading={historyLoading}
+    error={historyError}
+    show={showHistoryModal}
+    on:close={handleHistoryClose}
+    on:filterChange={handleHistoryPeriodChange}
+  />
 {/if}

@@ -83,9 +83,9 @@
               </span>
             </TableBodyCell>
             <TableBodyCell class="min-w-[120px]">
-              <div class="flex space-x-2">
+              <div class="flex space-x-1">
                 <button
-                  class="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   on:click={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -93,10 +93,10 @@
                   }}
                   title="Ver detalhes"
                 >
-                  <EyeOutline class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <EyeOutline class="w-5 h-5" />
                 </button>
                 <button
-                  class="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   on:click={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -104,10 +104,10 @@
                   }}
                   title="Duplicar"
                 >
-                  <ClipboardListOutline class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <ClipboardListOutline class="w-5 h-5" />
                 </button>
                 <button
-                  class="p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   on:click={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -115,7 +115,7 @@
                   }}
                   title="Excluir"
                 >
-                  <TrashBinOutline class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <TrashBinOutline class="w-5 h-5 text-red-600" />
                 </button>
               </div>
             </TableBodyCell>

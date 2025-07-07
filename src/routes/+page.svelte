@@ -17,46 +17,8 @@
   const loading = writable(true);
   const error = writable<string | null>(null);
   
-  // Derived metrics from API data
-  const metrics = derived(dashboardData, ($data) => {
-    if (!$data?.data) return [];
-    
-    const data = $data.data;
-    return [
-      {
-        title: 'Fichas Ativas',
-        value: data.fichasAtivas?.toString() || '0',
-        icon: FileDocOutline,
-        color: 'blue',
-        change: data.fichasAtivasChange || '0%',
-        changeType: 'positive'
-      },
-      {
-        title: 'EPIs Entregues',
-        value: data.episEntregues?.toString() || '0',
-        icon: CheckCircleOutline,
-        color: 'green',
-        change: data.episEntreguesChange || '0%',
-        changeType: 'positive'
-      },
-      {
-        title: 'EPIs Vencendo',
-        value: data.episVencendo?.toString() || '0',
-        icon: ExclamationCircleOutline,
-        color: 'yellow',
-        change: data.episVencendoChange || '0%',
-        changeType: 'negative'
-      },
-      {
-        title: 'Estoque Baixo',
-        value: data.estoqueBaixo?.toString() || '0',
-        icon: ArchiveOutline,
-        color: 'red',
-        change: data.estoqueBaixoChange || '0%',
-        changeType: 'positive'
-      }
-    ];
-  });
+  // Metrics data (reactive)
+  let metrics = [];
   
   // Load dashboard data from API
   async function loadDashboardData() {
@@ -66,6 +28,45 @@
       
       const response = await apiClient.getDashboardMetrics();
       dashboardData.set(response);
+      
+      // Update metrics array
+      if (response?.data) {
+        const data = response.data;
+        metrics = [
+          {
+            title: 'Fichas Ativas',
+            value: data.fichasAtivas?.toString() || '0',
+            icon: FileDocOutline,
+            color: 'blue',
+            change: data.fichasAtivasChange || '0%',
+            changeType: 'positive'
+          },
+          {
+            title: 'EPIs Entregues',
+            value: data.episEntregues?.toString() || '0',
+            icon: CheckCircleOutline,
+            color: 'green',
+            change: data.episEntreguesChange || '0%',
+            changeType: 'positive'
+          },
+          {
+            title: 'EPIs Vencendo',
+            value: data.episVencendo?.toString() || '0',
+            icon: ExclamationCircleOutline,
+            color: 'yellow',
+            change: data.episVencendoChange || '0%',
+            changeType: 'negative'
+          },
+          {
+            title: 'Estoque Baixo',
+            value: data.estoqueBaixo?.toString() || '0',
+            icon: ArchiveOutline,
+            color: 'red',
+            change: data.estoqueBaixoChange || '0%',
+            changeType: 'positive'
+          }
+        ];
+      }
       
       console.log('📊 Dashboard metrics carregadas do backend:', response);
     } catch (err) {
@@ -86,6 +87,42 @@
           estoqueBaixoChange: '+3%'
         }
       });
+      
+      // Update metrics with fallback data
+      metrics = [
+        {
+          title: 'Fichas Ativas',
+          value: '150',
+          icon: FileDocOutline,
+          color: 'blue',
+          change: '+12%',
+          changeType: 'positive'
+        },
+        {
+          title: 'EPIs Entregues',
+          value: '1245',
+          icon: CheckCircleOutline,
+          color: 'green',
+          change: '+8%',
+          changeType: 'positive'
+        },
+        {
+          title: 'EPIs Vencendo',
+          value: '23',
+          icon: ExclamationCircleOutline,
+          color: 'yellow',
+          change: '-5%',
+          changeType: 'negative'
+        },
+        {
+          title: 'Estoque Baixo',
+          value: '12',
+          icon: ArchiveOutline,
+          color: 'red',
+          change: '+3%',
+          changeType: 'positive'
+        }
+      ];
     } finally {
       loading.set(false);
     }
@@ -206,7 +243,7 @@
         </Card>
       {/each}
     {:else}
-      {#each $metrics as metric}
+      {#each metrics as metric}
         <Card size="sm" class="rounded-sm">
           <div class="flex items-center justify-between">
             <div>

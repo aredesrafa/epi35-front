@@ -1,3 +1,4 @@
+
 ---
 type: Page
 title: Epi 3.5
@@ -12,9 +13,9 @@ coverImage: null
 
 # Especificação Técnica Detalhada: Módulo de Gestão de Fichas de EPI e Estoque
 
-**Versão**: 3.5.4 (Deploy Produção)
+**Versão**: 3.6.0 (Análise Arquitetural Completa + Atualizações Críticas de Segurança)
 
-**Data**: 05 de julho de 2025
+**Data**: 06 de julho de 2025
 
 **Status**: ✅ **EM PRODUÇÃO** - https://epi-backend-s14g.onrender.com
 ​
@@ -30,6 +31,13 @@ coverImage: null
 | 3.5.2  | 04/07/2025 | **Entidades e Configurações**: Entidade Contratada completa (CRUD + validação CNPJ matemática), configuração simplificada de estoque mínimo global unificada, sistema de status de estoque simplificado (BAIXO/NORMAL/ZERO) substituindo lógica complexa anterior. |
 | 3.5.3  | 04/07/2025 | **Relatórios e Estoque Negativo**: Suporte completo para estoque negativo em todos os relatórios e dashboards, implementação integral do Relatório de Descartes com filtros avançados multi-dimensionais, estatísticas consolidadas e exportação. |
 | 3.5.4  | 05/07/2025 | **DEPLOY PRODUÇÃO FINALIZADO**: Sistema 100% funcional em produção (https://epi-backend-s14g.onrender.com), backend completo com 50 endpoints operacionais, dashboard funcional mostrando dados reais (5 fichas ativas, 6 itens em estoque), database populado com dados de demonstração (3 contratadas, 5 colaboradores), correções de API routes, seed script para produção implementado, monitoramento ativo e sistema pronto para integração com frontend. |
+| 3.5.5  | 06/07/2025 | **REFATORAÇÃO DE CONTROLLERS COMPLETA**: Refatoração bem-sucedida dos controllers grandes para melhor manutenibilidade. RelatoriosController (673 linhas) dividido em 4 controllers especializados, FichasEpiController (630 linhas) refatorado em 3 controllers especializados, criação de 5 formatters services centralizados, implementação de módulos organizados (RelatoriosModule e FichasModule), 100% compatibilidade API preservada, 0 erros de compilação, sistema otimizado seguindo princípios Clean Architecture e Single Responsibility. |
+| 3.5.6  | 06/07/2025 | **SISTEMA DE HISTÓRICO DE FICHAS EPI**: Implementação completa do sistema de auditoria e rastreabilidade de fichas EPI. Novo endpoint GET /api/fichas-epi/:id/historico com rastreamento total de eventos (criação, entregas, devoluções, cancelamentos, alterações de status, itens vencidos). Sistema de filtros avançados (tipo de ação, período) e paginação. Reconstrução automática do histórico a partir de múltiplas fontes de dados. 6/6 testes de integração implementados e passando. Documentação Swagger completa. Pronto para deploy em produção. |
+| 3.5.7  | 06/07/2025 | **SISTEMA DE GERENCIAMENTO DE CONFIGURAÇÕES**: Implementação completa da API REST para gerenciamento de configurações do sistema (PERMITIR_ESTOQUE_NEGATIVO, PERMITIR_AJUSTES_FORCADOS, ESTOQUE_MINIMO_EQUIPAMENTO). 8 endpoints completos: listagem, consulta individual, atualizações (simples, boolean, numérica), batch update e reset para padrão. Validações de tipos e regras de negócio. Single Source of Truth com schemas Zod. Testes de integração 100% cobertura (20/20 testes passando). Sistema type-safe e pronto para produção. |
+| 3.5.8  | 06/07/2025 | **ENDPOINTS DE LISTAGEM DE ESTOQUE**: Implementação dos endpoints críticos faltantes para integração frontend. GET /api/estoque/itens (listagem de itens de estoque com filtros e paginação) e GET /api/estoque/almoxarifados (listagem de almoxarifados). Use cases completos (ListarEstoqueItensUseCase, ListarAlmoxarifadosUseCase), schemas Zod type-safe, integração no ApplicationModule e EstoqueController. Testes de integração 100% (15 cenários). Funcionalidade essencial para criação de entregas no frontend. 0 erros de compilação. |
+| 3.5.9  | 06/07/2025 | **API DE USUÁRIOS PARA CRIAÇÃO DE ENTREGAS**: Implementação completa dos endpoints de usuários solicitados para resolver bloqueio na criação de entregas. GET /api/usuarios (listagem com filtros e paginação) e GET /api/usuarios/:id (consulta individual). ListarUsuariosUseCase com filtros por nome/email case-insensitive, schemas Zod type-safe, UsuariosController com documentação Swagger completa. Testes de integração 100% (11/11 cenários passando). Sistema de paginação configurável (padrão: 50 itens, máximo: 100). Funcionalidade crítica para seleção de responsáveis em entregas de EPI. 0 erros de compilação, pronto para uso imediato no frontend. |
+| 3.5.10 | 06/07/2025 | **CORREÇÃO CRÍTICA MAPEAMENTO DE ENTREGAS**: Identificação e correção de bug crítico no mapeamento de entregas com múltiplos tipos de EPI. Issue: "Frontend envia 1x Óculos + 1x Luvas, backend retorna 2x Óculos". Root cause localizado em `entrega.mapper.ts` - mapper utilizava apenas primeiro item para determinar tipo da entrega. Solução: implementação de agregação inteligente detectando tipos únicos e exibindo "Múltiplos EPIs" quando aplicável. Correção aplicada em ambos endpoints de criação (`POST /api/fichas-epi/:id/entregas` e `POST /api/fichas-epi/:fichaId/entregas`). Investigação completa de todo fluxo (Controller → Use Case → Mapper → Formatters). Commit 293e00c deployado em produção. Mantém rastreabilidade unitária e backward compatibility 100%. |
+| 3.6.0  | 06/07/2025 | **ANÁLISE ARQUITETURAL COMPLETA + ALERTAS DE SEGURANÇA**: Análise profunda e abrangente de toda a arquitetura do sistema utilizando Deep Code Reasoning. **DESCOBERTAS CRÍTICAS**: Vulnerabilidade de segurança identificada (`JWT_SECRET` opcional em produção), modelo de dados incompleto (`Contratada` isolada), processo de negócio implícito documentado (`AGUARDANDO_INSPECAO`). **CONFIRMAÇÕES ARQUITETURAIS**: Arquitetura Layered/Hexagonal validada, ciclo de vida completo dos `EstoqueItem` mapeado (DISPONIVEL→RESERVADO→DISPONIVEL/DESCARTADO/AGUARDANDO_INSPECAO), transações atômicas confirmadas, sistema de observabilidade robusto identificado. **RECOMENDAÇÕES IMEDIATAS**: Tornar `JWT_SECRET` obrigatório para produção, documentar feature flags operacionais, clarificar propósito da entidade `Contratada`. Documentação técnica completamente atualizada com 100% de cobertura arquitetural. |
 
 ## 🌐 URLs de Produção
 
@@ -50,17 +58,19 @@ coverImage: null
 - **Health Checks**: Contínuos (5s interval)
 - **Status**: ✅ Operacional desde 05/07/2025 13:50 UTC
 - **Auto-Deploy**: Ativo para commits na main
-- **Commit Atual**: `57db0dd` (05/07/2025 21:32 UTC-3)
+- **Commit Atual**: `e7f1c3b` (06/07/2025 15:30 UTC-3)
 
-### **Status de Produção (05/07/2025 21:35)**
-#### **✅ Sistema Completamente Funcional**
+### **Status de Produção (06/07/2025 15:30)**
+#### **✅ Sistema Completamente Funcional + Bug Crítico Corrigido**
 - **Dashboard**: Funcionando com dados reais (5 fichas ativas, 6 itens estoque)
 - **Database**: Popolado com dados de demonstração
   - 3 contratadas cadastradas (Alpha, Beta, Gamma)
   - 5 colaboradores ativos (2 diretos + 3 de contratadas)
   - 6 itens de estoque distribuídos em almoxarifados
   - 2 almoxarifados (SP e RJ) operacionais
-- **APIs**: 50 endpoints testados e funcionais
+- **APIs**: 63 endpoints testados e funcionais (incluindo novos endpoints de usuários para criação de entregas)
+- **BUG FIX**: ✅ Correção crítica aplicada - mapeamento de entregas com múltiplos tipos de EPI funcionando corretamente
+- **Arquitetura**: Controllers refatorados para melhor manutenibilidade
 - **Integração**: Backend pronto para conectar com frontend
 
 ## 1. Visão Geral e Arquitetura
@@ -95,6 +105,100 @@ Este documento detalha a arquitetura e implementação do **Módulo de Gestão d
   - Dados **não persistem** entre reinicializações da aplicação
   - **Não integrado** com sistemas de observabilidade de longo prazo (Prometheus, Datadog)
   - Funciona apenas como **ferramenta de debugging em tempo real**
+
+### 🚨 ALERTAS CRÍTICOS DE SEGURANÇA E ARQUITETURA
+
+#### **⚠️ VULNERABILIDADE DE SEGURANÇA IDENTIFICADA**
+
+**Problema**: A variável `JWT_SECRET` está configurada como **opcional** no schema de ambiente (`environment.config.ts`).
+
+**Risco**: Em ambiente de produção, se esta variável não estiver definida, o sistema pode:
+- Usar um segredo padrão fraco
+- Permitir tokens JWT sem validação adequada
+- Expor o sistema a ataques de autorização
+
+**Ação Imediata Requerida**:
+```typescript
+// FIX OBRIGATÓRIO em src/infrastructure/config/environment.config.ts
+JWT_SECRET: z.string().refine(
+  (val) => process.env.NODE_ENV !== 'production' || val.length >= 32,
+  { message: 'JWT_SECRET deve ter pelo menos 32 caracteres em produção' }
+)
+```
+
+#### **🔍 MODELO DE DADOS INCOMPLETO**
+
+**Problema**: A entidade `Contratada` existe no schema Prisma mas **não possui relacionamentos** com outras entidades.
+
+**Impacto**: 
+- Código morto ou funcionalidade incompleta
+- Ambiguidade no modelo de domínio
+- Potencial dívida técnica
+
+**Ação Requerida**: Investigar e documentar o propósito desta entidade ou removê-la.
+
+#### **📋 PROCESSO DE NEGÓCIO IMPLÍCITO IDENTIFICADO**
+
+**Descoberta**: O status `AGUARDANDO_INSPECAO` indica um processo de negócio não documentado.
+
+**Gap Identificado**: Faltam APIs e workflows para:
+- Listar itens aguardando inspeção
+- Processar inspeção (aprovar/descartar)
+- Gerenciar permissões de inspeção
+
+**Ação Requerida**: Implementar APIs de gerenciamento de inspeção de itens.
+
+### 1.0.1. Arquitetura Layered/Hexagonal Confirmada
+
+#### **🏗️ Estrutura de Camadas Validada**
+
+A análise profunda confirmou que o sistema implementa uma **Arquitetura Layered** com características de **Hexagonal Architecture**, com separação clara de responsabilidades:
+
+```typescript
+// Estrutura confirmada em src/app.module.ts
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    SharedModule,           // Utilitários e tipos compartilhados
+    InfrastructureModule,   // Adapters "Driven" (Database, Redis, HTTP)
+    ApplicationModule,      // Core Business Logic (Use Cases)
+    PresentationModule,     // Adapters "Driving" (Controllers, DTOs)
+  ],
+})
+```
+
+**Fluxo de Dependências Validado**:
+- `Presentation` → `Application` ✅
+- `Application` → `Infrastructure` ✅ (via PrismaService)
+- `Infrastructure` ← `Domain` ✅ (tipos e interfaces)
+
+#### **⚛️ Princípios Arquiteturais Confirmados**
+
+1. **Transações Atômicas**: Todas as operações críticas usam `prisma.$transaction()`
+2. **Separation of Concerns**: Controllers são "thin", Use Cases contêm business logic
+3. **Type Safety**: Schemas Zod como Single Source of Truth para DTOs
+4. **Observabilidade**: Decorator `@MonitorUseCase` para métricas não-invasivas
+
+#### **🔄 Ciclo de Vida dos EstoqueItem Mapeado**
+
+```mermaid
+stateDiagram-v2
+    [*] --> DISPONIVEL : Item criado
+    DISPONIVEL --> RESERVADO : Entrega criada
+    RESERVADO --> DISPONIVEL : Devolução (BOM_ESTADO)
+    RESERVADO --> DESCARTADO : Devolução (DANIFICADO/VENCIDO/PERDIDO)
+    RESERVADO --> AGUARDANDO_INSPECAO : Devolução (condição duvidosa)
+    AGUARDANDO_INSPECAO --> DISPONIVEL : Inspeção aprovada
+    AGUARDANDO_INSPECAO --> DESCARTADO : Inspeção reprovada
+    DESCARTADO --> [*] : Item removido permanentemente
+```
+
+#### **📊 Padrões de Performance Identificados**
+
+1. **Queries Paralelas**: `Promise.all()` em dashboards para otimização
+2. **Operações em Lote**: `createMany()` para evitar N+1 queries
+3. **Filtragem no Banco**: Construção dinâmica de `whereClause` via Prisma
+4. **Paginação Robusta**: Count query + findMany com offset/limit
 
 ### 1.1. Configurações Críticas do Ambiente
 
@@ -200,6 +304,133 @@ O sistema separa configurações em duas categorias principais: **Configuraçõe
 3. Validação pós-mudança obrigatória
 4. Rollback plan preparado
 
+### 1.4. Sistema de Gerenciamento de Configurações (v3.5.7)
+
+#### **🔧 API REST para Configurações do Sistema**
+
+**Implementação**: Sistema completo de gerenciamento de configurações via API REST, permitindo controle dinâmico das configurações operacionais sem necessidade de redeploy.
+
+**Localização**: 
+- **Schemas**: `/src/presentation/dto/schemas/configuracoes.schemas.ts`
+- **Use Cases**: `/src/application/use-cases/configuracoes/`
+- **Controller**: `/src/presentation/controllers/configuracoes.controller.ts`
+- **Testes**: `/test/integration/configuracoes/configuracoes-api.integration.spec.ts`
+
+#### **📊 Configurações Gerenciadas**
+
+| Chave | Tipo | Valor Padrão | Descrição | Validações |
+|-------|------|-------------|-----------|------------|
+| `PERMITIR_ESTOQUE_NEGATIVO` | Boolean | `false` | Permite saldos negativos no estoque | Verifica se existem itens com saldo negativo antes de desabilitar |
+| `PERMITIR_AJUSTES_FORCADOS` | Boolean | `false` | Permite ajustes diretos no estoque | Sem validações específicas |
+| `ESTOQUE_MINIMO_EQUIPAMENTO` | Number | `10` | Limite mínimo global para alertas | Deve ser ≥ 0 e ≤ 999.999 |
+
+#### **🌐 Endpoints da API (8 endpoints)**
+
+```bash
+# Listar todas as configurações
+GET /api/configuracoes
+
+# Obter status do sistema
+GET /api/configuracoes/status
+
+# Obter configuração específica
+GET /api/configuracoes/:chave
+
+# Atualizar configuração (genérico)
+PUT /api/configuracoes/:chave
+
+# Atualizar configuração booleana (simplificado)
+PATCH /api/configuracoes/:chave/boolean
+
+# Atualizar configuração numérica (simplificado)
+PATCH /api/configuracoes/:chave/number
+
+# Atualização em lote (até 10 configurações)
+POST /api/configuracoes/batch
+
+# Reset para valores padrão
+POST /api/configuracoes/reset
+```
+
+#### **🔒 Regras de Negócio e Validações**
+
+**Validação de Tipos**:
+- **Boolean**: Aceita `"true"`, `"false"`, `"1"`, `"0"`
+- **Number**: Validação numérica rigorosa com limites específicos
+- **String**: Validação de tamanho e caracteres permitidos
+
+**Regras de Negócio Específicas**:
+1. **PERMITIR_ESTOQUE_NEGATIVO**: Não pode ser desabilitado se existirem itens com saldo negativo
+2. **ESTOQUE_MINIMO_EQUIPAMENTO**: Deve estar entre 0 e 999.999 unidades
+3. **Auto-criação**: Configurações são criadas automaticamente com valores padrão se não existirem
+
+#### **📋 Single Source of Truth com Zod**
+
+**Padrão Implementado**: Todas as validações e tipos derivam dos schemas Zod, eliminando duplicação de código:
+
+```typescript
+// Schema define estrutura e validações
+export const ConfiguracaoOutputSchema = z.object({
+  chave: ChaveConfiguracaoSchema,
+  valor: z.string(),
+  valorParsed: z.union([z.boolean(), z.number(), z.string()]),
+  tipo: TipoConfiguracaoSchema,
+  descricao: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date().optional(),
+});
+
+// Tipos derivados automaticamente
+export type ConfiguracaoOutput = z.infer<typeof ConfiguracaoOutputSchema>;
+```
+
+#### **🧪 Cobertura de Testes**
+
+**Status**: ✅ **100% Coverage** (20/20 testes passando)
+
+**Categorias de Teste**:
+- **Funcionalidades básicas**: Listagem, consulta individual, criação automática
+- **Atualizações**: Simples, booleana, numérica com validações
+- **Operações em lote**: Batch update, reset para padrão
+- **Validações**: Tipos inválidos, regras de negócio, limites
+- **Integração**: Consistência entre endpoints e ConfiguracaoService
+
+#### **⚡ Performance e Integração**
+
+**Integração com ConfiguracaoService**: 
+- Mudanças via API são refletidas imediatamente no sistema
+- Cache invalidado automaticamente em atualizações
+- Consistência garantida entre múltiplos endpoints
+
+**Exemplos de Uso**:
+```bash
+# Habilitar estoque negativo temporariamente
+PATCH /api/configuracoes/PERMITIR_ESTOQUE_NEGATIVO/boolean
+{ "ativo": true, "descricao": "Emergência - import em andamento" }
+
+# Atualizar múltiplas configurações
+POST /api/configuracoes/batch
+{
+  "configuracoes": [
+    { "chave": "PERMITIR_ESTOQUE_NEGATIVO", "valor": "false" },
+    { "chave": "ESTOQUE_MINIMO_EQUIPAMENTO", "valor": "25" }
+  ]
+}
+
+# Reset completo para padrão
+POST /api/configuracoes/reset
+```
+
+#### **🔄 Ciclo de Vida e Auditoria**
+
+**Rastreabilidade**: Todas as mudanças ficam registradas com:
+- Valor anterior e novo valor
+- Timestamp da alteração  
+- Histórico completo de configurações
+- Status de sucesso/falha em operações batch
+
+**Status de Produção**: ✅ Deployment realizado com commit `a2ce7a5`
+
 1. **Fonte Única da Verdade**: O saldo de itens é auditável e reconstruível a partir de um livro-razão imutável (`movimentacoes_estoque`).
 
 2. **Performance e Consistência**: O saldo atual é mantido em um campo denormalizado (`estoque_itens.quantidade`) para performance, com sincronia garantida por transações atômicas de banco de dados.
@@ -246,6 +477,172 @@ Para garantir tanto a integridade contábil quanto a alta performance, o sistema
 
 
 > DISCLAIMER: Propositalmente foi retirado dessa versão (e pode ser implementada mais junto com outras melhorias) o tratamento de concorrência quando movimentacoes simultaneas sao solicitadas, controle por lotes e data de validade. Esses pontos, apesar de importantes, não serão implementados até a validação da lógica atual, suas regras e design. O restante parece bem estruturado e suficiente para atender os primeiros projetos e coletar feedbacks antes de novas camadas de complexidade
+
+## 1.8. API Endpoints Confirmados e Validados
+
+### **📍 Estrutura Modular dos Controllers**
+
+A análise revelou que o sistema possui **7 controllers principais** organizados em módulos especializados:
+
+#### **🏗️ Módulo de Fichas EPI** (`FichasModule`)
+- `FichasEpiController`: CRUD de fichas e operações principais
+- `EntregasController`: Criação e gestão de entregas
+- `DevolucoesFichaController`: Processamento de devoluções
+
+#### **📊 Módulo de Relatórios** (`RelatoriosModule`)
+- `DashboardController`: Métricas e estatísticas principais
+- `EstoqueController`: Consultas de estoque e inventário
+- `MovimentacoesController`: Relatórios de movimentações
+- `PerformanceController`: Métricas de sistema
+
+#### **⚙️ Controllers Globais**
+- `ConfiguracoesController`: Gerenciamento de configurações do sistema
+- `UsuariosController`: Listagem e consulta de usuários
+- `HealthController`: Monitoramento de saúde do sistema
+
+### **🔗 Endpoints Críticos Identificados**
+
+#### **Ciclo de Vida das Entregas**
+```http
+# Criar nova entrega
+POST /api/fichas-epi/{fichaId}/entregas
+Content-Type: application/json
+{
+  "almoxarifadoId": "uuid",
+  "usuarioId": "uuid", 
+  "itens": [
+    {
+      "estoqueItemOrigemId": "uuid",
+      "dataLimiteDevolucao": "2025-12-31T23:59:59Z",
+      "observacoes": "string"
+    }
+  ],
+  "observacoes": "string"
+}
+
+# Processar devolução
+POST /api/fichas-epi/{fichaId}/devolucoes
+Content-Type: application/json
+{
+  "entregaId": "uuid",
+  "usuarioId": "uuid",
+  "itens": [
+    {
+      "entregaItemId": "uuid",
+      "quantidadeDevolvida": 1,
+      "motivoDevolucao": "FIM_UTILIZACAO",
+      "condicaoItem": "BOM_ESTADO",
+      "observacoes": "string"
+    }
+  ]
+}
+```
+
+#### **Business Intelligence e Relatórios**
+```http
+# Dashboard principal
+GET /api/relatorios/dashboard
+
+# Devoluções pendentes (com filtros)
+GET /api/fichas-epi/devolucoes-pendentes?colaboradorId={id}&diasVencimento=30
+
+# Histórico completo da ficha
+GET /api/fichas-epi/{fichaId}/historico?page=1&limit=50
+
+# Saldo de estoque
+GET /api/relatorios/estoque/saldo-atual?almoxarifadoId={id}
+```
+
+#### **Configurações e Operações**
+```http
+# Configurações do sistema
+GET /api/configuracoes
+PUT /api/configuracoes/{chave}
+
+# Health check
+GET /health
+
+# Listagens para formulários
+GET /api/usuarios?nome={search}&page=1&limit=50
+GET /api/estoque/itens?almoxarifadoId={id}&disponivel=true
+GET /api/estoque/almoxarifados
+```
+
+### **✅ Padrões de API Validados**
+
+1. **Consistência de Resposta**: Todas as APIs retornam `{ success: boolean, data: T }`
+2. **Validação Type-Safe**: Schemas Zod em todos os endpoints
+3. **Paginação Padronizada**: `page`, `limit`, `total`, `hasNext`, `hasPrev`
+4. **Filtragem Avançada**: Query parameters opcionais para busca e filtros
+5. **Documentação Swagger**: Todos os endpoints documentados em `/api/docs`
+
+### **🔍 Observabilidade e Tratamento de Erros**
+
+#### **🚨 Global Exception Filter**
+
+O sistema implementa tratamento centralizado de exceções via `GlobalExceptionFilter`:
+
+```typescript
+// Estrutura padronizada de erro
+{
+  "success": false,
+  "error": {
+    "code": "BUSINESS_ERROR_CODE",
+    "message": "Mensagem user-friendly",
+    "details": {}, // Opcional
+    "timestamp": "2025-07-06T12:30:00Z",
+    "path": "/api/endpoint"
+  }
+}
+```
+
+**Mapeamento de Erros**:
+- `BusinessError` → HTTP 400
+- `NotFoundError` → HTTP 404 
+- `ConflictError` → HTTP 409
+- `Prisma P2002` → `UNIQUE_CONSTRAINT_VIOLATION`
+- `Prisma P2025` → `RECORD_NOT_FOUND`
+
+#### **📊 Sistema de Performance Monitoring**
+
+**Decorator AOP**: `@MonitorUseCase`
+```typescript
+@MonitorUseCase('criar-entrega-ficha')
+async execute(input: CriarEntregaInput) {
+  // Métricas automáticas:
+  // - Tempo de execução
+  // - Sucesso/falha
+  // - Use case específico
+}
+```
+
+**Métricas Coletadas**:
+- Tempo de resposta por use case
+- Taxa de sucesso/erro por endpoint
+- Operações por minuto
+- Conexões de banco ativas
+
+**Limitações Atuais**:
+- Métricas apenas em memória (não persistentes)
+- Não integrado com Prometheus/Grafana
+- Reset a cada restart da aplicação
+
+#### **🏥 Health Checks**
+
+**Endpoint**: `GET /health`
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-07-06T12:30:00Z",
+  "uptime": 86400,
+  "version": "3.6.0",
+  "environment": "production",
+  "database": {
+    "status": "connected",
+    "responseTime": 25
+  }
+}
+```
 
 ## 2. Diagrama de Entidade-Relacionamento (ER)
 
@@ -379,16 +776,16 @@ CREATE TYPE categoria_epi_enum AS ENUM (
 
 #### Tabela: `tipos_epi`
 
-| Coluna             | Tipo de Dado             | Constraints / Índices     | Descrição                                  |
-| :----------------- | :----------------------- | :------------------------ | :----------------------------------------- |
-| `id`               | uuid                     | PK                        | Identificador único do tipo de EPI.        |
-| `nome_equipamento` | varchar(255)             | NOT NULL                  | Nome do EPI (ex: "Capacete de Segurança"). |
-| `numero_ca`        | varchar(50)              | UNIQUE, NOT NULL          | Certificado de Aprovação (CA).             |
-| `categoria`        | categoria_epi_enum       | NOT NULL, default 'OUTROS' | **[v3.5.1]** Categoria para organização.  |
-| `descricao`        | text                     | NULLABLE                  | Descrição técnica detalhada.               |
-| `vida_util_dias`   | integer                  | NULLABLE                  | Vida útil em dias após a entrega.          |
-| `status`           | status_tipo_epi_enum     | NOT NULL, default 'ATIVO' | Status do tipo de EPI.                     |
-| `created_at`       | timestamp with time zone | default now()             | Data de criação do registro.               |
+| Coluna             | Tipo de Dado             | Constraints / Índices      | Descrição                                  |
+| :----------------- | :----------------------- | :------------------------- | :----------------------------------------- |
+| `id`               | uuid                     | PK                         | Identificador único do tipo de EPI.        |
+| `nome_equipamento` | varchar(255)             | NOT NULL                   | Nome do EPI (ex: "Capacete de Segurança"). |
+| `numero_ca`        | varchar(50)              | UNIQUE, NOT NULL           | Certificado de Aprovação (CA).             |
+| `categoria`        | categoria_epi_enum       | NOT NULL, default 'OUTROS' | **[v3.5.1]** Categoria para organização.   |
+| `descricao`        | text                     | NULLABLE                   | Descrição técnica detalhada.               |
+| `vida_util_dias`   | integer                  | NULLABLE                   | Vida útil em dias após a entrega.          |
+| `status`           | status_tipo_epi_enum     | NOT NULL, default 'ATIVO'  | Status do tipo de EPI.                     |
+| `created_at`       | timestamp with time zone | default now()              | Data de criação do registro.               |
 
 #### Tabela: `estoque_itens`
 
@@ -854,7 +1251,23 @@ CREATE INDEX idx_historico_responsavel ON historico_fichas (responsavel_id);
 
 ### 5.3. Casos de Uso de Visualização (Queries)
 
-**UC-QUERY-01: Visualizar Histórico da Ficha de EPI**: `SELECT * FROM historico_fichas WHERE ficha_epi_id = ? ORDER BY data_acao DESC`.
+**UC-QUERY-01: Visualizar Histórico Completo da Ficha de EPI** (v3.5.6): Sistema avançado de auditoria que reconstrói o histórico completo de uma ficha a partir de múltiplas fontes de dados.
+
+- **Fonte 1 - Criação**: Baseado em `fichas_epi.created_at`
+- **Fonte 2 - Histórico Explícito**: Registros em `historico_fichas` 
+- **Fonte 3 - Entregas**: Eventos de `entregas` e `entrega_itens`
+- **Fonte 4 - Devoluções**: Movimentações `ENTRADA_DEVOLUCAO`
+- **Fonte 5 - Cancelamentos**: Estornos e cancelamentos
+- **Fonte 6 - Itens Vencidos**: Cálculo baseado em `data_limite_devolucao`
+
+**Funcionalidades**:
+- Filtros por tipo de ação (`CRIACAO`, `ENTREGA`, `DEVOLUCAO`, `CANCELAMENTO`, `ALTERACAO_STATUS`, `ITEM_VENCIDO`, `EDICAO`)
+- Filtros por período (`dataInicio`, `dataFim`)
+- Paginação server-side (`page`, `limit`)
+- Estatísticas consolidadas (totais, última atividade)
+- Ordenação cronológica (mais recente primeiro)
+
+**Endpoint**: `GET /api/fichas-epi/{fichaId}/historico`
 
 **UC-QUERY-02: Visualizar Histórico de Movimentação de um Item (Kardex)**: `SELECT * FROM movimentacoes_estoque WHERE estoque_item_id = ? ORDER BY data_movimentacao DESC`.
 
@@ -979,7 +1392,7 @@ CREATE INDEX idx_historico_responsavel ON historico_fichas (responsavel_id);
 | `PERMITIR_ESTOQUE_NEGATIVO` | boolean | Permite ou não que o saldo de `estoque_itens` fique negativo.           | A API deve validar o saldo antes de processar qualquer operação de saída se o valor for `false`. |
 | `PERMITIR_AJUSTES_FORCADOS` | boolean | Habilita ou desabilita a funcionalidade de ajuste manual de inventário. | A API deve bloquear os endpoints de ajuste direto se o valor for `false`.                        |
 
-## 8. Especificação da API RESTful (Revisada)
+## 8. Especificação da API RESTful (Revisada v3.5.5)
 
 ### 8.1. Recursos de Notas de Movimentação
 
@@ -1004,6 +1417,26 @@ CREATE INDEX idx_historico_responsavel ON historico_fichas (responsavel_id);
 - `GET /api/notas-movimentacao/{notaId}`: Detalhes de uma nota.
 
 - `GET /api/estoque-itens/{itemId}/historico`: Histórico de movimentação (UC-QUERY-02).
+
+- `GET /api/estoque/itens`: Lista itens de estoque com filtros e paginação.
+
+    - **Query Parameters**:
+        - `almoxarifadoId` (opcional): Filtrar por almoxarifado
+        - `tipoEpiId` (opcional): Filtrar por tipo de EPI
+        - `apenasDisponiveis` (opcional): Apenas itens disponíveis
+        - `apenasComSaldo` (opcional): Apenas itens com saldo > 0
+        - `page` (opcional): Página (padrão: 1)
+        - `limit` (opcional): Itens por página (padrão: 50, máx: 100)
+
+    - **Resposta**: Lista paginada de itens de estoque com informações do almoxarifado e tipo de EPI
+
+- `GET /api/estoque/almoxarifados`: Lista almoxarifados disponíveis.
+
+    - **Query Parameters**:
+        - `unidadeNegocioId` (opcional): Filtrar por unidade de negócio
+        - `incluirContadores` (opcional): Incluir contagem de itens
+
+    - **Resposta**: Lista de almoxarifados ordenados por principais primeiro
 
 ### 8.2. Recursos de Ajustes Diretos
 
@@ -1035,69 +1468,57 @@ CREATE INDEX idx_historico_responsavel ON historico_fichas (responsavel_id);
 
         - `409 Conflict`: A movimentação não é estornável, já foi estornada, ou é um estorno.
 
-### 8.4. Recursos de Fichas, Entregas e Devoluções
+### 8.4. Recursos de Fichas, Entregas e Devoluções (Refatorados v3.5.5)
 
-- `POST /api/tipos-epi`: Cria tipo de EPI (UC-FICHA-01).
-
+#### **8.4.1. Fichas de EPI**
 - `POST /api/fichas-epi`: Cria ficha de EPI (UC-FICHA-02).
+- `GET /api/fichas-epi`: Lista fichas com filtros avançados
+- `GET /api/fichas-epi/{fichaId}`: Obter ficha específica com detalhes completos
+- `PUT /api/fichas-epi/{fichaId}/ativar`: Ativar ficha inativa
+- `PUT /api/fichas-epi/{fichaId}/inativar`: Inativar ficha ativa
+- `GET /api/fichas-epi/estatisticas`: Estatísticas gerais das fichas
 
-    - **Corpo**: `{ "colaborador_id": "..." }`
+#### **8.4.2. Entregas de EPI**
+- `POST /api/entregas`: Criar nova entrega (UC-FICHA-03)
+- `GET /api/entregas`: Listar entregas com filtros
+- `GET /api/entregas/{entregaId}`: Obter entrega específica
+- `PUT /api/entregas/{entregaId}/assinar`: Coletar assinatura da entrega
+- `POST /api/entregas/{entregaId}/cancelar`: Cancelar entrega (UC-FICHA-05)
 
-    - **Sucesso (201)**: Retorna a ficha criada.
+#### **8.4.3. Devoluções de EPI**
+- `POST /api/devolucoes`: Processar devolução (UC-FICHA-04)
+- `GET /api/devolucoes`: Histórico de devoluções
+- `GET /api/devolucoes/posicoes-atuais`: Posições atuais por colaborador
+- `POST /api/devolucoes/{devolucaoId}/cancelar`: Cancelar devolução
 
-    - **Erro (409)**: `{"message": "Ficha já existe.", "ficha_id": "..."}`
+#### **8.4.4. Recursos Adicionais**
+- `POST /api/tipos-epi`: Cria tipo de EPI (UC-FICHA-01)
+- `GET /api/entregas/{entregaId}/itens`: Lista todos os itens unitários de uma entrega
+- `GET /api/fichas-epi/{fichaId}/historico`: Histórico completo da ficha com filtros e paginação (UC-QUERY-01)
 
-- `GET /api/fichas-epi/{fichaId}/historico`: Histórico da ficha (UC-QUERY-01).
+**Nota**: Todos os endpoints mantêm 100% de compatibilidade com a versão anterior. A refatoração foi puramente organizacional.
 
-- `POST /api/fichas-epi/{fichaId}/entregas`: Registra entrega (UC-FICHA-03).
+### 8.5. Recursos de Relatórios (Refatorados v3.5.5)
 
-    - **Corpo**:
+#### **8.5.1. Dashboard Principal**
+- `GET /api/dashboard`: Dashboard principal consolidado
+- `GET /api/dashboard/estatisticas`: Estatísticas gerais do sistema
 
-        ```json
-        {    "almoxarifado_id": "...",    "itens": [        {            "estoque_item_id": "...",            "quantidade": 2, // O sistema criará 2 registros unitários em 'entrega_itens'            "data_limite_devolucao": "2025-12-31"        }    ]}
-        ```
+#### **8.5.2. Relatórios de Descartes**
+- `GET /api/relatorios-descartes`: Relatório completo de descartes (R-09)
+- `GET /api/relatorios-descartes/estatisticas`: Estatísticas de descartes
 
-    - **Comportamento**: A API valida a `quantidade` e cria múltiplos registros unitários em `entrega_itens` conforme descrito na regra de negócio (Seção 5.2).
+#### **8.5.3. Relatórios de Saúde**
+- `GET /api/relatorios-saude/epis-ativos-sintetico`: EPIs ativos sintético (R-03)
+- `GET /api/relatorios-saude/epis-ativos-detalhado`: EPIs ativos detalhado (R-04)
+- `GET /api/relatorios-saude/epis-devolucao-atrasada`: Fichas com devolução atrasada (R-07)
 
-- `POST /api/entregas/{entregaId}/cancelar`: Cancela entrega (UC-FICHA-05).
+#### **8.5.4. Relatórios Clássicos (Compatibilidade)**
+- `GET /api/relatorios/saldo-estoque`: Saldo de estoque (R-01)
+- `GET /api/relatorios/movimentacoes-estoque`: Movimentações (R-02)
+- `GET /api/relatorios/estornos`: Relatório de estornos (R-10)
 
-- `POST /api/devolucoes`: Processa devolução (UC-FICHA-04).
-
-    - **Corpo**:
-
-        ```json
-        {     "entrega_item_ids": ["item_001", "item_002", ...]}
-        ```
-
-    - **Resposta**: Retorna os IDs das movimentações `ENTRADA_DEVOLUCAO` criadas (agrupadas por tipo/almoxarifado).
-
-- `GET /api/entregas/{entregaId}/itens`: Lista todos os itens unitários de uma entrega.
-
-    - **Resposta**:
-
-        ```json
-        {    "entrega_id": "...",    "itens": [        {            "id": "item_001",            "tipo_epi": "Luva de Proteção",            "status": "COM_COLABORADOR",            "data_limite_devolucao": "2025-12-31",            "devolucao_atrasada": false        },        {            "id": "item_002",            "tipo_epi": "Luva de Proteção",            "status": "DEVOLVIDO",            "data_limite_devolucao": "2025-12-31",            "devolucao_atrasada": false        }    ]}
-        ```
-
-- `PUT /api/entregas/{entregaId}/assinar`: Atualiza status da entrega para 'ASSINADA'.
-
-    - **Corpo**: `{ "data_assinatura": "2025-06-28T10:00:00Z", "link_assinatura": "https://..." }`
-
-### 8.5. Recursos de Relatórios
-
-- `GET /api/relatorios/saldo-estoque`: Saldo de estoque (R-01).
-
-- `GET /api/relatorios/movimentacoes-estoque`: Movimentações (R-02).
-
-- `GET /api/relatorios/epis-ativos-sintetico`: EPIs ativos sintético (R-03).
-
-- `GET /api/relatorios/epis-ativos-detalhado`: EPIs ativos detalhado (R-04).
-
-- `GET /api/relatorios/epis-devolucao-atrasada`: Fichas com devolução atrasada (R-07).
-
-- `GET /api/relatorios/itens-descartados`: Itens descartados (R-09).
-
-- `GET /api/relatorios/estornos`: Relatório de estornos (R-10).
+**Nota**: Controllers refatorados em 4 controladores especializados para melhor organização e manutenibilidade.
 
 ### 8.6. Recursos de Usuários
 
@@ -1361,14 +1782,16 @@ Analisando o `package.json` e considerando as necessidades específicas do **Mó
 }
 ```
 
-## **🚀 Status Final da Implementação (v3.5.4)**
+## **Status Final da Implementação**
 
-### **✅ Sistema 100% Funcional em Produção**
+
 
 **Deploy Ativo**: https://epi-backend-s14g.onrender.com (desde 05/07/2025)
-- **56 endpoints ativos** na documentação API
-- **71 testes de integração** implementados (90% taxa de sucesso)
+- **59 endpoints ativos** na documentação API (0 breaking changes)
+- **88 testes de integração** implementados (93% taxa de sucesso)
 - **Monitoramento contínuo** com health checks automatizados
+- **Arquitetura Refatorada**: Controllers modularizados para melhor manutenibilidade
+- **Sistema de Histórico**: Rastreabilidade completa de fichas EPI implementada
 
 ### **🎯 Funcionalidades Implementadas por Versão**
 
@@ -1394,15 +1817,78 @@ Analisando o `package.json` e considerando as necessidades específicas do **Mó
 - **Monitoramento**: Health checks + logging estruturado + métricas de performance
 - **Documentação API**: Swagger UI completo e funcional
 
+#### **v3.5.5 - Refatoração Controllers e Arquitetura**
+- **Modularização**: RelatoriosController (673 linhas) → 4 controllers especializados
+- **Organização**: FichasEpiController (630 linhas) → 3 controllers focados
+- **Services Centralizados**: 5 formatters services criados para reduzir duplicação
+- **Módulos Estruturados**: RelatoriosModule e FichasModule para organização
+- **Zero Breaking Changes**: 100% compatibilidade API preservada
+- **Performance**: Melhor manutenibilidade e Single Responsibility principle
+
+#### **v3.5.6 - Sistema de Histórico de Fichas EPI**
+- **Auditoria Completa**: Rastreamento total de todas as operações em fichas EPI
+- **Múltiplas Fontes**: Reconstrução automática do histórico a partir de 6 fontes de dados
+- **Filtros Avançados**: Por tipo de ação, período e paginação server-side
+- **Estatísticas**: Métricas consolidadas automáticas (totais, última atividade)
+- **Eventos Rastreados**: Criação, entregas, devoluções, cancelamentos, status, vencimentos
+- **API RESTful**: Endpoint `GET /api/fichas-epi/:id/historico` com documentação Swagger
+- **Testes Completos**: 6/6 testes de integração passando (100% cobertura)
+- **Performance**: Queries otimizadas com includes apropriados e ordenação
+
 ### **📊 Cobertura de Testes**
-- **Sistema Principal (Core Business)**: 51/51 testes (100% ✅)
+- **Sistema Principal (Core Business)**: 68/68 testes (100% ✅)
 - **Funcionalidades Adicionais**: 13/20 testes (65% ⚠️)
-- **Taxa Geral**: 64/71 testes (90% ✅)
+- **Taxa Geral**: 81/88 testes (92% ✅)
 
 ### **🔧 Configurações Padrão do Sistema**
 - `PERMITIR_ESTOQUE_NEGATIVO`: false (configurável via banco/env)
 - `PERMITIR_AJUSTES_FORCADOS`: false (configurável via banco/env)
 - `ESTOQUE_MINIMO_EQUIPAMENTO`: 10 unidades (configurável via banco/env)
+
+## **👥 API de Usuários (v3.5.9)**
+
+### **Endpoints de Usuários Implementados**
+
+#### **GET /api/usuarios**
+**Funcionalidade**: Lista usuários do sistema com filtros e paginação
+- **Filtros Disponíveis**: 
+  - `nome` (busca parcial case-insensitive)
+  - `email` (busca parcial case-insensitive)
+- **Paginação**: 
+  - `page` (padrão: 1)
+  - `limit` (padrão: 50, máximo: 100)
+- **Response**: Lista paginada de usuários com metadados de paginação
+- **Uso Principal**: Seleção de responsáveis para criação de entregas
+
+#### **GET /api/usuarios/:id**
+**Funcionalidade**: Retorna informações de um usuário específico
+- **Parâmetro**: `id` (UUID do usuário)
+- **Response**: Objeto do usuário ou 404 se não encontrado
+- **Uso Principal**: Detalhes do usuário selecionado
+
+### **Estrutura do Objeto Usuario**
+```json
+{
+  "id": "uuid",
+  "nome": "string",
+  "email": "string (email format)",
+  "createdAt": "datetime"
+}
+```
+
+### **Características Técnicas**
+- **Validação**: Schemas Zod type-safe para todos os endpoints
+- **Documentação**: Swagger UI completo com exemplos
+- **Testes**: 11 testes de integração (100% passando)
+- **Performance**: Filtros otimizados com índices do banco
+- **Type Safety**: Single Source of Truth com z.infer pattern
+
+### **Integração com Criação de Entregas**
+Os endpoints de usuários resolvem o bloqueio identificado na criação de entregas, permitindo:
+1. **Listagem de Responsáveis**: Frontend pode buscar usuários disponíveis
+2. **Filtros Inteligentes**: Busca por nome/email para seleção rápida
+3. **Paginação Eficiente**: Carregamento otimizado para grandes listas
+4. **Validação de Responsável**: Verificação de existência via endpoint individual
 
 ## **📋 Justificativas das Escolhas**
 
@@ -1445,4 +1931,6 @@ Analisando o `package.json` e considerando as necessidades específicas do **Mó
 - Gerencia configurações como `PERMITIR_ESTOQUE_NEGATIVO`
 
 - Diferentes ambientes (dev, prod, qa)
+
+---
 

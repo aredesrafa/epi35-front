@@ -12,14 +12,16 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { fichaProcessAdapter } from '$lib/services/process/fichaProcessAdapter';
   import { notify } from '$lib/stores';
+  import { fichaDataStore } from '$lib/stores/fichaDataStore';
   import FichaDetailPresenter from '../presenters/FichaDetailPresenter.svelte';
   import type { 
     FichaDetailData,
     NovaEntregaFormData,
-    EPIDisponivel,
-    EquipamentoEmPosse,
-    HistoricoEvento
+    EPIDisponivel
   } from '$lib/services/process/fichaProcessAdapter';
+  import type {
+    EquipamentoEmPosseItem
+  } from '$lib/types/serviceTypes';
   
   // ==================== PROPS ====================
   
@@ -35,11 +37,21 @@
   
   // ==================== STATE MANAGEMENT ====================
   
-  // Estado principal dos dados
+  // Estado principal dos dados (reativo ao store)
   let fichaData: FichaDetailData | null = null;
   let episDisponiveis: EPIDisponivel[] = [];
+  let usuarios: Array<{id: string; nome: string; email: string;}> = [];
   let loading = true;
   let error: string | null = null;
+  
+  // ✅ NOVO: Reatividade ao store de fichas
+  $: if (fichaId && $fichaDataStore.has(fichaId)) {
+    const cachedData = $fichaDataStore.get(fichaId);
+    if (cachedData && fichaData !== cachedData) {
+      fichaData = cachedData;
+      console.log('🔄 Dados atualizados via store reativo:', fichaId);
+    }
+  }
   
   // Estados dos modals/drawers
   let showNovaEntregaDrawer = false;
@@ -54,7 +66,7 @@
   
   // Dados para operações
   let entregaEdicao: any = null;
-  let equipamentoDevolucao: EquipamentoEmPosse | null = null;
+  let equipamentoDevolucao: EquipamentoEmPosseItem | null = null;
   let entregaAssinatura: any = null;
   
   // Controle de cache - para evitar recarregamentos desnecessários
@@ -65,8 +77,11 @@
   onMount(() => {
     console.log('🚀 FichaDetailContainer: Inicializando...');
     
-    // Carregar EPIs disponíveis uma vez (não mudam frequentemente)
-    loadEPIsDisponiveis();
+    // Carregar dados auxiliares uma vez (não mudam frequentemente)
+    Promise.all([
+      loadEPIsDisponiveis(),
+      loadUsuarios()
+    ]);
   });
   
   // Reactive: carregar dados quando fichaId mudar
@@ -108,10 +123,26 @@
    */
   async function loadEPIsDisponiveis(): Promise<void> {
     try {
+      console.log('🚀 Iniciando carregamento de EPIs disponíveis...');
       episDisponiveis = await fichaProcessAdapter.getEPIsDisponiveis();
-      console.log('📦 EPIs disponíveis carregados:', episDisponiveis.length);
+      console.log('📦 EPIs disponíveis carregados no container:', episDisponiveis.length);
+      console.log('📋 Dados dos EPIs:', episDisponiveis);
     } catch (err) {
       console.error('❌ Erro ao carregar EPIs disponíveis:', err);
+    }
+  }
+
+  /**
+   * Carrega usuários disponíveis para responsável da entrega
+   */
+  async function loadUsuarios(): Promise<void> {
+    try {
+      console.log('👤 Iniciando carregamento de usuários...');
+      usuarios = await fichaProcessAdapter.getUsuarios();
+      console.log('👥 Usuários carregados no container:', usuarios.length);
+      console.log('📋 Dados dos usuários:', usuarios.map(u => `${u.id} - ${u.nome} (${u.email})`));
+    } catch (err) {
+      console.error('❌ Erro ao carregar usuários:', err);
     }
   }
   
@@ -141,9 +172,16 @@
   /**
    * Handler para nova entrega
    */
-  function handleNovaEntrega(): void {
-    showNovaEntregaDrawer = true;
+  async function handleNovaEntrega(): Promise<void> {
     console.log('➕ Abrindo formulário de nova entrega');
+    
+    // Garantir que EPIs estão carregados antes de abrir o drawer
+    if (episDisponiveis.length === 0) {
+      console.log('🔄 EPIs não carregados, carregando agora...');
+      await loadEPIsDisponiveis();
+    }
+    
+    showNovaEntregaDrawer = true;
   }
   
   /**
@@ -175,8 +213,44 @@
       dispatch('fichaUpdated', { fichaId });
       
     } catch (error) {
-      console.error('❌ Erro ao salvar entrega:', error);
-      notify.error('Erro ao salvar', 'Não foi possível criar a entrega');
+      console.error('❌ Erro ao salvar nova entrega:', error);
+      
+      // Melhor tratamento de erro baseado no tipo
+      let errorTitle = 'Erro ao criar entrega';
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error instanceof Error) {
+        switch (error.name) {
+          case 'EstoqueItemNotFoundError':
+            errorTitle = 'Item de estoque não encontrado';
+            errorMessage = 'Os EPIs selecionados não possuem estoque disponível no almoxarifado. Verifique se há itens em estoque antes de criar a entrega.';
+            break;
+          case 'ValidationError':
+            errorTitle = 'Dados de entrega inválidos';
+            errorMessage = 'Verifique se todos os campos obrigatórios estão preenchidos e tente novamente.';
+            break;
+          default:
+            if (error.message.includes('Cannot GET') || error.message.includes('404')) {
+              errorTitle = 'Serviço indisponível';
+              errorMessage = 'O serviço de entregas está temporariamente indisponível. Alguns endpoints do backend não estão implementados. Tente novamente mais tarde.';
+            } else if (error.message.includes('Network error') || error.message.includes('timeout')) {
+              errorTitle = 'Erro de conexão';
+              errorMessage = 'Problema de conexão com o servidor. Verifique sua internet e tente novamente.';
+            } else if (error.message.includes('Validation error')) {
+              errorTitle = 'Dados inválidos';
+              errorMessage = 'Os dados fornecidos são inválidos. Verifique os campos e tente novamente. Detalhes: ' + error.message;
+            } else {
+              errorMessage = error.message;
+            }
+            break;
+        }
+      }
+      
+      notify.error(errorTitle, errorMessage);
+      
+      // Não fechar o drawer em caso de erro para permitir correção
+      console.log('ℹ️ Drawer mantido aberto para correção dos dados');
+      
     } finally {
       entregaLoading = false;
     }
@@ -262,12 +336,11 @@
       console.log('✍️ Processando assinatura:', event.detail);
       
       // Usar service adapter para processar assinatura
-      await fichaProcessAdapter.processarAssinatura(
+      // Usar nome do colaborador da ficha como assinatura
+      const nomeColaborador = fichaData?.colaborador?.nome || 'Colaborador';
+      await fichaProcessAdapter.confirmarAssinatura(
         entregaAssinatura.id, 
-        {
-          entregaId: entregaAssinatura.id,
-          assinatura: event.detail.assinatura
-        }
+        nomeColaborador
       );
       
       // Fechar modal
@@ -301,7 +374,7 @@
   /**
    * Handler para devolução de equipamento
    */
-  function handleDevolverEquipamento(event: CustomEvent<{ equipamento: EquipamentoEmPosse }>): void {
+  function handleDevolverEquipamento(event: CustomEvent<{ equipamento: EquipamentoEmPosseItem }>): void {
     equipamentoDevolucao = event.detail.equipamento;
     showDevolucaoModal = true;
     console.log('🔄 Iniciando devolução:', equipamentoDevolucao.id);
@@ -331,7 +404,7 @@
       showDevolucaoModal = false;
       equipamentoDevolucao = null;
       
-      // Recarregar dados
+      // ✅ RECARREGAR DADOS: Backend real retorna status atualizado dos itens
       await loadFichaData();
       
       notify.success('Devolução registrada', 'Equipamento foi devolvido com sucesso');
@@ -393,6 +466,7 @@
     // Dados principais
     fichaData,
     episDisponiveis,
+    usuarios,
     
     // Estados de loading
     loading,

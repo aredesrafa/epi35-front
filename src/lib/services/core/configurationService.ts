@@ -180,3 +180,109 @@ export async function getStatusEstoque(): Promise<BusinessConfigurationItem[]> {
 export async function getTiposNota(): Promise<BusinessConfigurationItem[]> {
   return configurationService.getConfigByCategory('tiposNota');
 }
+
+// ==================== CONFIGURAÇÕES GERAIS DO SISTEMA ====================
+
+export interface ConfiguracaoSistemaDTO {
+  chave: string;
+  valor: string;
+  valorParsed: boolean | number | string;
+  tipo: 'BOOLEAN' | 'NUMBER' | 'STRING';
+  descricao: string;
+  createdAt: string;
+}
+
+/**
+ * ✅ CONECTADO AO BACKEND REAL: Lista todas as configurações do sistema
+ */
+export async function getConfiguracoesSistema(): Promise<ConfiguracaoSistemaDTO[]> {
+  try {
+    console.log('⚙️ Carregando configurações do sistema...');
+    
+    const response = await api.get<{
+      success: boolean;
+      data: ConfiguracaoSistemaDTO[];
+      message: string;
+    }>('/configuracoes');
+    
+    console.log('✅ Configurações do sistema carregadas:', response.data.length);
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar configurações do sistema:', error);
+    throw error;
+  }
+}
+
+/**
+ * ✅ CONECTADO AO BACKEND REAL: Atualiza uma configuração específica
+ */
+export async function updateConfiguracaoSistema(chave: string, valor: string): Promise<ConfiguracaoSistemaDTO> {
+  try {
+    console.log('💾 Atualizando configuração do sistema:', chave, '→', valor);
+    
+    const response = await api.put<{
+      success: boolean;
+      data: {
+        configuracao: ConfiguracaoSistemaDTO;
+        valorAnterior: string;
+      };
+      message: string;
+    }>(`/configuracoes/${chave}`, { valor });
+    
+    console.log('✅ Configuração do sistema atualizada:', {
+      chave,
+      valorAnterior: response.data.valorAnterior,
+      valorNovo: response.data.configuracao.valor
+    });
+    
+    return response.data.configuracao;
+    
+  } catch (error) {
+    console.error('❌ Erro ao atualizar configuração do sistema:', error);
+    throw error;
+  }
+}
+
+/**
+ * ✅ HELPER: Busca configuração por chave
+ */
+export async function getConfiguracaoPorChave(chave: string): Promise<ConfiguracaoSistemaDTO | null> {
+  try {
+    const configuracoes = await getConfiguracoesSistema();
+    return configuracoes.find(config => config.chave === chave) || null;
+  } catch (error) {
+    console.error('❌ Erro ao buscar configuração:', chave, error);
+    return null;
+  }
+}
+
+/**
+ * ✅ HELPER: Atualiza configuração booleana
+ */
+export async function updateConfiguracaoBoolean(chave: string, valor: boolean): Promise<ConfiguracaoSistemaDTO> {
+  return updateConfiguracaoSistema(chave, valor.toString());
+}
+
+/**
+ * ✅ HELPER: Mapeia configurações para objeto simples
+ */
+export function mapConfiguracoesToObject(configuracoes: ConfiguracaoSistemaDTO[]): Record<string, any> {
+  const result: Record<string, any> = {};
+  
+  configuracoes.forEach(config => {
+    result[config.chave] = config.valorParsed;
+  });
+  
+  return result;
+}
+
+// ==================== CHAVES DE CONFIGURAÇÃO CONHECIDAS ====================
+
+export const CONFIG_KEYS = {
+  PERMITIR_ESTOQUE_NEGATIVO: 'PERMITIR_ESTOQUE_NEGATIVO',
+  PERMITIR_AJUSTES_FORCADOS: 'PERMITIR_AJUSTES_FORCADOS',
+  ESTOQUE_MINIMO_EQUIPAMENTO: 'ESTOQUE_MINIMO_EQUIPAMENTO'
+} as const;
+
+export type ConfigKey = typeof CONFIG_KEYS[keyof typeof CONFIG_KEYS];

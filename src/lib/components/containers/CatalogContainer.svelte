@@ -1,18 +1,18 @@
 <!--
-  Catalog Container - Componente "Inteligente"
+  Catalog Container - Componente "Inteligente" com Enhanced Paginated Store
   
   Responsabilidades:
-  - Gerenciar estado do catálogo
-  - Integração com catalogAdapter
-  - Lógica de filtros e paginação
+  - Gerenciar estado do catálogo com arquitetura unificada
+  - Integração com enhanced store para performance otimizada
+  - Lógica de filtros e paginação com debounce automático
   - Event handlers para CRUD
   - Delegação de UI para presenter
 -->
 
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  import { catalogAdapter, type TipoEPI, type CatalogFilterParams } from '$lib/services/entity/catalogAdapter';
-  import { createPaginatedStore } from '$lib/stores/paginatedStore';
+  import { catalogAdapter, type TipoEPI } from '$lib/services/entity/catalogAdapter';
+  import { createEnhancedPaginatedStore } from '$lib/stores/enhancedPaginatedStore';
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
   import CatalogTablePresenter from '$lib/components/presenters/CatalogTablePresenter.svelte';
@@ -31,131 +31,77 @@
     epiDeleted: string;
   }>();
 
-  // ==================== STORES ====================
+  // ==================== ENHANCED STORE ====================
   
-  // Store paginado para tipos de EPI
-  const catalogStore = createPaginatedStore(
-    (params: CatalogFilterParams) => catalogAdapter.getTiposEPI(params),
-    initialPageSize
-  );
+  // Enhanced store com extração de filtros dos dados (sem endpoints específicos)
+  const catalogStore = createEnhancedPaginatedStore<TipoEPI>({
+    baseEndpoint: '/tipos-epi',
+    defaultPageSize: initialPageSize,
+    debounceDelay: 300,
+    cacheTimeout: 5 * 60 * 1000, // 5 minutos
+    autoRefresh,
+    refreshInterval: autoRefresh ? 30000 : undefined,
+    // Não usar filterEndpoints - extrair filtros dos dados principais
+    filterEndpoints: {
+      categorias: 'extract-from-data'
+    }
+  });
 
   // ==================== STATE ====================
   
-  // Filtros
-  let searchTerm = '';
-  let categoriaFilter = 'todas';
-  let fabricanteFilter = 'todos';
-  let statusFilter = 'todos';
-
   // Modal state
   let showEPIModal = false;
   let modalMode: 'create' | 'edit' | 'view' = 'create';
   let selectedEPI: TipoEPI | null = null;
   let epiFormLoading = false;
 
-  // Filter options
-  let categoriaOptions: Array<{ value: string; label: string }> = [
-    { value: 'todas', label: 'Todas as Categorias' }
-  ];
-  let fabricanteOptions: Array<{ value: string; label: string }> = [
-    { value: 'todos', label: 'Todos os Fabricantes' }
-  ];
-
   // ==================== LIFECYCLE ====================
   
   onMount(async () => {
-    console.log('📋 CatalogContainer: Inicializando...');
+    console.log('📋 CatalogContainer: Inicializando com Enhanced Store...');
     
     // Aguardar configurações de negócio
     await businessConfigStore.initialize();
     
-    // Carregar opções de filtros
-    await loadFilterOptions();
+    // Inicializar enhanced store (carrega dados e filtros automaticamente)
+    await catalogStore.initialize();
     
-    // Carregar dados iniciais
-    await loadCatalogData();
-    
-    console.log('✅ CatalogContainer: Inicializado com sucesso');
+    console.log('✅ CatalogContainer: Inicializado com Enhanced Store');
   });
 
-  // ==================== DATA LOADING ====================
-  
-  async function loadCatalogData(): Promise<void> {
-    const params: CatalogFilterParams = {
-      search: searchTerm || undefined,
-      categoria: categoriaFilter !== 'todas' ? categoriaFilter : undefined,
-      fabricante: fabricanteFilter !== 'todos' ? fabricanteFilter : undefined,
-      ativo: statusFilter !== 'todos' ? statusFilter === 'ativo' : undefined,
-      page: $catalogStore.currentPage,
-      pageSize: $catalogStore.pageSize
-    };
-
-    await catalogStore.load(params);
-  }
-
-  async function loadFilterOptions(): Promise<void> {
-    try {
-      const options = await catalogAdapter.getFilterOptions();
-      
-      categoriaOptions = [
-        { value: 'todas', label: 'Todas as Categorias' },
-        ...options.categorias
-      ];
-      
-      fabricanteOptions = [
-        { value: 'todos', label: 'Todos os Fabricantes' },
-        ...options.fabricantes
-      ];
-    } catch (error) {
-      console.error('Erro ao carregar opções de filtros:', error);
-    }
-  }
+  onDestroy(() => {
+    catalogStore.destroy();
+  });
 
   // ==================== FILTER HANDLERS ====================
   
   function handleSearchChange(value: string): void {
-    searchTerm = value;
-    catalogStore.resetPage();
-    loadCatalogData();
+    catalogStore.search(value);
   }
 
   function handleCategoriaFilterChange(value: string): void {
-    categoriaFilter = value;
-    catalogStore.resetPage();
-    loadCatalogData();
+    const filters = value === 'todas' ? {} : { categoria: value };
+    catalogStore.applyFilters(filters);
   }
 
-  function handleFabricanteFilterChange(value: string): void {
-    fabricanteFilter = value;
-    catalogStore.resetPage();
-    loadCatalogData();
-  }
 
   function handleStatusFilterChange(value: string): void {
-    statusFilter = value;
-    catalogStore.resetPage();
-    loadCatalogData();
+    const filters = value === 'todos' ? {} : { status: value };
+    catalogStore.applyFilters(filters);
   }
 
   function handleClearFilters(): void {
-    searchTerm = '';
-    categoriaFilter = 'todas';
-    fabricanteFilter = 'todos';
-    statusFilter = 'todos';
-    catalogStore.resetPage();
-    loadCatalogData();
+    catalogStore.clearFilters();
   }
 
   // ==================== PAGINATION HANDLERS ====================
   
   function handlePageChange(page: number): void {
-    catalogStore.setPage(page);
-    loadCatalogData();
+    catalogStore.goToPage(page);
   }
 
   function handlePageSizeChange(pageSize: number): void {
-    catalogStore.setPageSize(pageSize);
-    loadCatalogData();
+    catalogStore.loadData({ limit: pageSize, page: 1 });
   }
 
   // ==================== EPI CRUD HANDLERS ====================
@@ -184,9 +130,8 @@
       
       notify.success('EPI removido', `${epi.nomeEquipamento} foi removido do catálogo`);
       
-      // Recarregar dados
-      await loadCatalogData();
-      await loadFilterOptions(); // Atualizar opções de filtros
+      // Recarregar dados usando enhanced store
+      catalogStore.reload();
       
       // Emitir evento
       dispatch('epiDeleted', epi.id);
@@ -214,9 +159,8 @@
         dispatch('epiUpdated', result);
       }
       
-      // Recarregar dados
-      await loadCatalogData();
-      await loadFilterOptions(); // Atualizar opções de filtros
+      // Recarregar dados usando enhanced store
+      catalogStore.reload();
       
       // Fechar modal
       showEPIModal = false;
@@ -238,59 +182,54 @@
 
   // ==================== COMPUTED PROPERTIES ====================
   
-  $: hasActiveFilters = searchTerm !== '' || 
-    categoriaFilter !== 'todas' || 
-    fabricanteFilter !== 'todos' || 
-    statusFilter !== 'todos';
-
   $: modalTitle = modalMode === 'create' ? 'Novo EPI' : 
     modalMode === 'edit' ? 'Editar EPI' : 'Visualizar EPI';
 
-  // Auto-refresh
-  let refreshInterval: NodeJS.Timeout | null = null;
+  // ==================== DERIVED FILTER OPTIONS ====================
   
-  $: if (autoRefresh && $catalogStore.data) {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadCatalogData, 30000); // 30 segundos
-  } else if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
+  // Extrair opções de filtros dos metadados do enhanced store
+  $: categoriaOptions = [
+    { value: 'todas', label: 'Todas as Categorias' },
+    ...($catalogStore.filterMetadata.categorias || [])
+  ];
+
+
+  // ==================== PRESENTER PROPS ====================
   
-  onDestroy(() => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval);
+  $: presentationData = {
+    items: $catalogStore.items,
+    loading: $catalogStore.loading,
+    error: $catalogStore.error,
+    pagination: {
+      currentPage: $catalogStore.pagination.page,
+      totalPages: $catalogStore.pagination.totalPages,
+      pageSize: $catalogStore.pagination.limit,
+      total: $catalogStore.pagination.total,
+      hasNext: $catalogStore.pagination.hasNextPage,
+      hasPrev: $catalogStore.pagination.hasPreviousPage
+    },
+    filters: {
+      searchTerm: $catalogStore.search,
+      categoriaFilter: $catalogStore.filters.categoria || 'todas',
+      statusFilter: $catalogStore.filters.status || 'todos',
+      hasActiveFilters: $catalogStore.hasFilters
+    },
+    filterOptions: {
+      categorias: categoriaOptions
     }
-  });
+  };
 </script>
 
-<!-- Usar apenas o presenter para UI -->
+<!-- Usar presenter com dados do enhanced store -->
 <CatalogTablePresenter
-  items={$catalogStore.data?.items || []}
-  loading={$catalogStore.loading}
-  error={$catalogStore.error}
-  pagination={{
-    currentPage: $catalogStore.currentPage,
-    totalPages: $catalogStore.data?.totalPages || 1,
-    pageSize: $catalogStore.pageSize,
-    total: $catalogStore.data?.total || 0,
-    hasNext: $catalogStore.data?.hasNext || false,
-    hasPrev: $catalogStore.data?.hasPrev || false
-  }}
-  filters={{
-    searchTerm,
-    categoriaFilter,
-    fabricanteFilter,  
-    statusFilter,
-    hasActiveFilters
-  }}
-  filterOptions={{
-    categorias: categoriaOptions,
-    fabricantes: fabricanteOptions
-  }}
+  items={presentationData.items}
+  loading={presentationData.loading}
+  error={presentationData.error}
+  pagination={presentationData.pagination}
+  filters={presentationData.filters}
+  filterOptions={presentationData.filterOptions}
   on:searchChange={(e) => handleSearchChange(e.detail)}
   on:categoriaFilterChange={(e) => handleCategoriaFilterChange(e.detail)}
-  on:fabricanteFilterChange={(e) => handleFabricanteFilterChange(e.detail)}
   on:statusFilterChange={(e) => handleStatusFilterChange(e.detail)}
   on:clearFilters={handleClearFilters}
   on:pageChange={(e) => handlePageChange(e.detail)}

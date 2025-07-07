@@ -37,14 +37,12 @@
   export let filters: {
     searchTerm: string;
     categoriaFilter: string;
-    fabricanteFilter: string;
     statusFilter: string;
     hasActiveFilters: boolean;
   };
   
   export let filterOptions: {
     categorias: Array<{ value: string; label: string }>;
-    fabricantes: Array<{ value: string; label: string }>;
   };
 
   // ==================== EVENT DISPATCHER ====================
@@ -52,7 +50,6 @@
   const dispatch = createEventDispatcher<{
     searchChange: string;
     categoriaFilterChange: string;
-    fabricanteFilterChange: string;
     statusFilterChange: string;
     clearFilters: void;
     pageChange: number;
@@ -67,8 +64,8 @@
   
   const statusOptions = [
     { value: 'todos', label: 'Todos os Status' },
-    { value: 'ativo', label: 'Ativo' },
-    { value: 'inativo', label: 'Inativo' }
+    { value: 'ATIVO', label: 'Ativo' },
+    { value: 'DESCONTINUADO', label: 'Descontinuado' }
   ];
 
   // ==================== HANDLERS ====================
@@ -82,9 +79,6 @@
     dispatch('categoriaFilterChange', event.detail);
   }
 
-  function handleFabricanteChange(event: CustomEvent<string>): void {
-    dispatch('fabricanteFilterChange', event.detail);
-  }
 
   function handleStatusChange(event: CustomEvent<string>): void {
     dispatch('statusFilterChange', event.detail);
@@ -154,7 +148,7 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
       <!-- Filters inside table container -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Search -->
           <div class="relative">
             <SearchOutline class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -173,14 +167,6 @@
             value={filters.categoriaFilter}
             placeholder="Categoria"
             on:change={handleCategoriaChange}
-          />
-          
-          <!-- Manufacturer Filter -->
-          <SearchableDropdown
-            options={filterOptions.fabricantes}
-            value={filters.fabricanteFilter}
-            placeholder="Fabricante"
-            on:change={handleFabricanteChange}
           />
           
           <!-- Status Filter -->
@@ -215,14 +201,16 @@
             <TableHeadCell>Nome do Equipamento</TableHeadCell>
             <TableHeadCell>Número CA</TableHeadCell>
             <TableHeadCell>Categoria</TableHeadCell>
-            <TableHeadCell>Fabricante</TableHeadCell>
             <TableHeadCell>Validade Padrão</TableHeadCell>
             <TableHeadCell>Status</TableHeadCell>
             <TableHeadCell>Ações</TableHeadCell>
           </TableHead>
           <TableBody>
             {#each items as epi (epi.id)}
-              <TableBodyRow>
+              <TableBodyRow 
+                class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                on:click={() => handleVisualizarEPI(epi)}
+              >
                 <TableBodyCell>
                   <div class="flex flex-col">
                     <span class="font-medium text-gray-900 dark:text-white">
@@ -236,57 +224,54 @@
                   </div>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <span class="font-mono text-sm">{epi.numeroCA}</span>
+                  <span class="font-mono text-sm">{epi.numeroCa || epi.numeroCA}</span>
                 </TableBodyCell>
                 <TableBodyCell>
                   <span class="text-sm">{epi.categoria}</span>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <span class="text-sm">{epi.fabricante}</span>
-                </TableBodyCell>
-                <TableBodyCell>
-                  {#if epi.validadePadrao}
+                  {#if epi.vidaUtilDias || epi.validadePadrao}
                     <span class="text-sm">
-                      {Math.round(epi.validadePadrao / 30)} meses
+                      {Math.round((epi.vidaUtilDias || epi.validadePadrao) / 30)} meses
                     </span>
                   {:else}
                     <span class="text-sm text-gray-400">-</span>
                   {/if}
                 </TableBodyCell>
                 <TableBodyCell>
-                  <Badge color={statusBadgeColor(epi.ativo)} class="w-fit rounded-sm">
-                    {statusText(epi.ativo)}
-                  </Badge>
+                  {#if epi.status}
+                    <Badge color={epi.status === 'ATIVO' ? 'green' : 'red'} class="w-fit rounded-sm">
+                      {epi.status === 'ATIVO' ? 'Ativo' : 'Descontinuado'}
+                    </Badge>
+                  {:else}
+                    <Badge color={statusBadgeColor(epi.ativo)} class="w-fit rounded-sm">
+                      {statusText(epi.ativo)}
+                    </Badge>
+                  {/if}
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex space-x-1">
-                    <Button
-                      size="sm"
-                      color="alternative"
-                      class="rounded-sm p-2"
-                      on:click={() => handleVisualizarEPI(epi)}
+                    <button
+                      class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      on:click={(e) => { e.stopPropagation(); handleVisualizarEPI(epi); }}
                       title="Visualizar"
                     >
                       <EyeOutline class="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      color="primary"
-                      class="rounded-sm p-2"
-                      on:click={() => handleEditarEPI(epi)}
+                    </button>
+                    <button
+                      class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      on:click={(e) => { e.stopPropagation(); handleEditarEPI(epi); }}
                       title="Editar"
                     >
                       <PenOutline class="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      color="red"
-                      class="rounded-sm p-2"
-                      on:click={() => handleExcluirEPI(epi)}
+                    </button>
+                    <button
+                      class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      on:click={(e) => { e.stopPropagation(); handleExcluirEPI(epi); }}
                       title="Excluir"
                     >
                       <TrashBinOutline class="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                 </TableBodyCell>
               </TableBodyRow>
@@ -303,8 +288,7 @@
           </div>
           <div class="flex space-x-2">
             <Button
-              size="sm"
-              color="alternative"
+                            color="alternative"
               class="rounded-sm"
               disabled={!pagination.hasPrev}
               on:click={() => handlePageChange(pagination.currentPage - 1)}
@@ -315,8 +299,7 @@
               Página {pagination.currentPage} de {pagination.totalPages}
             </span>
             <Button
-              size="sm"
-              color="alternative"
+                            color="alternative"
               class="rounded-sm"
               disabled={!pagination.hasNext}
               on:click={() => handlePageChange(pagination.currentPage + 1)}
