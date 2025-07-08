@@ -14,8 +14,11 @@ const config = {
       assets: 'build',
       fallback: null,
       precompress: false,
-      strict: true
+      strict: false
     }),
+    prerender: {
+      handleHttpError: 'warn'
+    },
     paths: {
       base: process.env.NODE_ENV === 'production' ? '/epi35-front' : '',
     },
