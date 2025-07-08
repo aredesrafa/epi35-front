@@ -38,7 +38,6 @@
     searchTerm: string;
     empresaFilter: string;
     cargoFilter: string;
-    statusFilter: string;
     devolucaoPendente: boolean;
     hasActiveFilters: boolean;
   };
@@ -46,7 +45,6 @@
   export let filterOptions: {
     empresas: Array<{ value: string; label: string }>;
     cargos: Array<{ value: string; label: string }>;
-    status: Array<{ value: string; label: string }>;
   };
 
   // ==================== EVENT DISPATCHER ====================
@@ -55,7 +53,6 @@
     searchChange: string;
     empresaFilterChange: string;
     cargoFilterChange: string;
-    statusFilterChange: string;
     devolucaoPendenteChange: boolean;
     clearFilters: void;
     pageChange: number;
@@ -80,9 +77,6 @@
     dispatch('cargoFilterChange', event.detail);
   }
 
-  function handleStatusChange(event: CustomEvent<string>): void {
-    dispatch('statusFilterChange', event.detail);
-  }
 
   function handleDevolucaoPendenteChange(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -110,24 +104,6 @@
   }
 
   // ==================== COMPUTED PROPERTIES ====================
-  
-  $: getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'ativa': return 'green';
-      case 'vencida': return 'red';
-      case 'pendente_devolucao': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
-  $: getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'ativa': return 'Ativa';
-      case 'vencida': return 'Vencida';
-      case 'pendente_devolucao': return 'Pendente Devolução';
-      default: return 'Inativa';
-    }
-  };
 </script>
 
 <svelte:head>
@@ -164,7 +140,7 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
       <!-- Filters inside table container -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
           <!-- Search -->
           <div class="relative">
             <SearchOutline class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -191,14 +167,6 @@
             value={filters.cargoFilter}
             placeholder="Cargo"
             on:change={handleCargoChange}
-          />
-          
-          <!-- Status Filter -->
-          <SearchableDropdown
-            options={filterOptions.status}
-            value={filters.statusFilter}
-            placeholder="Status"
-            on:change={handleStatusChange}
           />
 
           <!-- Devolução Pendente Checkbox -->
@@ -229,14 +197,12 @@
       </div>
       
       <!-- Table content with responsive behavior -->
-      <div class="min-w-[980px] overflow-x-auto">
+      <div class="min-w-[680px] overflow-x-auto">
         <Table hoverable>
           <TableHead>
             <TableHeadCell>Colaborador</TableHeadCell>
             <TableHeadCell>Empresa</TableHeadCell>
             <TableHeadCell>EPIs Ativos</TableHeadCell>
-            <TableHeadCell>Status</TableHeadCell>
-            <TableHeadCell>Próximo Vencimento</TableHeadCell>
             <TableHeadCell>Ações</TableHeadCell>
           </TableHead>
           <TableBody>
@@ -251,7 +217,7 @@
                       {ficha.colaborador.nome}
                     </span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">
-                      {ficha.colaborador.cpf} • {ficha.colaborador.matricula || 'S/N'}
+                      {ficha.colaborador.cpf || 'CPF não informado'} • {ficha.colaborador.matricula || 'S/N'}
                     </span>
                   </div>
                 </TableBodyCell>
@@ -270,11 +236,11 @@
                 <TableBodyCell>
                   <div class="flex flex-wrap gap-1">
                     <Badge color="blue" class="w-fit rounded-sm">
-                      {ficha.episInfo?.totalEpisAtivos || 0} EPIs
+                      {ficha.episInfo?.totalEpisAtivos || ficha.totalEpisAtivos || 0} EPIs
                     </Badge>
-                    {#if ficha.episInfo?.episExpirados && ficha.episInfo.episExpirados > 0}
+                    {#if (ficha.episInfo?.episExpirados || ficha.totalEpisVencidos) && (ficha.episInfo?.episExpirados > 0 || ficha.totalEpisVencidos > 0)}
                       <Badge color="red" class="w-fit rounded-sm">
-                        {ficha.episInfo.episExpirados} vencido(s)
+                        {ficha.episInfo?.episExpirados || ficha.totalEpisVencidos} vencido(s)
                       </Badge>
                     {/if}
                   </div>
@@ -285,32 +251,6 @@
                         <span>... +{ficha.episInfo.tiposEpisAtivos.length - 2}</span>
                       {/if}
                     </div>
-                  {/if}
-                </TableBodyCell>
-                <TableBodyCell>
-                  <Badge color={getStatusBadgeColor(ficha.status)} class="w-fit rounded-sm">
-                    {getStatusLabel(ficha.status)}
-                  </Badge>
-                </TableBodyCell>
-                <TableBodyCell>
-                  {#if ficha.episInfo?.proximaDataVencimento}
-                    <div>
-                      <div class="text-sm text-gray-900 dark:text-white">
-                        {formatarData(ficha.episInfo.proximaDataVencimento)}
-                      </div>
-                      {#if ficha.episInfo.diasAteProximoVencimento !== undefined}
-                        <Badge 
-                          color={ficha.episInfo.diasAteProximoVencimento <= 7 ? 'red' : 
-                                 ficha.episInfo.diasAteProximoVencimento <= 30 ? 'yellow' : 'green'}
-                          class="w-fit rounded-sm text-xs mt-1"
-                        >
-                          {ficha.episInfo.diasAteProximoVencimento <= 0 ? 'Vencido' : 
-                           `${ficha.episInfo.diasAteProximoVencimento} dias`}
-                        </Badge>
-                      {/if}
-                    </div>
-                  {:else}
-                    <span class="text-gray-400">-</span>
                   {/if}
                 </TableBodyCell>
                 <TableBodyCell>

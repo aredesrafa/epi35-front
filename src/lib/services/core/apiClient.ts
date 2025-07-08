@@ -8,8 +8,10 @@
 
 import { browser } from '$app/environment';
 
-// Configurações da API - URL direta sempre para evitar problemas de SSR
-export const API_BASE_URL = 'https://epi-backend-s14g.onrender.com/api';
+// Configurações da API - Usar proxy em desenvolvimento, URL direta em produção
+export const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? '/api'  // Usar proxy em desenvolvimento
+  : 'https://epi-backend-s14g.onrender.com/api'; // URL direta em produção
 
 // Interfaces para request unificado
 export interface RequestConfig {
@@ -71,9 +73,9 @@ export interface ApiRequestOptions extends RequestInit {
  * Configurações padrão para requisições
  */
 const DEFAULT_OPTIONS: ApiRequestOptions = {
-  timeout: 10000, // 10 segundos
-  retries: 2,
-  retryDelay: 1000 // 1 segundo
+  timeout: 30000, // 30 segundos (cold start do backend pode demorar)
+  retries: 3,
+  retryDelay: 2000 // 2 segundos
 };
 
 /**
@@ -325,6 +327,39 @@ if (browser && !import.meta.env.PROD) {
       throw error;
     }
   };
+}
+
+/**
+ * Health check para verificar se o backend está ativo
+ */
+export async function healthCheck(): Promise<{ healthy: boolean; message: string }> {
+  try {
+    console.log('🏥 Verificando health do backend...');
+    const response = await apiClient<any>('/health', { 
+      timeout: 15000, 
+      retries: 1 
+    });
+    
+    console.log('✅ Backend está saudável:', response);
+    return { healthy: true, message: 'Backend operacional' };
+  } catch (error) {
+    console.warn('⚠️ Backend pode estar iniciando:', error);
+    
+    // Tentar endpoint alternativo
+    try {
+      const docsResponse = await apiClient<any>('/docs', { 
+        timeout: 20000, 
+        retries: 1 
+      });
+      console.log('✅ Backend respondeu via /docs');
+      return { healthy: true, message: 'Backend operacional (via docs)' };
+    } catch {
+      return { 
+        healthy: false, 
+        message: 'Backend indisponível - pode estar fazendo cold start' 
+      };
+    }
+  }
 }
 
 /**

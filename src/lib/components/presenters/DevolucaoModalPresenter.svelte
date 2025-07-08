@@ -1,38 +1,55 @@
 <!--
-  Devolução Modal Presenter - Componente "Burro"
+  Devolução Drawer Presenter - Componente "Burro"
   
-  Modal para processar devolução de EPI:
+  Drawer para processar devolução de EPI:
   - Interface simples para devolução
   - Validação básica
-  - Layout original preservado
+  - Layout convertido de modal para drawer
 -->
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Modal, Button, Label, Textarea, Checkbox, Input } from 'flowbite-svelte';
-  import Icon from '$lib/components/common/Icon.svelte';
+  import { Button, Label, Textarea, Select } from 'flowbite-svelte';
+  import { 
+    CloseOutline, 
+    ExclamationCircleOutline, 
+    CheckCircleOutline, 
+    ClockOutline,
+    CheckOutline,
+    ArrowLeftOutline
+  } from 'flowbite-svelte-icons';
   import { formatarData } from '$lib/utils/dateHelpers';
-  import type { EquipamentoEmPosse } from '$lib/services/process/fichaProcessAdapter';
+  import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
+  import type { EquipamentoEmPosseItem } from '$lib/types/serviceTypes';
 
   // ==================== PROPS ====================
   
-  export let equipamento: EquipamentoEmPosse | null = null;
+  export let equipamento: EquipamentoEmPosseItem | null = null;
   export let loading: boolean = false;
   export let show: boolean = false;
 
   // ==================== EVENT DISPATCHER ====================
   
   const dispatch = createEventDispatcher<{
-    confirmar: { motivo: string };
+    confirmar: { motivo: string; observacoes?: string };
     cancelar: void;
   }>();
 
   // ==================== LOCAL STATE ====================
   
-  let motivo = '';
+  let motivoSelecionado: 'devolução padrão' | 'danificado' | 'troca' | 'outros' = 'devolução padrão';
+  let observacoes = '';
 
   // Validation
   let errors: Record<string, string> = {};
+
+  // Opções do motivo de devolução
+  const motivosOptions = [
+    { value: 'devolução padrão', name: 'Devolução Padrão - Fim do período de uso' },
+    { value: 'danificado', name: 'Danificado - EPI com defeito ou quebrado' },
+    { value: 'troca', name: 'Troca - Substituição por outro equipamento' },
+    { value: 'outros', name: 'Outros - Outro motivo específico' }
+  ];
 
   // ==================== LIFECYCLE ====================
   
@@ -44,14 +61,15 @@
   // ==================== FORM MANAGEMENT ====================
   
   function resetForm(): void {
-    motivo = '';
+    motivoSelecionado = 'devolução padrão';
+    observacoes = '';
     errors = {};
   }
 
   function validateForm(): boolean {
     const newErrors: Record<string, string> = {};
 
-    if (!motivo.trim()) {
+    if (!motivoSelecionado) {
       newErrors.motivo = 'Motivo da devolução é obrigatório';
     }
 
@@ -66,10 +84,11 @@
       return;
     }
 
-    // Como cada equipamento é individual (quantidade = 1), sempre é devolução total do item
-    const motivoCompleto = `Devolução de item individual: ${motivo.trim()}`;
-
-    dispatch('confirmar', { motivo: motivoCompleto });
+    // Agora o motivo já está no formato correto do enum
+    dispatch('confirmar', { 
+      motivo: motivoSelecionado,
+      observacoes: observacoes.trim() || undefined
+    });
   }
 
   function handleCancelar(): void {
@@ -78,31 +97,43 @@
 
   // ==================== COMPUTED PROPERTIES ====================
   
-  $: canConfirm = motivo.trim() && !loading;
+  $: canConfirm = motivoSelecionado && !loading;
   $: isVencido = equipamento?.vencido || false;
   $: diasVencimento = equipamento?.diasVencido || 0;
 </script>
 
-<Modal
-  bind:open={show}
-  size="md"
-  autoclose={false}
-  class="z-60"
->
-  <div class="p-6">
+{#if show}
+  <!-- Overlay -->
+  <div 
+    class="fixed inset-0 bg-black bg-opacity-50 z-[60] transition-opacity"
+    on:click={handleCancelar}
+    role="presentation"
+  ></div>
+
+  <!-- Drawer -->
+  <div 
+    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out"
+    on:click|stopPropagation
+    role="dialog"
+    aria-modal="true"
+  >
+    
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-        Devolver Equipamento
-      </h3>
-      <button
-        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        on:click={handleCancelar}
-        disabled={loading}
-      >
-        <Icon name="CloseOutline" size="w-5 h-5" />
-      </button>
-    </div>
+    <DrawerHeader 
+      title={equipamento ? `Devolver ${equipamento.nomeEquipamento}` : 'Devolver Equipamento'}
+      objectType="DEVOLUÇÃO EPI"
+      iconName="TrashBinOutline"
+      primaryAction={{
+        text: loading ? 'Processando...' : 'Confirmar Devolução',
+        icon: loading ? '' : 'CheckOutline',
+        disabled: !canConfirm
+      }}
+      on:close={handleCancelar}
+      on:primaryAction={handleConfirmar}
+    />
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
 
     {#if equipamento}
       <!-- Informações do Equipamento -->
@@ -137,12 +168,12 @@
             <div class="text-right">
               {#if isVencido}
                 <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                  <Icon name="ExclamationTriangleOutline" className="mr-1" size="w-3 h-3" />
+                  <ExclamationCircleOutline class="mr-1 w-3 h-3" />
                   Vencido há {diasVencimento} dias
                 </div>
               {:else}
                 <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                  <Icon name="CheckCircleOutline" className="mr-1" size="w-3 h-3" />
+                  <CheckCircleOutline class="mr-1 w-3 h-3" />
                   No prazo
                 </div>
               {/if}
@@ -155,7 +186,7 @@
       <div class="mb-6">
         <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div class="flex items-start">
-                          <Icon name="ExclamationCircleOutline" className="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" size="w-4 h-4" />
+            <ExclamationCircleOutline class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5 w-4 h-4" />
             <div>
               <p class="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Devolução de Item Individual</strong>
@@ -176,13 +207,12 @@
         <Label for="motivo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Motivo da Devolução *
         </Label>
-        <Textarea
+        <Select
           id="motivo"
-          placeholder="Descreva o motivo da devolução..."
-          bind:value={motivo}
-          rows={3}
+          bind:value={motivoSelecionado}
           class="rounded-sm {errors.motivo ? 'border-red-500' : ''}"
           disabled={loading}
+          items={motivosOptions}
         />
         {#if errors.motivo}
           <p class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -191,11 +221,29 @@
         {/if}
       </div>
 
+      <!-- Observações (opcional) -->
+      <div class="mb-6">
+        <Label for="observacoes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Observações (opcional)
+        </Label>
+        <Textarea
+          id="observacoes"
+          placeholder="Observações adicionais sobre a devolução..."
+          bind:value={observacoes}
+          rows={2}
+          class="rounded-sm"
+          disabled={loading}
+        />
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Campo opcional para detalhes específicos da devolução
+        </p>
+      </div>
+
       <!-- Alertas -->
       {#if isVencido}
         <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
           <div class="flex items-start">
-            <Icon name="ExclamationTriangleOutline" className="text-red-600 dark:text-red-400 mt-0.5 mr-3" size="w-5 h-5" />
+            <ExclamationCircleOutline class="text-red-600 dark:text-red-400 mt-0.5 mr-3 w-5 h-5" />
             <div>
               <h4 class="text-sm font-medium text-red-800 dark:text-red-200">
                 Equipamento com prazo vencido
@@ -217,38 +265,38 @@
           <p>• Equipamento: {equipamento.nomeEquipamento} (CA {equipamento.registroCA})</p>
           <p>• Quantidade: 1 unidade (item individual)</p>
           <p>• Tipo: Devolução de item individual</p>
-          {#if motivo.trim()}
-            <p>• Motivo: {motivo.trim()}</p>
+          {#if motivoSelecionado.trim()}
+            <p>• Motivo: {motivoSelecionado.trim()}</p>
           {/if}
         </div>
       </div>
 
     {/if}
 
-    <!-- Actions -->
-    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <Button
-        color="alternative"
-        class="rounded-sm"
-        on:click={handleCancelar}
-        disabled={loading}
-      >
-        Cancelar
-      </Button>
-      <Button
-        color="primary"
-        class="rounded-sm"
-        on:click={handleConfirmar}
-        disabled={!canConfirm}
-      >
-        {#if loading}
-          <Icon name="ClockOutline" className="mr-2 animate-spin" size="w-4 h-4" />
-          Processando...
-        {:else}
-          <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />
-          Confirmar Devolução
-        {/if}
-      </Button>
     </div>
   </div>
-</Modal>
+{/if}
+
+<style>
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+</style>

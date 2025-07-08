@@ -87,12 +87,16 @@ export async function initializeConfiguration(): Promise<SystemConfiguration> {
   
   try {
     // Carrega configurações diretas (hardcoded conforme backend)
-    const backendConfig = await api.get('/configuration');
+    // Note: /configuration endpoint may not exist yet, handle gracefully
+    const backendConfig = await api.get('/configuration').catch(error => {
+      console.warn('⚠️ Endpoint /configuration não encontrado, usando configurações padrão');
+      return null;
+    });
     
     // Mescla com valores padrão
     const mergedConfig: SystemConfiguration = {
       ...DEFAULT_CONFIGURATION,
-      ...backendConfig?.data || {}
+      ...(backendConfig && typeof backendConfig === 'object' ? backendConfig : {})
     };
     
     configurationStore.set(mergedConfig);

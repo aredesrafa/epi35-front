@@ -7,15 +7,16 @@
 
 <script lang="ts">
   import { Badge } from 'flowbite-svelte';
-  import type { ComponentColor } from 'flowbite-svelte/dist/types';
+  // Definindo tipo ComponentColor localmente para evitar import issues
+  type ComponentColor = 'alternative' | 'blue' | 'dark' | 'green' | 'light' | 'primary' | 'purple' | 'red' | 'yellow';
   import { statusColors, statusColorsHex, getFlowbiteColor } from '$lib/theme';
   
   export let status: string;
-  export let type: 'ficha' | 'epi' | 'colaborador' | 'estoque' | 'entrega' | 'item' | 'movimento' = 'epi';
+  export const type: 'ficha' | 'epi' | 'colaborador' | 'estoque' | 'entrega' | 'item' | 'movimento' = 'epi';
   export let size: 'xs' | 'sm' | 'base' | 'lg' | 'xl' = 'sm';
   export let rounded = false;
   export let showText = true; // Para compatibilidade com StatusDot
-  export let showIcon = false; // Para badges simples
+  export const showIcon = false; // Para badges simples
   
   // Usar configuração centralizada do tema
   $: flowbiteColor = (statusColors[status] || statusColors[status?.toUpperCase?.()] || 'blue') as ComponentColor;

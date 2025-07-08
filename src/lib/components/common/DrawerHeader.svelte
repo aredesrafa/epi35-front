@@ -14,7 +14,7 @@
   export let objectType: string = ''; // Texto em ALL CAPS (ex: "FICHA EPI")
   export let iconName: string = 'UserOutline'; // Ícone principal
   export let status: string = ''; // Status do objeto
-  export let statusType: 'ficha' | 'colaborador' | 'entrega' | 'item' | 'movimento' = 'ficha';
+  export let statusType: 'ficha' | 'colaborador' | 'entrega' | 'item' | 'movimento' | 'epi' = 'ficha';
 
   // Informações adicionais (linha inferior)
   export let additionalInfo: string[] = []; // Array de strings para info adicional

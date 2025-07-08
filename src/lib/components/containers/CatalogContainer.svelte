@@ -16,7 +16,7 @@
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
   import CatalogTablePresenter from '$lib/components/presenters/CatalogTablePresenter.svelte';
-  import EPIFormModalPresenter from '$lib/components/presenters/EPIFormModalPresenter.svelte';
+  import EPIDetailDrawer from '$lib/components/presenters/EPIDetailDrawer.svelte';
 
   // ==================== PROPS ====================
   
@@ -31,67 +31,90 @@
     epiDeleted: string;
   }>();
 
-  // ==================== ENHANCED STORE ====================
+  // ==================== PAGINATED STORE ====================
   
-  // Enhanced store com extração de filtros dos dados (sem endpoints específicos)
-  const catalogStore = createEnhancedPaginatedStore<TipoEPI>({
-    baseEndpoint: '/tipos-epi',
-    defaultPageSize: initialPageSize,
-    debounceDelay: 300,
-    cacheTimeout: 5 * 60 * 1000, // 5 minutos
-    autoRefresh,
-    refreshInterval: autoRefresh ? 30000 : undefined,
-    // Não usar filterEndpoints - extrair filtros dos dados principais
-    filterEndpoints: {
-      categorias: 'extract-from-data'
+  // Store para catálogo com paginação server-side
+  const catalogStore = createPaginatedStore<TipoEPI>(
+    (params) => catalogAdapter.getTiposEPI(params),
+    {
+      initialPageSize: initialPageSize,
+      enableCache: true,
+      cacheTimeout: 5 * 60 * 1000, // 5 minutos
+      debounceDelay: 300
     }
-  });
+  );
 
   // ==================== STATE ====================
   
-  // Modal state
-  let showEPIModal = false;
-  let modalMode: 'create' | 'edit' | 'view' = 'create';
+  // Drawer state
+  let showEPIDrawer = false;
+  let drawerMode: 'create' | 'edit' | 'view' = 'view';
   let selectedEPI: TipoEPI | null = null;
-  let epiFormLoading = false;
+  let epiDrawerLoading = false;
 
   // ==================== LIFECYCLE ====================
   
   onMount(async () => {
-    console.log('📋 CatalogContainer: Inicializando com Enhanced Store...');
+    console.log('📋 CatalogContainer: Inicializando (versão corrigida)...');
     
-    // Aguardar configurações de negócio
-    await businessConfigStore.initialize();
-    
-    // Inicializar enhanced store (carrega dados e filtros automaticamente)
-    await catalogStore.initialize();
-    
-    console.log('✅ CatalogContainer: Inicializado com Enhanced Store');
+    try {
+      // Aguardar configurações de negócio
+      await businessConfigStore.initialize();
+      
+      // Carregar dados iniciais
+      await catalogStore.fetchPage();
+      
+      console.log('✅ CatalogContainer: Inicializado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro na inicialização do CatalogContainer:', error);
+    }
   });
 
   onDestroy(() => {
-    catalogStore.destroy();
+    // Cleanup se necessário
   });
 
   // ==================== FILTER HANDLERS ====================
   
+  // Estado dos filtros
+  let searchTerm = '';
+  let categoriaFilter = 'todas';
+  let statusFilter = 'todos';
+  
   function handleSearchChange(value: string): void {
-    catalogStore.search(value);
+    searchTerm = value;
+    catalogStore.setSearch(value);
   }
 
   function handleCategoriaFilterChange(value: string): void {
-    const filters = value === 'todas' ? {} : { categoria: value };
-    catalogStore.applyFilters(filters);
+    categoriaFilter = value;
+    applyFiltersToStore();
   }
 
-
   function handleStatusFilterChange(value: string): void {
-    const filters = value === 'todos' ? {} : { status: value };
-    catalogStore.applyFilters(filters);
+    statusFilter = value;
+    applyFiltersToStore();
   }
 
   function handleClearFilters(): void {
-    catalogStore.clearFilters();
+    searchTerm = '';
+    categoriaFilter = 'todas';
+    statusFilter = 'todos';
+    applyFiltersToStore();
+  }
+  
+  function applyFiltersToStore(): void {
+    const filters: any = {};
+    
+    if (categoriaFilter !== 'todas') {
+      filters.categoria = categoriaFilter;
+    }
+    
+    if (statusFilter !== 'todos') {
+      filters.status = statusFilter;
+    }
+    
+    catalogStore.setFilters(filters);
   }
 
   // ==================== PAGINATION HANDLERS ====================
@@ -101,27 +124,27 @@
   }
 
   function handlePageSizeChange(pageSize: number): void {
-    catalogStore.loadData({ limit: pageSize, page: 1 });
+    catalogStore.fetchPage({ limit: pageSize, page: 1 });
   }
 
   // ==================== EPI CRUD HANDLERS ====================
   
   function handleNovoEPI(): void {
     selectedEPI = null;
-    modalMode = 'create';
-    showEPIModal = true;
+    drawerMode = 'create';
+    showEPIDrawer = true;
   }
 
   function handleEditarEPI(epi: TipoEPI): void {
     selectedEPI = epi;
-    modalMode = 'edit';
-    showEPIModal = true;
+    drawerMode = 'edit';
+    showEPIDrawer = true;
   }
 
   function handleVisualizarEPI(epi: TipoEPI): void {
     selectedEPI = epi;
-    modalMode = 'view';
-    showEPIModal = true;
+    drawerMode = 'view';
+    showEPIDrawer = true;
   }
 
   async function handleExcluirEPI(epi: TipoEPI): Promise<void> {
@@ -141,15 +164,16 @@
     }
   }
 
-  // ==================== FORM MODAL HANDLERS ====================
+  // ==================== DRAWER HANDLERS ====================
   
-  async function handleFormSave(formData: any): Promise<void> {
-    epiFormLoading = true;
+  async function handleDrawerSave(event: CustomEvent<Partial<TipoEPI>>): Promise<void> {
+    epiDrawerLoading = true;
     
     try {
+      const formData = event.detail;
       let result: TipoEPI;
       
-      if (modalMode === 'create') {
+      if (drawerMode === 'create') {
         result = await catalogAdapter.createTipoEPI(formData);
         notify.success('EPI criado', `${result.nomeEquipamento} foi adicionado ao catálogo`);
         dispatch('epiCreated', result);
@@ -159,40 +183,53 @@
         dispatch('epiUpdated', result);
       }
       
-      // Recarregar dados usando enhanced store
+      // Recarregar dados
       catalogStore.reload();
       
-      // Fechar modal
-      showEPIModal = false;
+      // Fechar drawer
+      showEPIDrawer = false;
       selectedEPI = null;
       
     } catch (error) {
       console.error('Erro ao salvar EPI:', error);
       notify.error('Erro ao salvar', 'Não foi possível salvar o EPI');
     } finally {
-      epiFormLoading = false;
+      epiDrawerLoading = false;
     }
   }
 
-  function handleFormCancel(): void {
-    showEPIModal = false;
+  function handleDrawerClose(): void {
+    showEPIDrawer = false;
     selectedEPI = null;
-    epiFormLoading = false;
+    epiDrawerLoading = false;
+  }
+
+  function handleDrawerEdit(): void {
+    drawerMode = 'edit';
   }
 
   // ==================== COMPUTED PROPERTIES ====================
-  
-  $: modalTitle = modalMode === 'create' ? 'Novo EPI' : 
-    modalMode === 'edit' ? 'Editar EPI' : 'Visualizar EPI';
 
-  // ==================== DERIVED FILTER OPTIONS ====================
+  // ==================== FILTER OPTIONS ====================
   
-  // Extrair opções de filtros dos metadados do enhanced store
+  // Opções estáticas de filtros (podem ser carregadas do backend depois)
   $: categoriaOptions = [
     { value: 'todas', label: 'Todas as Categorias' },
-    ...($catalogStore.filterMetadata.categorias || [])
+    { value: 'EPI_CABECA', label: 'EPI de Cabeça' },
+    { value: 'EPI_OLHOS_FACE', label: 'EPI de Olhos e Face' },
+    { value: 'EPI_AUDITIVA', label: 'EPI Auditiva' },
+    { value: 'EPI_RESPIRATORIA', label: 'EPI Respiratória' },
+    { value: 'EPI_MAOS_BRACOS', label: 'EPI de Mãos e Braços' },
+    { value: 'EPI_TRONCO', label: 'EPI de Tronco' },
+    { value: 'EPI_MEMBROS_INFERIORES', label: 'EPI de Membros Inferiores' },
+    { value: 'EPI_CORPO_INTEIRO', label: 'EPI de Corpo Inteiro' }
   ];
 
+  // ==================== COMPUTED PROPERTIES ====================
+  
+  $: hasActiveFilters = searchTerm !== '' || 
+    categoriaFilter !== 'todas' || 
+    statusFilter !== 'todos';
 
   // ==================== PRESENTER PROPS ====================
   
@@ -201,18 +238,18 @@
     loading: $catalogStore.loading,
     error: $catalogStore.error,
     pagination: {
-      currentPage: $catalogStore.pagination.page,
-      totalPages: $catalogStore.pagination.totalPages,
-      pageSize: $catalogStore.pagination.limit,
-      total: $catalogStore.pagination.total,
-      hasNext: $catalogStore.pagination.hasNextPage,
-      hasPrev: $catalogStore.pagination.hasPreviousPage
+      currentPage: $catalogStore.page,
+      totalPages: $catalogStore.totalPages,
+      pageSize: $catalogStore.pageSize,
+      total: $catalogStore.total,
+      hasNext: catalogStore.hasNext(),
+      hasPrev: catalogStore.hasPrev()
     },
     filters: {
-      searchTerm: $catalogStore.search,
-      categoriaFilter: $catalogStore.filters.categoria || 'todas',
-      statusFilter: $catalogStore.filters.status || 'todos',
-      hasActiveFilters: $catalogStore.hasFilters
+      searchTerm,
+      categoriaFilter,
+      statusFilter,
+      hasActiveFilters
     },
     filterOptions: {
       categorias: categoriaOptions
@@ -240,13 +277,13 @@
   on:excluirEPI={(e) => handleExcluirEPI(e.detail)}
 />
 
-<!-- Modal de Formulário EPI -->
-<EPIFormModalPresenter
-  show={showEPIModal}
-  mode={modalMode}
-  title={modalTitle}
+<!-- Drawer de Detalhes EPI -->
+<EPIDetailDrawer
+  open={showEPIDrawer}
+  mode={drawerMode}
   epi={selectedEPI}
-  loading={epiFormLoading}
-  on:salvar={(e) => handleFormSave(e.detail)}
-  on:cancelar={handleFormCancel}
+  loading={epiDrawerLoading}
+  on:save={handleDrawerSave}
+  on:close={handleDrawerClose}
+  on:edit={handleDrawerEdit}
 />

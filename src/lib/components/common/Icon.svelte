@@ -10,7 +10,7 @@
   let loading = true;
   let error = false;
 
-  // Mapeamento de ícones disponíveis
+  // Mapeamento de ícones disponíveis - Compatible com flowbite-svelte-icons
   const iconMap: Record<string, string> = {
     'XMarkOutline': 'CloseOutline', // Fix: XMarkOutline doesn't exist, use CloseOutline
     'CloseOutline': 'CloseOutline',
@@ -18,15 +18,22 @@
     'CalendarMonthOutline': 'CalendarMonthOutline',
     'ClipboardListOutline': 'ClipboardListOutline',
     'TruckOutline': 'TruckOutline',
-    'ExclamationTriangleOutline': 'ExclamationCircleOutline', // Fallback
+    'ExclamationTriangleOutline': 'ExclamationCircleOutline', // Fix: Triangle doesn't exist
     'CheckCircleOutline': 'CheckCircleOutline',
-    'CheckOutline': 'CheckOutline', // Para botões de confirmação
+    'CheckOutline': 'CheckOutline',
     'ClockOutline': 'ClockOutline',
     'PlusOutline': 'PlusOutline',
     'SearchOutline': 'SearchOutline',
     'PenOutline': 'PenOutline',
     'EyeOutline': 'EyeOutline',
-    'FileDocOutline': 'FileDocumentOutline'
+    'FileDocOutline': 'FileDocumentOutline',
+    // Adicionar mais mapeamentos para ícones comuns
+    'TrashBinOutline': 'TrashBinOutline',
+    'ChevronDownOutline': 'ChevronDownOutline',
+    'ChevronUpOutline': 'ChevronUpOutline',
+    'ArrowRightOutline': 'ArrowRightOutline',
+    'ArrowLeftOutline': 'ArrowLeftOutline',
+    'InfoCircleOutline': 'InfoCircleOutline'
   };
 
   onMount(async () => {

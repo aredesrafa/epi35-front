@@ -3,7 +3,11 @@
   import { ChevronDownOutline, BuildingOutline } from 'flowbite-svelte-icons';
   import { companies, selectedCompanyStore, type Company } from '$lib/stores/companyStore';
   
+  // Definindo tipo ComponentColor localmente para evitar import issues
+  type ComponentColor = 'green' | 'red' | 'yellow' | 'primary' | 'blue' | 'dark' | 'purple' | 'indigo' | 'pink' | 'none';
+  
   // Props para integração com o header (usado pelo Header.svelte)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars  
   export let headerType: 'admin' | 'holding' | 'contratada' | 'default' = 'default';
 
   // Função para selecionar empresa
@@ -30,14 +34,17 @@
   };
   
   // Função para obter cor da badge
-  function getBadgeColor(badge: string) {
+  function getBadgeColor(badge: string): ComponentColor {
     switch (badge.toLowerCase()) {
       case 'admin':
         return 'dark';
       default: // contratada, holding
-        return 'gray';
+        return 'primary'; // Use 'primary' instead of 'alternative' for better compatibility
     }
   }
+  
+  // Variável reativa para a cor do badge
+  $: badgeColor = getBadgeColor(selectedCompany.badge);
   
   // Função para obter classes do botão baseado no header
   function getButtonClasses() {
@@ -92,7 +99,7 @@
         {selectedCompany.name}
       </span>
       <Badge 
-        color={getBadgeColor(selectedCompany.badge) as any} 
+        color={badgeColor} 
         class="text-xs px-1 py-0.5 rounded-sm flex-shrink-0"
       >
         {selectedCompany.badge}

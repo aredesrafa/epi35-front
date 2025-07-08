@@ -19,11 +19,25 @@ export { inventoryCommandAdapter } from './inventory/inventoryCommandAdapter';
 // Process Lifecycle Adapter - Para workflows complexos
 export { processLifecycleAdapter } from './process/processLifecycleAdapter';
 
-// Ficha Process Adapter - Para workflows de fichas EPI
-export { fichaProcessAdapter } from './process/fichaProcessAdapter';
+// 🚀 NOVOS: Process adapters especializados (substituindo fichaProcessAdapter)
+export * from './process';
+
+// Notas Movimentacao Adapter - Para notas de movimentação
+export { notasMovimentacaoAdapter } from './process/notasMovimentacaoAdapter';
 
 // Reporting Query Adapter - Para consultas especializadas
 export { reportingQueryAdapter } from './reporting/reportingQueryAdapter';
+
+// Nuevos adapters para notas
+export { almoxarifadosAdapter } from './entity/almoxarifadosAdapter';
+export { tiposEpiAdapter } from './entity/tiposEpiAdapter';
+export { estoqueItensAdapter } from './entity/estoqueItensAdapter';
+
+// Imports para uso em getServiceAdapters
+import { almoxarifadosAdapter } from './entity/almoxarifadosAdapter';
+import { tiposEpiAdapter } from './entity/tiposEpiAdapter';
+import { estoqueItensAdapter } from './entity/estoqueItensAdapter';
+import { notasMovimentacaoAdapter } from './process/notasMovimentacaoAdapter';
 
 // Business Configuration Stores
 export { 
@@ -50,8 +64,13 @@ export function getServiceAdapters() {
     inventoryQuery: inventoryQueryAdapter,
     inventoryCommand: inventoryCommandAdapter,
     process: processLifecycleAdapter,
-    ficha: fichaProcessAdapter,
-    reporting: reportingQueryAdapter
+    // ficha: fichaProcessAdapter, // ✅ REMOVIDO: Usar novos adapters especializados
+    reporting: reportingQueryAdapter,
+    // Novos adapters para notas
+    notas: notasMovimentacaoAdapter,
+    almoxarifados: almoxarifadosAdapter,
+    tiposEpi: tiposEpiAdapter,
+    estoqueItens: estoqueItensAdapter
   };
 }
 
@@ -84,6 +103,13 @@ export function clearAllServiceCaches(): void {
     inventoryQueryAdapter.clearCache();
     inventoryCommandAdapter.clearCache();
     reportingQueryAdapter.clearCache();
+    
+    // Novos adapters para notas
+    almoxarifadosAdapter.clearCache();
+    tiposEpiAdapter.clearCache();
+    estoqueItensAdapter.clearCache();
+    // notasMovimentacaoAdapter não tem cache (adapter de processo)
+    
     console.log('🗑️ Cache de todos os services limpo');
   } catch (error) {
     console.warn('⚠️ Erro ao limpar cache dos services:', error);

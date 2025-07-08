@@ -2,8 +2,444 @@
 > datalife-epi-svelte@0.1.0 dev
 > vite dev
 
+Port 5175 is in use, trying another one...
 
-  VITE v5.4.19  ready in 755 ms
+  VITE v5.4.19  ready in 740 ms
 
-  ➜  Local:   http://localhost:5175/
-  ➜  Network: http://192.168.1.17:5175/
+  ➜  Local:   http://localhost:5176/
+  ➜  Network: http://192.168.1.17:5176/
+🚀 Inicializando aplicação - SSR mode
+6:36:55 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/containers/FichasContainer.svelte:20:11 FichasContainer has unused export property 'autoRefresh'. If it is for external reference only, please consider using `export const autoRefresh`
+6:36:55 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/containers/FichasContainer.svelte:21:11 FichasContainer has unused export property 'refreshInterval'. If it is for external reference only, please consider using `export const refreshInterval`
+6:37:00 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/CompanySelector.svelte:4:11 CompanySelector has unused export property 'headerType'. If it is for external reference only, please consider using `export const headerType`
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/ItemCard.svelte:12:0 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/ItemCard.svelte:12:0 A11y: <div> with click handler must have an ARIA role
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:01 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:37:03 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/containers/FichasContainer.svelte:20:11 FichasContainer has unused export property 'autoRefresh'. If it is for external reference only, please consider using `export const autoRefresh`
+6:37:03 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/containers/FichasContainer.svelte:21:11 FichasContainer has unused export property 'refreshInterval'. If it is for external reference only, please consider using `export const refreshInterval`
+6:37:03 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/CompanySelector.svelte:4:11 CompanySelector has unused export property 'headerType'. If it is for external reference only, please consider using `export const headerType`
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/ItemCard.svelte:12:0 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:37:04 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/common/ItemCard.svelte:12:0 A11y: <div> with click handler must have an ARIA role
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 200 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:38:40 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+6:38:40 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+6:38:40 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+6:38:40 PM [vite] page reload .svelte-kit/generated/client/app.js
+6:38:40 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+6:38:40 PM [vite] page reload .svelte-kit/generated/server/internal.js
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:38:49 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:40:54 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:49:22 PM [vite] hmr update /src/lib/components/presenters/DevolucaoModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:49:23 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:120:18 'ExclamationTriangleOutline' is not defined
+6:49:23 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:195:12 'ExclamationTriangleOutline' is not defined
+6:49:23 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:120:18 'ExclamationTriangleOutline' is not defined
+6:49:23 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:195:12 'ExclamationTriangleOutline' is not defined
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:49:29 PM [vite] hmr update /src/lib/components/presenters/DevolucaoModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:49:29 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:195:12 'ExclamationTriangleOutline' is not defined
+6:49:30 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/DevolucaoModalPresenter.svelte:195:12 'ExclamationTriangleOutline' is not defined
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:49:36 PM [vite] hmr update /src/lib/components/presenters/DevolucaoModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:49:42 PM [vite] hmr update /src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte, /src/app.css
+6:49:42 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:221:16 'ExclamationTriangleOutline' is not defined
+6:49:42 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:42 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+🚀 Inicializando aplicação - SSR mode
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:221:16 'ExclamationTriangleOutline' is not defined
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:221:16 'ExclamationTriangleOutline' is not defined
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:43 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:49:47 PM [vite] hmr update /src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte, /src/app.css
+6:49:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+🚀 Inicializando aplicação - SSR mode
+6:49:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:49:49 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:49:49 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/NovaEntregaDrawerPresenter.svelte:156:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:50:22 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+6:50:26 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+6:50:31 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+6:50:49 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+6:51:01 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:52:52 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+6:52:52 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+6:52:52 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+6:52:52 PM [vite] page reload .svelte-kit/generated/client/app.js
+6:52:52 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+6:52:52 PM [vite] page reload .svelte-kit/generated/server/internal.js
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:54:34 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:54:34 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:251:10 'SpinnerOutline' is not defined
+6:54:35 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:251:10 'SpinnerOutline' is not defined
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:54:40 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:54:47 PM [vite] hmr update /src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:54:47 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:348:14 'SpinnerOutline' is not defined
+6:54:47 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:54:47 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:54:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:348:14 'SpinnerOutline' is not defined
+6:54:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:54:48 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:54:53 PM [vite] hmr update /src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:54:53 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:54:53 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+6:54:54 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+6:54:54 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/EditarEntregaDrawerPresenter.svelte:132:2 A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.
+📡 Proxying: GET /api/health
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:55:39 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+6:55:39 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:143:12 'DeviceTabletOutline' is not defined
+6:55:39 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:172:12 'DocumentTextOutline' is not defined
+6:55:41 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:143:12 'DeviceTabletOutline' is not defined
+6:55:41 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:172:12 'DocumentTextOutline' is not defined
+📡 Proxying: GET /api/health
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 200 /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+6:55:45 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+6:55:45 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:172:12 'DocumentTextOutline' is not defined
+6:55:45 PM [vite-plugin-svelte] /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/presenters/AssinaturaModalPresenter.svelte:172:12 'DocumentTextOutline' is not defined
+6:55:50 PM [vite] hmr update /src/lib/components/presenters/AssinaturaModalPresenter.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/complete
+📡 Proxying: GET /api/estoque/posicao
+📡 Proxying: GET /api/usuarios
+✅ Proxy response: 200 /api/estoque/posicao
+✅ Proxy response: 200 /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/complete
+✅ Proxy response: 200 /api/usuarios
+📡 Proxying: GET /api/estoque/posicao
+✅ Proxy response: 200 /api/estoque/posicao
+📡 Proxying: GET /api/tipos-epi
+✅ Proxy response: 502 /api/tipos-epi
+📡 Proxying: GET /api/tipos-epi
+✅ Proxy response: 502 /api/tipos-epi
+📡 Proxying: GET /api/estoque/almoxarifados
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=100
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=100
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=10
+✅ Proxy response: 502 /api/estoque/almoxarifados
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=10
+📡 Proxying: GET /api/estoque/itens?limit=100
+📡 Proxying: GET /api/tipos-epi
+✅ Proxy response: 502 /api/tipos-epi
+✅ Proxy response: 502 /api/estoque/itens?limit=100
+📡 Proxying: GET /api/estoque/itens?limit=100
+✅ Proxy response: 200 /api/estoque/itens?limit=100
+🚀 Inicializando aplicação - SSR mode
+🚀 Inicializando aplicação - SSR mode
+ReferenceError: createAdvancedPaginatedStore is not defined
+    at /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/containers/CatalogContainer.svelte:37:24
+    at Object.$$render (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/node_modules/svelte/src/runtime/internal/ssr.js:134:16)
+    at eval (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/routes/catalogo/+page.svelte:11:105)
+    at Object.$$render (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/node_modules/svelte/src/runtime/internal/ssr.js:134:16)
+    at Object.default (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/.svelte-kit/generated/root.svelte:47:45)
+    at Object.default (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/routes/+layout.svelte:63:43)
+    at eval (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/lib/components/layout/MainLayout.svelte:169:351)
+    at Object.$$render (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/node_modules/svelte/src/runtime/internal/ssr.js:134:16)
+    at eval (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/src/routes/+layout.svelte:61:98)
+    at Object.$$render (/Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/node_modules/svelte/src/runtime/internal/ssr.js:134:16)
+📡 Proxying: GET /api/health
+✅ Proxy response: 502 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 502 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 502 /api/configuration
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 502 /api/configuration
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 502 /api/configuration
+📡 Proxying: GET /api/estoque/almoxarifados
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=100
+✅ Proxy response: 200 /api/estoque/almoxarifados
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=100
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=10
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=10
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=10&status=RASCUNHO
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=10&status=RASCUNHO
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=10&status=CONCLUIDA
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=10&status=CONCLUIDA
+📡 Proxying: GET /api/notas-movimentacao?page=1&limit=10&status=CANCELADA
+✅ Proxy response: 200 /api/notas-movimentacao?page=1&limit=10&status=CANCELADA
+🚀 Inicializando aplicação - SSR mode
+Not found: /apple-touch-icon-precomposed.png
+🚀 Inicializando aplicação - SSR mode
+Not found: /apple-touch-icon.png
+🚀 Inicializando aplicação - SSR mode
+Not found: /favicon.ico
+🚀 Inicializando aplicação - SSR mode
+Not found: /favicon.png
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/4.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/6.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/7.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/nodes/9.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/app.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+7:03:15 PM [vite] page reload .svelte-kit/generated/server/internal.js
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+✅ Proxy response: 200 /api/docs
+📡 Proxying: GET /api/configuration
+✅ Proxy response: 404 /api/configuration
+7:21:32 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:21:37 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:23:04 PM [vite] hmr update /src/lib/components/containers/NotesContainer.svelte, /src/app.css
+7:23:12 PM [vite] hmr update /src/lib/components/containers/NotesContainer.svelte, /src/app.css
+7:23:39 PM [vite] hmr update /src/lib/components/presenters/NotesTablePresenter.svelte, /src/app.css
+7:23:45 PM [vite] hmr update /src/lib/components/presenters/NotesTablePresenter.svelte, /src/app.css
+7:23:51 PM [vite] hmr update /src/lib/components/presenters/NotesTablePresenter.svelte, /src/app.css
+7:24:21 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/4.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/6.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/7.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/nodes/9.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/app.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+7:25:09 PM [vite] page reload .svelte-kit/generated/server/internal.js
+7:25:37 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:25:45 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:25:54 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:26:48 PM [vite] hmr update /src/lib/components/containers/InventoryContainer.svelte, /src/app.css
+7:26:54 PM [vite] page reload src/lib/services/inventory/inventoryCommandAdapter.ts
+7:27:05 PM [vite] page reload src/lib/services/inventory/inventoryCommandAdapter.ts
+7:33:23 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:34:25 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:36:21 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:36:38 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:36:45 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:36:53 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:37:03 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:37:20 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:37:39 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:37:59 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:38:08 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+7:38:20 PM [vite] hmr update /src/lib/components/presenters/NotesFormModalPresenter.svelte, /src/app.css
+📡 Proxying: GET /api/estoque/posicao
+✅ Proxy response: 200 /api/estoque/posicao
+7:40:42 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/4.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/6.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/7.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/nodes/9.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/app.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+7:40:43 PM [vite] page reload .svelte-kit/generated/server/internal.js
+7:40:55 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+7:41:06 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+🚀 Inicializando aplicação - SSR mode
+7:41:20 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/estoque/posicao
+✅ Proxy response: 200 /api/estoque/posicao
+📡 Proxying: GET /api/estoque/posicao
+✅ Proxy response: 200 /api/estoque/posicao
+7:41:41 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+7:41:48 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/estoque/posicao
+✅ Proxy response: 200 /api/estoque/posicao
+7:42:59 PM [vite] hmr update /src/lib/components/containers/FichaDetailContainer.svelte, /src/app.css
+7:44:48 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:46:04 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:46:23 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:46:39 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:46:56 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:47:04 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:47:17 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:47:26 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:47:40 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:47:51 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:48:06 PM [vite] page reload src/lib/services/process/notasMovimentacaoAdapter.ts
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/0.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/1.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/4.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/6.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/7.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/8.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/nodes/9.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/app.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/client/matchers.js
+7:48:27 PM [vite] page reload .svelte-kit/generated/server/internal.js
+📡 Proxying: GET /api/docs
+✅ Proxy response: 200 /api/docs
+7:50:23 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+7:50:35 PM [vite] hmr update /src/lib/components/containers/FichaDetailContainer.svelte, /src/app.css
+🚀 Inicializando aplicação - SSR mode
+📡 Proxying: GET /api/health
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 404 /api/health
+📡 Proxying: GET /api/docs
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/docs
+📡 Proxying: GET /api/configuration
+7:50:44 PM [vite] hmr update /src/lib/components/containers/FichaDetailContainer.svelte, /src/app.css
+✅ Proxy response: 404 /api/configuration
+7:50:53 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+📡 Proxying: GET /api/usuarios
+✅ Proxy response: 200 /api/usuarios
+📡 Proxying: POST /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/entregas
+✅ Proxy response: 400 /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/entregas
+📡 Proxying: GET /api/estoque/itens
+✅ Proxy response: 200 /api/estoque/itens
+7:51:36 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+7:51:47 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+7:52:02 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+7:52:12 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+7:52:20 PM [vite] hmr update /src/app.css, /src/lib/components/containers/FichasContainer.svelte, /src/lib/components/containers/FichaDetailContainer.svelte, /src/lib/components/containers/InventoryContainer.svelte
+📡 Proxying: GET /api/fichas-epi/list-enhanced
+✅ Proxy response: 304 /api/fichas-epi/list-enhanced
+📡 Proxying: POST /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/entregas
+✅ Proxy response: 201 /api/fichas-epi/88b49e49-5957-4cc4-8915-f547af0051d1/entregas
+🚀 Inicializando aplicação - SSR mode

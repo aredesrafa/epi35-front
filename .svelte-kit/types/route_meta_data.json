@@ -3,16 +3,10 @@
 		"src/routes/+layout.ts",
 		"src/routes/+layout.ts"
 	],
-	"/auditoria": [
-		"src/routes/+layout.ts"
-	],
 	"/catalogo": [
 		"src/routes/+layout.ts"
 	],
 	"/configuracoes": [
-		"src/routes/+layout.ts"
-	],
-	"/devolucoes": [
 		"src/routes/+layout.ts"
 	],
 	"/estoque": [
@@ -27,20 +21,7 @@
 	"/relatorios": [
 		"src/routes/+layout.ts"
 	],
-	"/relatorios/dashboard": [
-		"src/routes/relatorios/dashboard/+page.ts",
-		"src/routes/+layout.ts"
-	],
-	"/relatorios/descartes": [
-		"src/routes/relatorios/descartes/+page.ts",
-		"src/routes/+layout.ts"
-	],
-	"/relatorios/personalizados": [
-		"src/routes/relatorios/personalizados/+page.ts",
-		"src/routes/+layout.ts"
-	],
-	"/relatorios/saude": [
-		"src/routes/relatorios/saude/+page.ts",
+	"/relatorios/auditoria": [
 		"src/routes/+layout.ts"
 	]
 }

@@ -1,17 +1,28 @@
 <!--
-  Assinatura Modal Presenter - Componente "Burro"
+  Assinatura Drawer Presenter - Componente "Burro"
   
-  Modal para processar assinatura digital:
+  Drawer para processar assinatura digital:
   - Interface simples para confirmar assinatura
   - Placeholder para integração futura com assinatura digital
-  - Layout original preservado
+  - Layout convertido de modal para drawer
 -->
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Modal, Button, Label, Textarea } from 'flowbite-svelte';
-  import Icon from '$lib/components/common/Icon.svelte';
+  import { Button } from 'flowbite-svelte';
+  import { 
+    CloseOutline, 
+    CheckOutline, 
+    RefreshOutline,
+    CheckCircleOutline,
+    TabletOutline,
+    GlobeOutline,
+    QrCodeOutline,
+    FileLinesOutline,
+    PrinterOutline
+  } from 'flowbite-svelte-icons';
   import { formatarData } from '$lib/utils/dateHelpers';
+  import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
 
   // ==================== PROPS ====================
   
@@ -28,12 +39,11 @@
 
   // ==================== LOCAL STATE ====================
   
-  let observacoes = '';
   let assinaturaConfirmada = false;
 
   // ==================== LIFECYCLE ====================
   
-  // Reset when modal opens
+  // Reset when drawer opens
   $: if (show) {
     resetForm();
   }
@@ -41,7 +51,6 @@
   // ==================== FORM MANAGEMENT ====================
   
   function resetForm(): void {
-    observacoes = '';
     assinaturaConfirmada = false;
   }
 
@@ -72,26 +81,43 @@
   $: canConfirm = !loading && !assinaturaConfirmada;
 </script>
 
-<Modal
-  bind:open={show}
-  size="lg"
-  autoclose={false}
-  class="z-60"
->
-  <div class="p-6">
+{#if show}
+  <!-- Overlay -->
+  <div 
+    class="fixed inset-0 bg-black bg-opacity-50 z-[60] transition-opacity"
+    on:click={handleCancelar}
+    role="presentation"
+  ></div>
+
+  <!-- Drawer -->
+  <div 
+    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out"
+    on:click|stopPropagation
+    role="dialog"
+    aria-modal="true"
+  >
+    
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-        Confirmar Assinatura Digital
-      </h3>
-      <button
-        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        on:click={handleCancelar}
-        disabled={loading}
-      >
-        <Icon name="CloseOutline" size="w-5 h-5" />
-      </button>
-    </div>
+    <DrawerHeader 
+      title={entrega ? `Assinatura da Entrega #${entrega.id}` : 'Confirmar Assinatura Digital'}
+      objectType="ASSINATURA DIGITAL"
+      iconName="TabletOutline"
+      primaryAction={{
+        text: loading ? 'Processando...' : (assinaturaConfirmada ? 'Assinatura Confirmada' : 'Foi assinado'),
+        icon: loading ? '' : (assinaturaConfirmada ? 'CheckOutline' : 'CheckCircleOutline'),
+        disabled: !canConfirm
+      }}
+      secondaryAction={{
+        text: 'Cancelar',
+        disabled: loading
+      }}
+      on:close={handleCancelar}
+      on:primaryAction={confirmarAssinatura}
+      on:secondaryAction={handleCancelar}
+    />
+
+    <!-- Content -->
+    <div class="overflow-y-auto custom-scrollbar p-6" style="height: calc(100% - 80px);">
 
     {#if entrega}
       <!-- Informações da Entrega -->
@@ -141,27 +167,13 @@
         </div>
       </div>
 
-      <!-- Observações -->
-      <div class="mb-6">
-        <Label for="observacoes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Observações (opcional)
-        </Label>
-        <Textarea
-          id="observacoes"
-          placeholder="Adicione observações sobre a entrega..."
-          bind:value={observacoes}
-          rows={3}
-          class="rounded-sm"
-          disabled={loading}
-        />
-      </div>
 
       <!-- Opções de Assinatura -->
       <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Assinatura Digital -->
         <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div class="flex items-start">
-            <Icon name="DeviceTabletOutline" className="text-blue-600 dark:text-blue-400 mt-0.5 mr-3" size="w-5 h-5" />
+            <TabletOutline class="text-blue-600 dark:text-blue-400 mt-0.5 mr-3 w-5 h-5" />
             <div>
               <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
                 Assinatura Digital
@@ -171,12 +183,12 @@
               </p>
               <div class="mt-3 space-y-2">
                 <Button size="xs" color="primary" class="rounded-sm w-full">
-                  <Icon name="GlobeOutline" className="mr-2" size="w-3 h-3" />
+                  <GlobeOutline class="mr-2 w-3 h-3" />
                   Abrir Link de Assinatura
                 </Button>
                 <div class="flex items-center justify-center p-3 bg-white dark:bg-gray-700 rounded border">
                   <div class="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
-                    <Icon name="QrCodeOutline" className="text-gray-400" size="w-8 h-8" />
+                    <QrCodeOutline class="text-gray-400 w-8 h-8" />
                   </div>
                 </div>
                 <p class="text-xs text-blue-700 dark:text-blue-300 text-center">
@@ -190,7 +202,7 @@
         <!-- Assinatura Manual -->
         <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
           <div class="flex items-start">
-            <Icon name="DocumentTextOutline" className="text-green-600 dark:text-green-400 mt-0.5 mr-3" size="w-5 h-5" />
+            <FileLinesOutline class="text-green-600 dark:text-green-400 mt-0.5 mr-3 w-5 h-5" />
             <div>
               <h4 class="text-sm font-medium text-green-900 dark:text-green-100">
                 Assinatura Manual
@@ -200,7 +212,7 @@
               </p>
               <div class="mt-3 space-y-2">
                 <Button size="xs" color="alternative" class="rounded-sm w-full">
-                  <Icon name="PrinterOutline" className="mr-2" size="w-3 h-3" />
+                  <PrinterOutline class="mr-2 w-3 h-3" />
                   Imprimir Documento
                 </Button>
                 <p class="text-xs text-green-700 dark:text-green-300 text-center">
@@ -216,7 +228,7 @@
       {#if assinaturaConfirmada}
         <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
           <div class="flex items-center">
-            <Icon name="CheckCircleOutline" className="text-green-600 dark:text-green-400 mr-3" size="w-5 h-5" />
+            <CheckCircleOutline class="text-green-600 dark:text-green-400 mr-3 w-5 h-5" />
             <div>
               <h4 class="text-sm font-medium text-green-900 dark:text-green-100">
                 Assinatura Confirmada
@@ -229,56 +241,33 @@
         </div>
       {/if}
 
-      <!-- Termos -->
-      <div class="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-        <div class="flex items-start">
-          <Icon name="ExclamationTriangleOutline" className="text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3" size="w-5 h-5" />
-          <div>
-            <h4 class="text-sm font-medium text-yellow-900 dark:text-yellow-100">
-              Importante
-            </h4>
-            <p class="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
-              Ao assinar, você confirma o recebimento dos EPIs e se compromete a:
-            </p>
-            <ul class="text-sm text-yellow-800 dark:text-yellow-200 mt-2 ml-4 list-disc">
-              <li>Usar os equipamentos conforme as instruções</li>
-              <li>Manter os EPIs em bom estado de conservação</li>
-              <li>Devolver quando solicitado ou no fim do período</li>
-              <li>Comunicar imediatamente qualquer dano ou perda</li>
-            </ul>
-          </div>
-        </div>
-      </div>
 
     {/if}
 
-    <!-- Actions -->
-    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <Button
-        color="alternative"
-        class="rounded-sm"
-        on:click={handleCancelar}
-        disabled={loading}
-      >
-        Cancelar
-      </Button>
-      <Button
-        color="primary"
-        class="rounded-sm"
-        on:click={confirmarAssinatura}
-        disabled={!canConfirm}
-      >
-        {#if loading}
-          <Icon name="SpinnerOutline" className="mr-2 animate-spin" size="w-4 h-4" />
-          Processando Assinatura...
-        {:else if assinaturaConfirmada}
-          <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />
-          Assinatura Confirmada
-        {:else}
-          <Icon name="CheckCircleOutline" className="mr-2" size="w-4 h-4" />
-          Foi assinado
-        {/if}
-      </Button>
     </div>
   </div>
-</Modal>
+{/if}
+
+<style>
+  /* Scrollbar customization */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  :global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    background-clip: content-box;
+  }
+</style>

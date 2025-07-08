@@ -22,17 +22,18 @@
     TipoNotaEnum,
     StatusNotaEnum,
     NotasFilterOptions
-  } from '$lib/services/process/notasMovimentacaoAdapter';
+  } from '$lib/services/process/notasMovimentacaoTypes';
   import { createPaginatedStore } from '$lib/stores/paginatedStore';
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
   import NotesTablePresenter from '$lib/components/presenters/NotesTablePresenter.svelte';
   import NotesFormModalPresenter from '$lib/components/presenters/NotesFormModalPresenter.svelte';
+  import BackendStatusIndicator from '$lib/components/common/BackendStatusIndicator.svelte';
+  import { getTipoNotaLabel } from '$lib/utils/notasHelpers';
 
   // ==================== PROPS ====================
   
   export let initialPageSize = 20;
-  export let autoRefresh = false;
 
   // ==================== EVENT DISPATCHER ====================
   
@@ -44,21 +45,18 @@
     notaCancelada: string;
   }>();
 
-  // ==================== ENHANCED STORE ====================
+  // ==================== PAGINATED STORE ====================
   
-  // Enhanced store para notas com paginação server-side e cache
-  const notesStore = createEnhancedPaginatedStore<NotaMovimentacao>({
-    baseEndpoint: '/notas-movimentacao',
-    defaultPageSize: initialPageSize,
-    debounceDelay: 300,
-    cacheTimeout: 3 * 60 * 1000, // 3 minutos
-    autoRefresh,
-    refreshInterval: autoRefresh ? 30000 : undefined,
-    // Função customizada de fetch usando o adapter
-    customFetch: async (params: any) => {
-      return notasMovimentacaoAdapter.listarNotas(params as NotasMovimentacaoFilterParams);
+  // Store para notas com paginação server-side
+  const notesStore = createPaginatedStore<NotaMovimentacao>(
+    (params) => notasMovimentacaoAdapter.listarNotas(params as NotasMovimentacaoFilterParams),
+    {
+      initialPageSize: initialPageSize,
+      enableCache: true,
+      cacheTimeout: 3 * 60 * 1000, // 3 minutos
+      debounceDelay: 300
     }
-  });
+  );
 
   // ==================== STATE ====================
   
@@ -72,7 +70,7 @@
   let dataFimFilter = '';
 
   // Tab state
-  let activeTab = 0; // 0 = Todas, 1 = Rascunhos, 2 = Concluídas, 3 = Canceladas
+  let activeTab = 0; // 0 = Concluídas, 1 = Rascunhos, 2 = Canceladas
 
   // Modal state
   let showNotaModal = false;
@@ -80,6 +78,9 @@
   let modalTipo: TipoNotaEnum = 'ENTRADA';
   let selectedNota: NotaMovimentacao | null = null;
   let notaFormLoading = false;
+
+  // Backend status
+  let usingFallbackData = false;
 
   // Filter options (carregadas dinamicamente)
   let filterOptions: NotasFilterOptions = {
@@ -92,7 +93,7 @@
   // ==================== LIFECYCLE ====================
   
   onMount(async () => {
-    console.log('📋 NotesContainer: Inicializando com Enhanced Store...');
+    console.log('📋 NotesContainer: Inicializando...');
     
     // Aguardar configurações de negócio
     await businessConfigStore.initialize();
@@ -100,14 +101,14 @@
     // Carregar opções de filtros
     await loadFilterOptions();
     
-    // Inicializar enhanced store (carrega dados automaticamente)
-    await notesStore.initialize();
+    // Aplicar filtros iniciais (tab Concluídas = status CONCLUIDA)
+    applyFiltersToStore();
     
-    console.log('✅ NotesContainer: Inicializado com Enhanced Store');
+    console.log('✅ NotesContainer: Inicializado');
   });
 
   onDestroy(() => {
-    notesStore.destroy();
+    // Cleanup se necessário
   });
 
   // ==================== DATA LOADING ====================
@@ -128,11 +129,18 @@
         tipos: options.tipos,
         status: [
           { value: 'todos', label: 'Todos os Status' },
-          ...options.status.map(s => ({ value: s.value, label: s.label }))
+          ...options.status.map(s => ({ value: s.value as StatusNotaEnum, label: s.label }))
         ]
       };
     } catch (error) {
       console.error('Erro ao carregar opções de filtros:', error);
+      
+      // Detectar se estamos usando dados de fallback
+      if (error.message?.includes('Backend pode estar iniciando') || 
+          error.message?.includes('timeout') ||
+          error.message?.includes('fallback')) {
+        usingFallbackData = true;
+      }
     }
   }
 
@@ -152,19 +160,17 @@
 
     // Aplicar filtro de status baseado na aba ativa
     switch (activeTab) {
+      case 0: // Concluídas (padrão)
+        filters.status = 'CONCLUIDA';
+        break;
       case 1: // Rascunhos
         filters.status = 'RASCUNHO';
         break;
-      case 2: // Concluídas
-        filters.status = 'CONCLUIDA';
-        break;
-      case 3: // Canceladas
+      case 2: // Canceladas
         filters.status = 'CANCELADA';
         break;
-      default: // Todas
-        if (statusFilter !== 'todos') {
-          filters.status = statusFilter;
-        }
+      default: // Fallback para concluídas
+        filters.status = 'CONCLUIDA';
         break;
     }
 
@@ -177,6 +183,8 @@
       filters.almoxarifado_id = almoxarifadoFilter;
     }
 
+    console.log('🔍 BuildFilters: activeTab =', activeTab, ', status filter =', filters.status);
+    
     return filters;
   }
 
@@ -191,7 +199,7 @@
   
   function handleSearchChange(value: string): void {
     searchTerm = value;
-    notesStore.search(value);
+    notesStore.setSearch(value);
   }
 
   function handleTipoFilterChange(value: string): void {
@@ -232,13 +240,13 @@
     almoxarifadoFilter = 'todos';
     dataInicioFilter = '';
     dataFimFilter = '';
-    activeTab = 0;
-    notesStore.clearFilters();
+    activeTab = 0; // Volta para Concluídas
+    applyFiltersToStore();
   }
 
   function applyFiltersToStore(): void {
     const filters = buildFilters();
-    notesStore.applyFilters(filters);
+    notesStore.setFilters(filters);
   }
 
   // ==================== PAGINATION HANDLERS ====================
@@ -248,7 +256,7 @@
   }
 
   function handlePageSizeChange(pageSize: number): void {
-    notesStore.loadData({ limit: pageSize, page: 1 });
+    notesStore.fetchPage({ limit: pageSize, page: 1 });
   }
 
   // ==================== NOTA CRUD HANDLERS ====================
@@ -260,25 +268,71 @@
     showNotaModal = true;
   }
 
-  function handleEditarNota(nota: NotaMovimentacao): void {
-    selectedNota = nota;
-    modalMode = 'edit';
-    modalTipo = nota.tipo_nota;
-    showNotaModal = true;
+  async function handleEditarNota(nota: NotaMovimentacao): Promise<void> {
+    try {
+      console.log('✏️ Carregando dados completos da nota para edição:', nota.id);
+      
+      // Buscar dados completos da nota (incluindo itens) usando endpoint GET /:id
+      const notaCompleta = await notasMovimentacaoAdapter.obterNota(nota.id);
+      
+      selectedNota = notaCompleta;
+      modalMode = 'edit';
+      modalTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
+      showNotaModal = true;
+      
+      console.log('✅ Dados completos carregados para edição:', {
+        id: notaCompleta.id,
+        itens: notaCompleta.itens?.length || 0,
+        status: notaCompleta.status
+      });
+    } catch (error) {
+      console.error('❌ Erro ao carregar dados completos da nota:', error);
+      
+      // Fallback para dados básicos (do resumo)
+      selectedNota = nota;
+      modalMode = 'edit';
+      modalTipo = nota.tipo;
+      showNotaModal = true;
+      
+      notify.warning('Aviso', 'Alguns detalhes podem não estar disponíveis');
+    }
   }
 
-  function handleVisualizarNota(nota: NotaMovimentacao): void {
-    selectedNota = nota;
-    modalMode = 'view';
-    modalTipo = nota.tipo_nota;
-    showNotaModal = true;
+  async function handleVisualizarNota(nota: NotaMovimentacao): Promise<void> {
+    try {
+      console.log('👁️ Carregando dados completos da nota para visualização:', nota.id);
+      
+      // Buscar dados completos da nota (incluindo itens) usando endpoint GET /:id
+      const notaCompleta = await notasMovimentacaoAdapter.obterNota(nota.id);
+      
+      selectedNota = notaCompleta;
+      modalMode = 'view';
+      modalTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
+      showNotaModal = true;
+      
+      console.log('✅ Dados completos carregados:', {
+        id: notaCompleta.id,
+        itens: notaCompleta.itens?.length || 0,
+        status: notaCompleta.status
+      });
+    } catch (error) {
+      console.error('❌ Erro ao carregar dados completos da nota:', error);
+      
+      // Fallback para dados básicos (do resumo)
+      selectedNota = nota;
+      modalMode = 'view';
+      modalTipo = nota.tipo;
+      showNotaModal = true;
+      
+      notify.warning('Aviso', 'Alguns detalhes podem não estar disponíveis');
+    }
   }
 
   async function handleExcluirNota(nota: NotaMovimentacao): Promise<void> {
     try {
       await notasMovimentacaoAdapter.excluirNota(nota.id);
       
-      notify.success('Nota removida', `Nota ${nota.numero_documento || nota.id.slice(0, 8)} foi removida`);
+      notify.success('Nota removida', `Nota ${nota.numero || nota.id.slice(0, 8)} foi removida`);
       
       // Recarregar dados usando enhanced store
       notesStore.reload();
@@ -293,11 +347,44 @@
 
   async function handleConcluirNota(nota: NotaMovimentacao): Promise<void> {
     try {
+      // Validação usando o método local melhorado (sem fazer chamada 404)
+      const validacao = await notasMovimentacaoAdapter.validarNotaAntesConcluir(nota.id);
+      
+      if (!validacao.pode_concluir) {
+        notify.error('Não é possível concluir', validacao.erros.join(', '));
+        return;
+      }
+      
+      console.log('✅ Validação local passou, prosseguindo com conclusão...');
+      
       const response = await notasMovimentacaoAdapter.concluirNota(nota.id);
+      
+      // Verificar se realmente foi concluída
+      console.log('📋 Resposta da conclusão:', response);
+      
+      // Parse response data safely
+      const responseData = response.data || response;
+      const movimentacoes = responseData.movimentacoesCriadas?.length || 
+                           responseData.data?.movimentacoesCriadas?.length ||
+                           responseData.movimentacoes_criadas ||
+                           'N/A';
+      
+      // Verificar status após conclusão
+      try {
+        const notaAtualizada = await notasMovimentacaoAdapter.obterNota(nota.id);
+        if (notaAtualizada.status !== 'CONCLUIDA' && notaAtualizada._status !== 'CONCLUIDA') {
+          throw new Error('Nota não foi concluída no backend');
+        }
+        console.log('✅ Confirmado: Nota foi concluída no backend');
+      } catch (verificationError) {
+        console.error('❌ Erro na verificação pós-conclusão:', verificationError);
+        notify.error('Erro na conclusão', 'Nota pode não ter sido concluída corretamente');
+        return;
+      }
       
       notify.success(
         'Nota concluída', 
-        `Nota concluída com ${response.data.movimentacoes_criadas} movimentações criadas`
+        `Nota concluída com sucesso! ${movimentacoes !== 'N/A' && movimentacoes !== 0 ? `${movimentacoes} movimentações criadas` : 'Verificar movimentações no backend'}`
       );
       
       // Recarregar dados
@@ -323,7 +410,7 @@
 
       await notasMovimentacaoAdapter.cancelarNota(nota.id);
       
-      notify.success('Nota cancelada', `Nota ${nota.numero_documento || nota.id.slice(0, 8)} foi cancelada`);
+      notify.success('Nota cancelada', `Nota ${nota.numero || nota.id.slice(0, 8)} foi cancelada`);
       
       // Recarregar dados
       notesStore.reload();
@@ -338,24 +425,15 @@
 
   // ==================== FORM MODAL HANDLERS ====================
   
-  async function handleFormSave(formData: CriarNotaMovimentacaoRequest): Promise<void> {
+  async function handleFormSave(event: CustomEvent<{ notaId: string; modo: 'rascunho' | 'concluida' }>): Promise<void> {
     notaFormLoading = true;
     
     try {
-      let result: NotaMovimentacao;
+      const { notaId, modo } = event.detail;
       
-      if (modalMode === 'create') {
-        const createResponse = await notasMovimentacaoAdapter.criarNota(formData);
-        // Buscar a nota criada para obter dados completos
-        result = await notasMovimentacaoAdapter.obterNota(createResponse.data.id);
-        
-        notify.success('Nota criada', `Nota ${createResponse.data.numero} foi criada`);
-        dispatch('notaCreated', result);
-      } else {
-        result = await notasMovimentacaoAdapter.atualizarNota(selectedNota!.id, formData);
-        
-        notify.success('Nota atualizada', `Nota foi atualizada`);
-        dispatch('notaUpdated', result);
+      if (modo === 'concluida') {
+        // Se for para concluir, processar a nota
+        await handleConcluirNota({ id: notaId } as NotaMovimentacao);
       }
       
       // Recarregar dados usando enhanced store
@@ -367,6 +445,19 @@
       // Fechar modal
       showNotaModal = false;
       selectedNota = null;
+      
+      const mensagem = modo === 'rascunho' ? 'Rascunho salvo com sucesso' : 'Nota concluída com sucesso';
+      notify.success('Sucesso', mensagem);
+      
+      // Emitir eventos apropriados
+      if (modo === 'rascunho') {
+        const notaAtualizada = await notasMovimentacaoAdapter.obterNota(notaId);
+        if (modalMode === 'create') {
+          dispatch('notaCreated', notaAtualizada);
+        } else {
+          dispatch('notaUpdated', notaAtualizada);
+        }
+      }
       
     } catch (error) {
       console.error('Erro ao salvar nota:', error);
@@ -390,26 +481,32 @@
     responsavelFilter !== 'todos' ||
     almoxarifadoFilter !== 'todos' ||
     dataInicioFilter !== '' ||
-    dataFimFilter !== '' ||
-    activeTab !== 0;
+    dataFimFilter !== '';
 
-  $: modalTitle = modalMode === 'create' ? `Nova Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}` : 
-    modalMode === 'edit' ? `Editar Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}` : 
-    `Visualizar Nota - ${notasMovimentacaoAdapter.getTipoNotaLabel(modalTipo)}`;
+  $: modalTitle = modalMode === 'create' ? `Nova Nota - ${getTipoNotaLabel(modalTipo)}` : 
+    modalMode === 'edit' ? `Editar Nota - ${getTipoNotaLabel(modalTipo)}` : 
+    `Visualizar Nota - ${getTipoNotaLabel(modalTipo)}`;
 
   // ==================== PRESENTER PROPS ====================
   
+  $: {
+    // Detectar dados de fallback verificando IDs de fallback
+    if ($notesStore.items.some(item => item.id.startsWith('fallback-'))) {
+      usingFallbackData = true;
+    }
+  }
+
   $: presentationData = {
     items: $notesStore.items,
     loading: $notesStore.loading,
     error: $notesStore.error,
     pagination: {
-      currentPage: $notesStore.pagination.page,
-      totalPages: $notesStore.pagination.totalPages,
-      pageSize: $notesStore.pagination.limit,
-      total: $notesStore.pagination.total,
-      hasNext: $notesStore.pagination.hasNextPage,
-      hasPrev: $notesStore.pagination.hasPreviousPage
+      currentPage: $notesStore.page,
+      totalPages: $notesStore.totalPages,
+      pageSize: $notesStore.pageSize,
+      total: $notesStore.total,
+      hasNext: notesStore.hasNext(),
+      hasPrev: notesStore.hasPrev()
     },
     filters: {
       searchTerm,
@@ -425,6 +522,9 @@
     filterOptions
   };
 </script>
+
+<!-- Backend Status Indicator -->
+<BackendStatusIndicator visible={usingFallbackData} />
 
 <!-- Usar presenter com dados do enhanced store -->
 <NotesTablePresenter
@@ -448,14 +548,14 @@
   on:novaNotaEntrada={() => handleNovaNota('ENTRADA')}
   on:novaNotaTransferencia={() => handleNovaNota('TRANSFERENCIA')}
   on:novaNotaDescarte={() => handleNovaNota('DESCARTE')}
-  on:editarNota={(e) => handleEditarNota(e.detail)}
-  on:visualizarNota={(e) => handleVisualizarNota(e.detail)}
+  on:editarNota={(e) => { handleEditarNota(e.detail); }}
+  on:visualizarNota={(e) => { handleVisualizarNota(e.detail); }}
   on:excluirNota={(e) => handleExcluirNota(e.detail)}
   on:concluirNota={(e) => handleConcluirNota(e.detail)}
   on:cancelarNota={(e) => handleCancelarNota(e.detail)}
 />
 
-<!-- Modal de Formulário Nota -->
+<!-- Modal de Formulário Nota Dual -->
 <NotesFormModalPresenter
   show={showNotaModal}
   mode={modalMode}
@@ -463,6 +563,6 @@
   title={modalTitle}
   nota={selectedNota}
   loading={notaFormLoading}
-  on:salvar={(e) => handleFormSave(e.detail)}
+  on:salvar={handleFormSave}
   on:cancelar={handleFormCancel}
 />

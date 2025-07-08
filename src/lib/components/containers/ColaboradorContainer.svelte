@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { createEnhancedPaginatedStore } from '$lib/stores/paginatedStore';
+  import { createAdvancedPaginatedStore } from '$lib/stores/paginatedStore';
   import ColaboradorTablePresenter from '$lib/components/presenters/ColaboradorTablePresenter.svelte';
   import { notify } from '$lib/stores';
   import type { ColaboradorDTO, ContratadaDTO } from '$lib/types/serviceTypes';
@@ -20,7 +20,7 @@
   // ==================== ENHANCED PAGINATED STORE ====================
   
   // ✅ Enhanced Store conectado ao endpoint de colaboradores
-  const colaboradorStore = createEnhancedPaginatedStore<ColaboradorDTO>({
+  const colaboradorStore = createAdvancedPaginatedStore<ColaboradorDTO>({
     baseEndpoint: '/colaboradores',
     defaultPageSize: initialPageSize,
     debounceDelay: 300,

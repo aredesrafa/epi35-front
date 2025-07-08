@@ -11,7 +11,8 @@
 
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { fichaProcessAdapter } from '$lib/services/process/fichaProcessAdapter';
+  // 🚀 MIGRADO: Usar novo adapter de consultas
+  import { fichaQueryAdapter } from '$lib/services/process';
   import { createPaginatedStore } from '$lib/stores/paginatedStore';
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
@@ -27,9 +28,9 @@
 
   // ==================== ENHANCED STORE ====================
   
-  // Store paginado usando o service adapter para transformação correta dos dados
+  // 🚀 MIGRADO: Store paginado usando método transitório do novo adapter
   const fichasStore = createPaginatedStore(
-    (params) => fichaProcessAdapter.getFichasWithColaboradores({
+    (params) => fichaQueryAdapter.getFichasWithColaboradores({
       page: params.page || 1,
       limit: params.limit || initialPageSize,
       searchTerm: params.search || undefined,
@@ -83,7 +84,6 @@
   let filters = {
     empresa: 'todas',
     cargo: 'todos', 
-    status: 'todos',
     devolucaoPendente: false
   };
   let searchTerm = '';
@@ -103,10 +103,6 @@
     applyFilters();
   }
 
-  function handleStatusFilterChange(value: string): void {
-    filters = { ...filters, status: value };
-    applyFilters();
-  }
 
   function handleDevolucaoPendenteChange(checked: boolean): void {
     filters = { ...filters, devolucaoPendente: checked };
@@ -115,7 +111,7 @@
 
   function handleClearFilters(): void {
     searchTerm = '';
-    filters = { empresa: 'todas', cargo: 'todos', status: 'todos', devolucaoPendente: false };
+    filters = { empresa: 'todas', cargo: 'todos', devolucaoPendente: false };
     applyFilters();
   }
 
@@ -139,9 +135,6 @@
       activeFilters.cargo = filters.cargo;
     }
 
-    if (filters.status && filters.status !== 'todos') {
-      activeFilters.status = filters.status;
-    }
 
     if (filters.devolucaoPendente) {
       activeFilters.devolucaoPendente = true;
@@ -201,19 +194,11 @@
     // TODO: Carregar dinamicamente do backend
   ];
 
-  $: statusOptions = [
-    { value: 'todos', label: 'Todos os Status' },
-    { value: 'ativa', label: 'Ativa' },
-    { value: 'vencida', label: 'Vencida' },
-    { value: 'pendente_devolucao', label: 'Pendente Devolução' },
-    { value: 'inativa', label: 'Inativa' }
-  ];
 
   // Verificar se há filtros ativos
   $: hasActiveFilters = searchTerm !== '' || 
     filters.empresa !== 'todas' || 
     filters.cargo !== 'todos' ||
-    filters.status !== 'todos' ||
     filters.devolucaoPendente;
   
   // ==================== PRESENTER PROPS ====================
@@ -234,14 +219,12 @@
       searchTerm,
       empresaFilter: filters.empresa,
       cargoFilter: filters.cargo,
-      statusFilter: filters.status,
       devolucaoPendente: filters.devolucaoPendente,
       hasActiveFilters
     },
     filterOptions: {
       empresas: empresaOptions,
-      cargos: cargoOptions,
-      status: statusOptions
+      cargos: cargoOptions
     }
   };
 </script>
@@ -257,7 +240,6 @@
   on:searchChange={(e) => handleSearchChange(e.detail)}
   on:empresaFilterChange={(e) => handleEmpresaFilterChange(e.detail)}
   on:cargoFilterChange={(e) => handleCargoFilterChange(e.detail)}
-  on:statusFilterChange={(e) => handleStatusFilterChange(e.detail)}
   on:devolucaoPendenteChange={(e) => handleDevolucaoPendenteChange(e.detail)}
   on:clearFilters={handleClearFilters}
   on:pageChange={(e) => handlePageChange(e.detail)}

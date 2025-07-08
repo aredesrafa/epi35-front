@@ -27,7 +27,7 @@
   export let pagination: PaginationState;
   export let filters: FilterState = {};
   export let embedded = false; // Para uso em tabs
-  export let showNovaContratadaModal = false;
+  export const showNovaContratadaModal = false;
   export let showEditarContratadaModal = false;
   export let contratadaEdicao: ContratadaDTO | null = null;
   
@@ -83,7 +83,7 @@
   // ==================== REACTIVE STATEMENTS ====================
   
   // Resetar form quando modal abre
-  $: if (showNovaContratadaModal && !contratadaEdicao) {
+  $: if (showEditarContratadaModal && !contratadaEdicao) {
     formData = {
       nome: '',
       cnpj: '',
@@ -464,7 +464,6 @@
 
 <!-- Modal: Nova/Editar Contratada -->
 <Modal 
-  bind:open={showNovaContratadaModal}
   bind:open={showEditarContratadaModal}
   size="md"
   title={contratadaEdicao ? 'Editar Contratada' : 'Nova Contratada'}

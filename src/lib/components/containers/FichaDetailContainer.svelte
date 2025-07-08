@@ -10,15 +10,28 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { fichaProcessAdapter } from '$lib/services/process/fichaProcessAdapter';
+  // 🚀 NOVO: Usar adapters especializados
+  import { 
+    fichaQueryAdapter,
+    deliveryProcessAdapter,
+    returnProcessAdapter,
+    UIMappingHelpers
+  } from '$lib/services/process';
   import { notify } from '$lib/stores';
   import { fichaDataStore } from '$lib/stores/fichaDataStore';
   import FichaDetailPresenter from '../presenters/FichaDetailPresenter.svelte';
   import type { 
-    FichaDetailData,
+    FichaCompleteResponse,
+    CreateDeliveryPayload,
+    ReturnBatchPayload,
+    ConfirmSignaturePayload,
+    CancelDeliveryPayload
+  } from '$lib/services/process';
+  // Imports dos novos adapters
+  import type { 
     NovaEntregaFormData,
     EPIDisponivel
-  } from '$lib/services/process/fichaProcessAdapter';
+  } from '$lib/services/process';
   import type {
     EquipamentoEmPosseItem
   } from '$lib/types/serviceTypes';
@@ -27,6 +40,11 @@
   
   export let open = false;
   export let fichaId: string | null = null;
+  
+  // Debug - monitorar mudanças no estado open
+  $: if (open && fichaId) {
+    console.log('🎯 FichaDetailContainer: Estado open mudou para true, fichaId:', fichaId);
+  }
   
   // ==================== EVENT DISPATCHER ====================
   
@@ -37,19 +55,19 @@
   
   // ==================== STATE MANAGEMENT ====================
   
-  // Estado principal dos dados (reativo ao store)
-  let fichaData: FichaDetailData | null = null;
+  // 🚀 MUDANÇA: Estado usando dados pré-processados
+  let fichaCompleteData: FichaCompleteResponse | null = null;
   let episDisponiveis: EPIDisponivel[] = [];
   let usuarios: Array<{id: string; nome: string; email: string;}> = [];
   let loading = true;
   let error: string | null = null;
   
-  // ✅ NOVO: Reatividade ao store de fichas
+  // 🚀 ATUALIZADO: Reatividade ao store de fichas com dados completos
   $: if (fichaId && $fichaDataStore.has(fichaId)) {
     const cachedData = $fichaDataStore.get(fichaId);
-    if (cachedData && fichaData !== cachedData) {
-      fichaData = cachedData;
-      console.log('🔄 Dados atualizados via store reativo:', fichaId);
+    if (cachedData && fichaCompleteData !== cachedData) {
+      fichaCompleteData = cachedData;
+      console.log('🔄 Dados completos atualizados via store reativo:', fichaId);
     }
   }
   
@@ -92,7 +110,7 @@
   // ==================== DATA LOADING ====================
   
   /**
-   * Carrega dados completos da ficha
+   * 🚀 SIMPLIFICADO: Carrega dados completos pré-processados da ficha
    */
   async function loadFichaData(): Promise<void> {
     if (!fichaId) return;
@@ -102,12 +120,16 @@
     lastFichaId = fichaId;
     
     try {
-      console.log('📋 Carregando dados da ficha:', fichaId);
+      console.log('📋 FichaDetailContainer: Carregando ficha completa:', fichaId);
       
-      // Usar service adapter para buscar dados
-      fichaData = await fichaProcessAdapter.getFichaDetailData(fichaId);
+      // ✅ NOVA ARQUITETURA: 1 call ao invés de 3-5 calls
+      fichaCompleteData = await fichaQueryAdapter.getFichaComplete(fichaId);
       
-      console.log('✅ Dados da ficha carregados:', fichaData);
+      console.log('✅ Dados da ficha carregados');
+      console.log('🔍 Equipamentos em posse:', fichaCompleteData?.data?.equipamentosEmPosse?.length || 0);
+      console.log('🔄 Devoluções:', fichaCompleteData?.data?.devolucoes?.length || 0);
+      console.log('🚚 Entregas:', fichaCompleteData?.data?.entregas?.length || 0);
+      console.log('📝 Histórico:', fichaCompleteData?.data?.historico?.length || 0);
       
     } catch (err) {
       console.error('❌ Erro ao carregar ficha:', err);
@@ -119,30 +141,47 @@
   }
   
   /**
-   * Carrega EPIs disponíveis para entregas
+   * 🚀 MIGRADO: Carrega EPIs disponíveis para entregas
    */
   async function loadEPIsDisponiveis(): Promise<void> {
     try {
-      console.log('🚀 Iniciando carregamento de EPIs disponíveis...');
-      episDisponiveis = await fichaProcessAdapter.getEPIsDisponiveis();
-      console.log('📦 EPIs disponíveis carregados no container:', episDisponiveis.length);
-      console.log('📋 Dados dos EPIs:', episDisponiveis);
+      console.log('🚀 FichaDetailContainer: Carregando EPIs disponíveis...');
+      // ✅ NOVA ARQUITETURA: Usar fichaQueryAdapter para consultas
+      episDisponiveis = await fichaQueryAdapter.getEPIsDisponiveis();
+      console.log('📦 EPIs disponíveis carregados:', episDisponiveis.length);
+      console.log('📦 Estrutura dos EPIs:', episDisponiveis.slice(0, 2));
+      
+      // ✨ LOG ADICIONAL: Verificar se algum EPI tem estoque
+      const episComEstoque = episDisponiveis.filter(epi => epi.disponivel && epi.quantidadeDisponivel > 0);
+      console.log('🎯 EPIs com estoque disponível:', episComEstoque.length);
+      if (episComEstoque.length === 0) {
+        console.warn('⚠️ ATENÇÃO: Nenhum EPI com estoque disponível encontrado!');
+        console.log('🔍 EPIs sem estoque:', episDisponiveis.map(epi => ({
+          nome: epi.nomeEquipamento,
+          quantidade: epi.quantidadeDisponivel,
+          disponivel: epi.disponivel
+        })));
+      }
+      
     } catch (err) {
       console.error('❌ Erro ao carregar EPIs disponíveis:', err);
+      throw err; // SEM FALLBACK - erro deve ser visível
     }
   }
 
   /**
-   * Carrega usuários disponíveis para responsável da entrega
+   * 🚀 MIGRADO: Carrega usuários disponíveis para responsável da entrega
    */
   async function loadUsuarios(): Promise<void> {
     try {
-      console.log('👤 Iniciando carregamento de usuários...');
-      usuarios = await fichaProcessAdapter.getUsuarios();
-      console.log('👥 Usuários carregados no container:', usuarios.length);
-      console.log('📋 Dados dos usuários:', usuarios.map(u => `${u.id} - ${u.nome} (${u.email})`));
+      console.log('👤 FichaDetailContainer: Carregando usuários...');
+      // ✅ NOVA ARQUITETURA: Usar fichaQueryAdapter para consultas
+      usuarios = await fichaQueryAdapter.getUsuarios();
+      console.log('👥 Usuários carregados:', usuarios?.length);
+      console.log('👥 Estrutura dos usuários:', usuarios?.slice(0, 2));
     } catch (err) {
       console.error('❌ Erro ao carregar usuários:', err);
+      throw err; // SEM FALLBACK - erro deve ser visível
     }
   }
   
@@ -156,7 +195,7 @@
     lastFichaId = null;
     
     // Reset state
-    fichaData = null;
+    fichaCompleteData = null;
     error = null;
     
     // Fechar modals/drawers aninhados
@@ -174,18 +213,21 @@
    */
   async function handleNovaEntrega(): Promise<void> {
     console.log('➕ Abrindo formulário de nova entrega');
+    console.log('📦 Estado atual dos EPIs:', episDisponiveis.length, 'EPIs carregados');
     
     // Garantir que EPIs estão carregados antes de abrir o drawer
     if (episDisponiveis.length === 0) {
       console.log('🔄 EPIs não carregados, carregando agora...');
       await loadEPIsDisponiveis();
+      console.log('📦 Após recarregar:', episDisponiveis.length, 'EPIs disponíveis');
     }
     
+    console.log('📦 EPIs que serão passados para o drawer:', episDisponiveis);
     showNovaEntregaDrawer = true;
   }
   
   /**
-   * Handler para salvar nova entrega
+   * 🚀 MIGRADO: Handler para salvar nova entrega
    */
   async function handleSalvarNovaEntrega(event: CustomEvent<NovaEntregaFormData>): Promise<void> {
     if (!fichaId) return;
@@ -193,10 +235,37 @@
     entregaLoading = true;
     
     try {
-      console.log('💾 Salvando nova entrega:', event.detail);
+      console.log('💾 FichaDetailContainer: Criando nova entrega...');
+      console.log('🔍 Responsável ID:', event.detail.usuarioResponsavelId);
+      console.log('🔍 Quantidade de itens:', event.detail.itens?.length || 0);
       
-      // Usar service adapter para criar entrega
-      const novaEntrega = await fichaProcessAdapter.criarNovaEntrega(fichaId, event.detail);
+      // Validar dados essenciais antes de criar o payload
+      if (!event.detail.usuarioResponsavelId) {
+        throw new Error('usuarioResponsavelId é obrigatório');
+      }
+      
+      if (!event.detail.itens || event.detail.itens.length === 0) {
+        throw new Error('Pelo menos um item deve ser selecionado');
+      }
+      
+      // ✅ NOVA ARQUITETURA: Usar deliveryProcessAdapter para operações de entrega
+      const payload: CreateDeliveryPayload = {
+        fichaEpiId: fichaId,
+        responsavelId: event.detail.usuarioResponsavelId, // Nome do campo correto
+        itens: event.detail.itens.map(item => {
+          // Encontrar o EPI correspondente para pegar o estoqueItemId correto
+          const epiCorrespondente = episDisponiveis.find(epi => epi.episDisponivelId === item.episDisponivelId);
+          return {
+            estoqueItemId: epiCorrespondente?.estoqueItemId || item.episDisponivelId, // Usar estoqueItemId se disponível
+            quantidade: item.quantidade
+          };
+        }),
+        observacoes: event.detail.observacoes || ''
+      };
+      
+      console.log('📋 Payload da entrega:', payload);
+      
+      const novaEntrega = await deliveryProcessAdapter.createDelivery(payload);
       
       // Fechar drawer
       showNovaEntregaDrawer = false;
@@ -206,7 +275,7 @@
       
       notify.success(
         'Entrega criada', 
-        `Entrega ${novaEntrega.id} criada com sucesso`
+        `Entrega ${novaEntrega.data.entregaId} criada com ${novaEntrega.data.totalItens} itens`
       );
       
       // Notificar que ficha foi atualizada
@@ -274,7 +343,7 @@
   }
   
   /**
-   * Handler para salvar edição de entrega
+   * 🚀 MIGRADO: Handler para salvar edição de entrega
    */
   async function handleSalvarEdicaoEntrega(event: CustomEvent<NovaEntregaFormData>): Promise<void> {
     if (!entregaEdicao) return;
@@ -282,10 +351,19 @@
     entregaLoading = true;
     
     try {
-      console.log('💾 Salvando edição de entrega:', event.detail);
+      console.log('💾 FichaDetailContainer: Editando entrega:', event.detail);
       
-      // Usar service adapter para editar entrega
-      await fichaProcessAdapter.editarEntrega(entregaEdicao.id, event.detail);
+      // ✅ NOVA ARQUITETURA: Usar deliveryProcessAdapter para editar entrega
+      const payload: Partial<CreateDeliveryPayload> = {
+        responsavelId: event.detail.responsavelId,
+        itens: event.detail.itens.map(item => ({
+          estoqueItemId: item.estoqueItemId,
+          quantidade: item.quantidade
+        })),
+        observacoes: event.detail.observacoes
+      };
+      
+      await deliveryProcessAdapter.updateDelivery(entregaEdicao.id, payload);
       
       // Fechar drawer
       showEditarEntregaDrawer = false;
@@ -325,7 +403,7 @@
   }
   
   /**
-   * Handler para confirmar assinatura
+   * 🚀 MIGRADO: Handler para confirmar assinatura
    */
   async function handleConfirmarAssinatura(event: CustomEvent<{ assinatura: string }>): Promise<void> {
     if (!entregaAssinatura) return;
@@ -333,15 +411,14 @@
     assinaturaLoading = true;
     
     try {
-      console.log('✍️ Processando assinatura:', event.detail);
+      console.log('✍️ FichaDetailContainer: Confirmando assinatura:', event.detail);
       
-      // Usar service adapter para processar assinatura
-      // Usar nome do colaborador da ficha como assinatura
-      const nomeColaborador = fichaData?.colaborador?.nome || 'Colaborador';
-      await fichaProcessAdapter.confirmarAssinatura(
-        entregaAssinatura.id, 
-        nomeColaborador
-      );
+      // ✅ NOVA ARQUITETURA: Usar deliveryProcessAdapter para confirmar assinatura
+      const payload: ConfirmSignaturePayload = {
+        assinatura: event.detail.assinatura
+      };
+      
+      await deliveryProcessAdapter.confirmSignature(entregaAssinatura.id, payload);
       
       // Fechar modal
       showAssinaturaModal = false;
@@ -381,24 +458,31 @@
   }
   
   /**
-   * Handler para confirmar devolução
+   * 🚀 MIGRADO: Handler para confirmar devolução
    */
-  async function handleConfirmarDevolucao(event: CustomEvent<{ motivo: string }>): Promise<void> {
+  async function handleConfirmarDevolucao(event: CustomEvent<{ motivo: string; observacoes?: string }>): Promise<void> {
     if (!equipamentoDevolucao) return;
     
     devolucaoLoading = true;
     
     try {
-      console.log('🔄 Processando devolução:', event.detail);
+      console.log('🔄 FichaDetailContainer: Processando devolução:', event.detail);
       
-      // Usar service adapter para processar devolução
-      await fichaProcessAdapter.processarDevolucao(
-        equipamentoDevolucao.id,
-        {
-          entregaId: equipamentoDevolucao.entregaId,
-          motivo: event.detail.motivo
-        }
-      );
+      // ✅ NOVA ARQUITETURA: Usar returnProcessAdapter para processamento em lote
+      const payload: ReturnBatchPayload = {
+        devolucoes: [{
+          equipamentoId: equipamentoDevolucao.id,
+          motivo: event.detail.motivo, // Agora já vem no formato correto do enum
+          observacoes: event.detail.observacoes || `Devolução via interface da ficha`
+        }]
+      };
+      
+      const result = await returnProcessAdapter.processReturns(payload);
+      
+      // Verificar se houve erros
+      if (result.data.erros.length > 0) {
+        throw new Error(`Erro na devolução: ${result.data.erros[0].erro}`);
+      }
       
       // Fechar modal
       showDevolucaoModal = false;
@@ -431,11 +515,19 @@
   /**
    * Handler para cancelar entrega
    */
+  /**
+   * 🚀 MIGRADO: Handler para cancelar entrega
+   */
   async function handleCancelarEntrega(event: CustomEvent<{ entrega: any; motivo: string }>): Promise<void> {
     try {
-      console.log('❌ Cancelando entrega:', event.detail);
+      console.log('❌ FichaDetailContainer: Cancelando entrega:', event.detail);
       
-      await fichaProcessAdapter.cancelarEntrega(event.detail.entrega.id, event.detail.motivo);
+      // ✅ NOVA ARQUITETURA: Usar deliveryProcessAdapter para cancelar entrega
+      const payload: CancelDeliveryPayload = {
+        motivo: event.detail.motivo
+      };
+      
+      await deliveryProcessAdapter.cancelDelivery(event.detail.entrega.id, payload);
       
       // Recarregar dados
       await loadFichaData();
@@ -461,10 +553,10 @@
   
   // ==================== COMPUTED PROPERTIES ====================
   
-  // Estado consolidado para o presenter
+  // 🚀 MUDANÇA: Estado consolidado usando dados pré-processados
   $: containerState = {
-    // Dados principais
-    fichaData,
+    // Dados principais (já processados pelo backend)
+    fichaCompleteData,
     episDisponiveis,
     usuarios,
     
@@ -496,23 +588,22 @@
   Todo o HTML fica no Presenter, que é "burro" e apenas recebe dados e emite eventos.
 -->
 
-{#if open}
-  <FichaDetailPresenter
-    {...containerState}
-    on:close={handleClose}
-    on:novaEntrega={handleNovaEntrega}
-    on:salvarNovaEntrega={handleSalvarNovaEntrega}
-    on:cancelarNovaEntrega={handleCancelarNovaEntrega}
-    on:editarEntrega={handleEditarEntrega}
-    on:salvarEdicaoEntrega={handleSalvarEdicaoEntrega}
-    on:cancelarEdicaoEntrega={handleCancelarEdicaoEntrega}
-    on:assinarEntrega={handleAssinarEntrega}
-    on:confirmarAssinatura={handleConfirmarAssinatura}
-    on:cancelarAssinatura={handleCancelarAssinatura}
-    on:devolverEquipamento={handleDevolverEquipamento}
-    on:confirmarDevolucao={handleConfirmarDevolucao}
-    on:cancelarDevolucao={handleCancelarDevolucao}
-    on:cancelarEntrega={handleCancelarEntrega}
-    on:imprimirEntrega={handleImprimirEntrega}
-  />
-{/if}
+<!-- Sempre renderizar o Presenter, deixar o controle de visibilidade para ele -->
+<FichaDetailPresenter
+  {...containerState}
+  on:close={handleClose}
+  on:novaEntrega={handleNovaEntrega}
+  on:salvarNovaEntrega={handleSalvarNovaEntrega}
+  on:cancelarNovaEntrega={handleCancelarNovaEntrega}
+  on:editarEntrega={handleEditarEntrega}
+  on:salvarEdicaoEntrega={handleSalvarEdicaoEntrega}
+  on:cancelarEdicaoEntrega={handleCancelarEdicaoEntrega}
+  on:assinarEntrega={handleAssinarEntrega}
+  on:confirmarAssinatura={handleConfirmarAssinatura}
+  on:cancelarAssinatura={handleCancelarAssinatura}
+  on:devolverEquipamento={handleDevolverEquipamento}
+  on:confirmarDevolucao={handleConfirmarDevolucao}
+  on:cancelarDevolucao={handleCancelarDevolucao}
+  on:cancelarEntrega={handleCancelarEntrega}
+  on:imprimirEntrega={handleImprimirEntrega}
+/>

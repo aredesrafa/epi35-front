@@ -30,7 +30,6 @@
       icon: FolderOpenOutline,
       dropdown: [
         { href: '/estoque', label: 'Estoque' },
-        { href: '/devolucoes', label: 'Devoluções' },
         { href: '/notas', label: 'Notas' },
         { href: '/catalogo', label: 'Catálogo' }
       ]
@@ -39,10 +38,7 @@
       label: 'Relatórios', 
       icon: ChartOutline,
       dropdown: [
-        { href: '/relatorios/dashboard', label: 'Dashboard Executivo' },
-        { href: '/relatorios/descartes', label: 'Relatório de Descartes' },
-        { href: '/relatorios/saude', label: 'Saúde do Sistema' },
-        { href: '/relatorios/personalizados', label: 'Relatórios Personalizados' }
+        { href: '/relatorios/auditoria', label: 'Auditoria' }
       ]
     }
   ];

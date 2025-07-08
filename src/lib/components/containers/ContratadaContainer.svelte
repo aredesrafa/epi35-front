@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { createEnhancedPaginatedStore } from '$lib/stores/paginatedStore';
+  import { createAdvancedPaginatedStore } from '$lib/stores/paginatedStore';
   import ContratadaTablePresenter from '$lib/components/presenters/ContratadaTablePresenter.svelte';
   import { notify } from '$lib/stores';
   import type { ContratadaDTO } from '$lib/types/serviceTypes';
@@ -20,7 +20,7 @@
   // ==================== ENHANCED PAGINATED STORE ====================
   
   // ✅ Enhanced Store conectado ao endpoint de contratadas
-  const contratadaStore = createEnhancedPaginatedStore<ContratadaDTO>({
+  const contratadaStore = createAdvancedPaginatedStore<ContratadaDTO>({
     baseEndpoint: '/contratadas',
     defaultPageSize: initialPageSize,
     debounceDelay: 300,

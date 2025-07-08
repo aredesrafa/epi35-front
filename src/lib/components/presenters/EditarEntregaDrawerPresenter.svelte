@@ -10,12 +10,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button, Input, Select, Label } from 'flowbite-svelte';
-  import Icon from '$lib/components/common/Icon.svelte';
+  import { PlusOutline, TrashBinOutline, CheckOutline, RefreshOutline } from 'flowbite-svelte-icons';
   import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
   import type { 
     EPIDisponivel,
     NovaEntregaFormData
-  } from '$lib/services/process/fichaProcessAdapter';
+  } from '$lib/services/process';
 
   // ==================== PROPS ====================
   
@@ -187,10 +187,19 @@
 
 {#if show}
   <!-- Overlay -->
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-55 transition-opacity"></div>
+  <div 
+    class="fixed inset-0 bg-black bg-opacity-50 z-[60] transition-opacity"
+    on:click={handleCancelar}
+    role="presentation"
+  ></div>
 
   <!-- Drawer -->
-  <div class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
+  <div 
+    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out"
+    on:click|stopPropagation
+    role="dialog"
+    aria-modal="true"
+  >
     
     <!-- Header -->
     <DrawerHeader 
@@ -249,7 +258,7 @@
               on:click={adicionarItem}
               disabled={loading}
             >
-              <Icon name="PlusOutline" className="mr-2" size="w-4 h-4" />
+              <PlusOutline class="mr-2 w-4 h-4" />
               Adicionar Item
             </Button>
           </div>
@@ -274,7 +283,7 @@
                       disabled={loading}
                       title="Remover item"
                     >
-                      <Icon name="TrashBinOutline" size="w-4 h-4" />
+                      <TrashBinOutline class="w-4 h-4" />
                     </button>
                   {/if}
                 </div>
@@ -349,7 +358,7 @@
             <!-- Add first item button if no items -->
             {#if itensSelecionados.length === 0}
               <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <Icon name="PlusOutline" className="mx-auto mb-3 text-gray-400" size="w-8 h-8" />
+                <PlusOutline class="mx-auto mb-3 text-gray-400 w-8 h-8" />
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   Nenhum item na entrega
                 </p>
@@ -401,10 +410,10 @@
             disabled={!canSave}
           >
             {#if loading}
-              <Icon name="SpinnerOutline" className="mr-2 animate-spin" size="w-4 h-4" />
+              <RefreshOutline class="mr-2 animate-spin w-4 h-4" />
               Salvando...
             {:else}
-              <Icon name="CheckOutline" className="mr-2" size="w-4 h-4" />
+              <CheckOutline class="mr-2 w-4 h-4" />
               Salvar Alterações
             {/if}
           </Button>

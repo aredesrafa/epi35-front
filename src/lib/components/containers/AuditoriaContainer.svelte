@@ -12,8 +12,8 @@
   import { notify } from '$lib/stores';
   import type { RelatorioMovimentacaoDTO, RelatorioMovimentacoesParams } from '$lib/types/serviceTypes';
   
-  // Imports para service adapters
-  import { fichaProcessAdapter } from '$lib/services/process/fichaProcessAdapter';
+  // 🚀 MIGRADO: Imports para service adapters
+  import { fichaQueryAdapter } from '$lib/services/process';
   import { inventoryQueryAdapter } from '$lib/services/inventory/inventoryQueryAdapter';
   import { catalogAdapter } from '$lib/services/entity/catalogAdapter';
   
@@ -39,8 +39,8 @@
     try {
       console.log('🔗 Carregando entregas para correlação...');
       
-      // Buscar fichas ativas usando service adapter
-      const fichasData = await fichaProcessAdapter.getFichasWithColaboradores({
+      // 🚀 MIGRADO: Buscar fichas ativas usando novo adapter
+      const fichasData = await fichaQueryAdapter.getFichasWithColaboradores({
         page: 1,
         limit: 100
       });
@@ -53,8 +53,9 @@
       // Para cada ficha, buscar entregas e popular cache
       for (const ficha of fichas) {
         try {
-          // Usar o fichaProcessAdapter para buscar entregas
-          const entregasData = await fichaProcessAdapter.getEntregasByFicha(ficha.id);
+          // 🚀 MIGRADO: Buscar entregas usando fallback temporário
+          // TODO: Implementar getEntregasByFicha no fichaQueryAdapter
+          const entregasData = await fichaQueryAdapter.getFichaById(ficha.id);
             
             // ✅ CORREÇÃO: A resposta de entregas vem em data diretamente como array
             const entregas = entregasData.data || [];
@@ -268,12 +269,9 @@
         }));
         console.log('✅ Tipos EPI carregados:', tiposEpi.length);
       
-      // Carregar usuários
-      const usuariosData = await fichaProcessAdapter.getUsuarios({
-        page: 1,
-        limit: 100
-      });
-      usuarios = usuariosData.items.map((item: any) => ({
+      // 🚀 MIGRADO: Carregar usuários
+      const usuariosData = await fichaQueryAdapter.getUsuarios();
+      usuarios = usuariosData.map((item: any) => ({
           id: item.id,
           nome: item.nome
         }));

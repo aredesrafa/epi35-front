@@ -1,16 +1,5 @@
 
 ---
-type: Page
-title: Epi 3.5
-description: null
-icon: null
-createdAt: '2025-06-28T19:49:48.118Z'
-creationDate: 2025-06-28 16:49
-modificationDate: 2025-06-28 22:53
-tags: []
-coverImage: null
----
-
 # Especificação Técnica Detalhada: Módulo de Gestão de Fichas de EPI e Estoque
 
 **Versão**: 3.6.0 (Análise Arquitetural Completa + Atualizações Críticas de Segurança)
@@ -1933,4 +1922,3 @@ Os endpoints de usuários resolvem o bloqueio identificado na criação de entre
 - Diferentes ambientes (dev, prod, qa)
 
 ---
-

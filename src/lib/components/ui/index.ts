@@ -7,7 +7,7 @@ export { default as OptimizedModal } from './OptimizedModal.svelte';
 export { default as TableContainer } from './TableContainer.svelte';
 export { default as TableFilters } from './TableFilters.svelte';
 export { default as StatsCard } from './StatsCard.svelte';
-export { default as MovementHistoryLog } from './MovementHistoryLog.svelte';
+export { default as ItemMovementHistory } from './ItemMovementHistory.svelte';
 
 // Tipos úteis para componentes UI
 export interface TableColumn {

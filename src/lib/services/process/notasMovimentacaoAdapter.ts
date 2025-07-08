@@ -1,154 +1,45 @@
 /**
- * Notas Movimentacao Adapter - Conectado ao Backend Real
+ * Notas Movimentacao Adapter - Simplificado para Backend Real
  * 
- * Adapter especializado para notas de movimentação baseado na estrutura real
- * do backend PostgreSQL (tabela notas_movimentacao)
+ * Adapter direto usando endpoints otimizados da API v3.5
+ * SEM lógica de normalização desnecessária
  */
 
 import { api, createUrlWithParams } from '../core/apiClient';
-import type { PaginatedResponse, PaginationParams } from '$lib/stores/paginatedStore';
-
-// ==================== INTERFACES E TIPOS ====================
-
-// Enums do backend
-export type TipoNotaEnum = 'ENTRADA' | 'TRANSFERENCIA' | 'DESCARTE' | 'ENTRADA_AJUSTE' | 'SAIDA_AJUSTE';
-export type StatusNotaEnum = 'RASCUNHO' | 'CONCLUIDA' | 'CANCELADA';
-
-// Item da nota de movimentação
-export interface NotaMovimentacaoItem {
-  id: string;
-  nota_movimentacao_id: string;
-  quantidade: number;
-  estoque_item_id?: string; // Para saídas/transferências
-  tipo_epi_id?: string; // Para entradas
-  custo_unitario?: number;
-  // Campos derivados para exibição
-  equipamento_nome?: string;
-  equipamento_ca?: string;
-  categoria?: string;
-}
-
-// Nota de movimentação principal
-export interface NotaMovimentacao {
-  id: string;
-  almoxarifado_id: string;
-  almoxarifado_destino_id?: string; // Obrigatório apenas para TRANSFERENCIA
-  responsavel_id: string;
-  tipo_nota: TipoNotaEnum;
-  status: StatusNotaEnum;
-  numero_documento?: string;
-  data_documento: string;
-  observacoes?: string;
-  created_at: string;
-  // Relacionamentos expandidos
-  responsavel?: {
-    id: string;
-    nome: string;
-    email: string;
-  };
-  almoxarifado?: {
-    id: string;
-    nome: string;
-    descricao?: string;
-  };
-  almoxarifado_destino?: {
-    id: string;
-    nome: string;
-    descricao?: string;
-  };
-  itens?: NotaMovimentacaoItem[];
-  // Campos derivados
-  total_itens?: number;
-  valor_total?: number;
-}
-
-// Parâmetros de filtro para listagem
-export interface NotasMovimentacaoFilterParams extends PaginationParams {
-  dataInicio?: string;
-  dataFim?: string;
-  status?: StatusNotaEnum;
-  tipo?: TipoNotaEnum;
-  numero?: string;
-  responsavel_id?: string;
-  almoxarifado_id?: string;
-}
-
-// Dados para criar nota
-export interface CriarNotaMovimentacaoRequest {
-  tipo_nota: TipoNotaEnum;
-  almoxarifado_id: string;
-  almoxarifado_destino_id?: string; // Apenas para TRANSFERENCIA
-  numero_documento?: string;
-  data_documento?: string; // Default: current_date
-  observacoes?: string;
-}
-
-// Dados para atualizar nota (apenas RASCUNHO)
-export interface AtualizarNotaMovimentacaoRequest {
-  numero_documento?: string;
-  data_documento?: string;
-  observacoes?: string;
-}
-
-// Dados para adicionar item à nota
-export interface AdicionarItemNotaRequest {
-  tipo_epi_id?: string; // Para ENTRADA
-  estoque_item_id?: string; // Para SAIDA/TRANSFERENCIA
-  quantidade: number;
-  custo_unitario?: number;
-}
-
-// Response de criação de nota
-export interface CriarNotaResponse {
-  success: boolean;
-  data: {
-    id: string;
-    numero: string;
-    tipo: TipoNotaEnum;
-    status: StatusNotaEnum;
-  };
-}
-
-// Response de conclusão de nota
-export interface ConcluirNotaResponse {
-  success: boolean;
-  data: {
-    movimentacoes_criadas: number;
-    nota_id: string;
-    status: StatusNotaEnum;
-  };
-}
-
-// Validação de cancelamento
-export interface ValidacaoCancelamento {
-  pode_cancelar: boolean;
-  motivo?: string;
-  impactos?: string[];
-}
-
-// Opções para filtros
-export interface NotasFilterOptions {
-  responsaveis: Array<{ value: string; label: string }>;
-  almoxarifados: Array<{ value: string; label: string }>;
-  tipos: Array<{ value: TipoNotaEnum; label: string }>;
-  status: Array<{ value: StatusNotaEnum; label: string }>;
-}
+import type { PaginatedResponse } from '$lib/stores/paginatedStore';
+import type {
+  NotaMovimentacao,
+  NotaMovimentacaoItem,
+  NotasMovimentacaoFilterParams,
+  CriarNotaMovimentacaoRequest,
+  AtualizarNotaMovimentacaoRequest,
+  AdicionarItemNotaRequest,
+  CriarNotaResponse,
+  ConcluirNotaResponse,
+  ValidacaoCancelamento,
+  NotasFilterOptions,
+  TipoNotaEnum,
+  StatusNotaEnum
+} from './notasMovimentacaoTypes';
 
 // ==================== ADAPTER CLASS ====================
 
 class NotasMovimentacaoAdapter {
   private baseEndpoint = '/notas-movimentacao';
 
+  // Cache removido - dados vêm pré-processados do endpoint /resumo
+
   // ==================== CONSULTAS ====================
 
   /**
-   * Lista notas de movimentação com filtros e paginação
+   * Lista notas usando endpoint /resumo otimizado
+   * Dados vêm pré-processados (nomes, contagens, valores)
    */
   async listarNotas(params: NotasMovimentacaoFilterParams = {}): Promise<PaginatedResponse<NotaMovimentacao>> {
-    console.log('📋 NotasMovimentacaoAdapter: Listando notas', params);
+    console.log('📋 NotasMovimentacaoAdapter: Listando notas via /resumo', params);
 
     try {
-      const url = createUrlWithParams(this.baseEndpoint, {
+      const url = createUrlWithParams(`${this.baseEndpoint}/resumo`, {
         page: params.page?.toString(),
         limit: params.limit?.toString(),
         dataInicio: params.dataInicio,
@@ -156,33 +47,28 @@ class NotasMovimentacaoAdapter {
         status: params.status,
         tipo: params.tipo,
         numero: params.numero,
-        responsavel_id: params.responsavel_id,
-        almoxarifado_id: params.almoxarifado_id,
-        search: params.search
+        usuarioId: params.responsavel_id,
+        almoxarifadoId: params.almoxarifado_id
       });
 
-      const response = await api.get<{
-        success: boolean;
-        data: {
-          items: NotaMovimentacao[];
-          pagination: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-          };
+      const response = await api.get<any>(url, { 
+        timeout: 30000,
+        retries: 2 
+      });
+
+      console.log('✅ Notas resumo carregadas:', response);
+
+      if (response.success && response.data) {
+        return {
+          data: response.data, // Dados já vêm processados do backend
+          total: response.pagination?.total || 0,
+          page: response.pagination?.page || 1,
+          pageSize: response.pagination?.limit || 10,
+          totalPages: response.pagination?.totalPages || 1
         };
-      }>(url);
+      }
 
-      console.log('✅ Notas listadas com sucesso:', response.data.pagination);
-
-      return {
-        data: response.data.items,
-        total: response.data.pagination.total,
-        page: response.data.pagination.page,
-        pageSize: response.data.pagination.limit,
-        totalPages: response.data.pagination.totalPages
-      };
+      throw new Error('Resposta inválida do servidor');
     } catch (error) {
       console.error('❌ Erro ao listar notas:', error);
       throw new Error('Não foi possível carregar as notas de movimentação');
@@ -191,38 +77,56 @@ class NotasMovimentacaoAdapter {
 
   /**
    * Busca uma nota específica por ID
+   * Este endpoint JÁ inclui itens por padrão (conforme documentação linha 855)
    */
   async obterNota(id: string): Promise<NotaMovimentacao> {
     console.log('🔍 NotasMovimentacaoAdapter: Buscando nota', id);
 
     try {
-      const response = await api.get<{
-        success: boolean;
-        data: NotaMovimentacao;
-      }>(`${this.baseEndpoint}/${id}`);
+      const response = await api.get<any>(`${this.baseEndpoint}/${id}`);
+      console.log('✅ Resposta obter nota:', response);
+      console.log('🔍 Estrutura da resposta:', JSON.stringify(response, null, 2));
 
-      console.log('✅ Nota encontrada:', response.data.id);
-      return response.data;
+      // API retorna dados já processados
+      let notaData;
+      if (response.success && response.data) {
+        notaData = response.data;
+      } else if (response.data) {
+        notaData = response.data;
+      } else {
+        notaData = response;
+      }
+
+      console.log('📋 Dados da nota processados:', JSON.stringify(notaData, null, 2));
+      return notaData;
     } catch (error) {
       console.error('❌ Erro ao buscar nota:', error);
       throw new Error('Não foi possível encontrar a nota');
     }
   }
 
+  // Método listarNotasComDetalhes removido - endpoint /resumo já inclui tudo
+
   /**
-   * Lista apenas rascunhos do usuário atual
+   * Lista apenas rascunhos usando endpoint específico
    */
   async listarRascunhos(): Promise<NotaMovimentacao[]> {
     console.log('📝 NotasMovimentacaoAdapter: Listando rascunhos');
 
     try {
-      const response = await api.get<{
-        success: boolean;
-        data: NotaMovimentacao[];
-      }>(`${this.baseEndpoint}/rascunhos`);
-
-      console.log('✅ Rascunhos listados:', response.data.length);
-      return response.data;
+      // Usar endpoint específico para rascunhos (linha 848)
+      const response = await api.get<any>(`${this.baseEndpoint}/rascunhos`);
+      console.log('✅ Resposta listar rascunhos:', response);
+      
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data?.items) {
+        return response.data.items;
+      }
+      
+      return [];
     } catch (error) {
       console.error('❌ Erro ao listar rascunhos:', error);
       throw new Error('Não foi possível carregar os rascunhos');
@@ -232,16 +136,64 @@ class NotasMovimentacaoAdapter {
   // ==================== COMANDOS ====================
 
   /**
-   * Cria uma nova nota de movimentação
+   * Cria uma nova nota usando o endpoint correto
    */
   async criarNota(data: CriarNotaMovimentacaoRequest): Promise<CriarNotaResponse> {
-    console.log('➕ NotasMovimentacaoAdapter: Criando nota', data);
+    console.log('📝 NotasMovimentacaoAdapter: Criando nota', data);
 
     try {
-      const response = await api.post<CriarNotaResponse>(this.baseEndpoint, data);
+      // Garantir que responsavel_id seja fornecido
+      if (!data.responsavel_id) {
+        console.log('⚠️ responsavel_id não fornecido, buscando usuário padrão...');
+        
+        try {
+          const usuariosResponse = await api.get<any>('/usuarios?limit=1');
+          console.log('🔍 Resposta usuarios endpoint:', usuariosResponse);
+          
+          // API de usuários retorna formato: { items: [...] }
+          if (usuariosResponse.items && usuariosResponse.items.length > 0) {
+            data.responsavel_id = usuariosResponse.items[0].id;
+            console.log('✅ Usando responsavel_id:', data.responsavel_id);
+          } else if (usuariosResponse.success && usuariosResponse.data && usuariosResponse.data.length > 0) {
+            data.responsavel_id = usuariosResponse.data[0].id;
+            console.log('✅ Usando responsavel_id:', data.responsavel_id);
+          } else {
+            // Usar ID conhecido do administrador do sistema
+            console.log('⚠️ Nenhum usuário encontrado, usando administrador padrão...');
+            data.responsavel_id = 'cffc2197-acbe-4a64-bfd7-435370e9c226';
+            console.log('✅ Usando responsavel_id do administrador:', data.responsavel_id);
+          }
+        } catch (userError) {
+          console.error('❌ Erro ao buscar usuário:', userError);
+          data.responsavel_id = 'cffc2197-acbe-4a64-bfd7-435370e9c226';
+          console.log('✅ Usando responsavel_id do administrador (fallback):', data.responsavel_id);
+        }
+      }
 
-      console.log('✅ Nota criada com sucesso:', response.data.id);
-      return response;
+      // Mapear campos conforme documentação da API (linha 774)
+      const backendData = {
+        tipo: data.tipo_nota,
+        almoxarifadoOrigemId: data.almoxarifado_origem_id,
+        almoxarifadoDestinoId: data.almoxarifado_destino_id,
+        // usuarioId não é enviado na criação - será inferido pelo backend
+        observacoes: data.observacoes
+      };
+
+      console.log('📤 Dados para backend:', backendData);
+
+      const response = await api.post<any>(this.baseEndpoint, backendData);
+
+      console.log('✅ Nota criada:', response);
+      
+      // API retorna no formato padrão
+      if (response.success) {
+        return {
+          success: response.success,
+          data: response.data
+        };
+      } else {
+        return response;
+      }
     } catch (error) {
       console.error('❌ Erro ao criar nota:', error);
       throw new Error('Não foi possível criar a nota de movimentação');
@@ -249,19 +201,22 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Atualiza uma nota em RASCUNHO
+   * Atualiza uma nota existente (apenas rascunhos)
    */
   async atualizarNota(id: string, data: AtualizarNotaMovimentacaoRequest): Promise<NotaMovimentacao> {
     console.log('📝 NotasMovimentacaoAdapter: Atualizando nota', id, data);
 
     try {
-      const response = await api.put<{
-        success: boolean;
-        data: NotaMovimentacao;
-      }>(`${this.baseEndpoint}/${id}`, data);
-
-      console.log('✅ Nota atualizada com sucesso');
-      return response.data;
+      const response = await api.put<any>(`${this.baseEndpoint}/${id}`, data);
+      console.log('✅ Resposta atualizar nota:', response);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else if (response.data) {
+        return response.data;
+      } else {
+        return response;
+      }
     } catch (error) {
       console.error('❌ Erro ao atualizar nota:', error);
       throw new Error('Não foi possível atualizar a nota');
@@ -269,36 +224,49 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Exclui uma nota em RASCUNHO
+   * Exclui uma nota (apenas rascunhos)
    */
   async excluirNota(id: string): Promise<void> {
     console.log('🗑️ NotasMovimentacaoAdapter: Excluindo nota', id);
 
     try {
       await api.delete(`${this.baseEndpoint}/${id}`);
-      console.log('✅ Nota excluída com sucesso');
+      console.log('✅ Nota excluída:', id);
     } catch (error) {
       console.error('❌ Erro ao excluir nota:', error);
       throw new Error('Não foi possível excluir a nota');
     }
   }
 
-  // ==================== GERENCIAMENTO DE ITENS ====================
+  // ==================== ITENS ====================
 
   /**
-   * Adiciona item à nota
+   * Adiciona um item à nota usando endpoint correto (linha 906)
    */
   async adicionarItem(notaId: string, item: AdicionarItemNotaRequest): Promise<NotaMovimentacaoItem> {
     console.log('➕ NotasMovimentacaoAdapter: Adicionando item', notaId, item);
 
     try {
-      const response = await api.post<{
-        success: boolean;
-        data: NotaMovimentacaoItem;
-      }>(`${this.baseEndpoint}/${notaId}/itens`, item);
+      // Usar formato conforme documentação (linha 911)
+      const backendItemData = {
+        tipoEpiId: item.tipo_epi_id,
+        quantidade: Number(item.quantidade),
+        observacoes: item.observacoes || null
+      };
 
-      console.log('✅ Item adicionado com sucesso');
-      return response.data;
+      console.log('📤 Dados do item para backend:', backendItemData);
+
+      const response = await api.post<any>(`${this.baseEndpoint}/${notaId}/itens`, backendItemData);
+      
+      console.log('✅ Item adicionado:', response);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else if (response.data) {
+        return response.data;
+      } else {
+        return response;
+      }
     } catch (error) {
       console.error('❌ Erro ao adicionar item:', error);
       throw new Error('Não foi possível adicionar o item à nota');
@@ -306,14 +274,16 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Atualiza quantidade de um item
+   * Atualiza quantidade de um item (linha 925)
    */
   async atualizarQuantidade(notaId: string, tipoEpiId: string, quantidade: number): Promise<void> {
     console.log('📝 NotasMovimentacaoAdapter: Atualizando quantidade', notaId, tipoEpiId, quantidade);
 
     try {
-      await api.put(`${this.baseEndpoint}/${notaId}/itens/${tipoEpiId}`, { quantidade });
-      console.log('✅ Quantidade atualizada com sucesso');
+      await api.put(`${this.baseEndpoint}/${notaId}/itens/${tipoEpiId}`, { 
+        quantidade: Number(quantidade) 
+      });
+      console.log('✅ Quantidade atualizada');
     } catch (error) {
       console.error('❌ Erro ao atualizar quantidade:', error);
       throw new Error('Não foi possível atualizar a quantidade');
@@ -321,33 +291,43 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Remove item da nota
+   * Remove um item da nota (linha 937)
    */
   async removerItem(notaId: string, itemId: string): Promise<void> {
     console.log('🗑️ NotasMovimentacaoAdapter: Removendo item', notaId, itemId);
 
     try {
       await api.delete(`${this.baseEndpoint}/${notaId}/itens/${itemId}`);
-      console.log('✅ Item removido com sucesso');
+      console.log('✅ Item removido');
     } catch (error) {
       console.error('❌ Erro ao remover item:', error);
       throw new Error('Não foi possível remover o item');
     }
   }
 
-  // ==================== OPERAÇÕES DE ESTADO ====================
+  // ==================== WORKFLOW ====================
 
   /**
-   * Conclui uma nota (marca como CONCLUIDA e gera movimentações)
+   * Conclui uma nota usando endpoint correto (linha 942)
    */
   async concluirNota(id: string): Promise<ConcluirNotaResponse> {
     console.log('⚡ NotasMovimentacaoAdapter: Concluindo nota', id);
 
     try {
-      const response = await api.post<ConcluirNotaResponse>(`${this.baseEndpoint}/${id}/concluir`);
-
-      console.log('✅ Nota concluída com sucesso:', response.data.movimentacoes_criadas);
-      return response;
+      const response = await api.post<any>(`${this.baseEndpoint}/${id}/concluir`, {
+        validarEstoque: true
+      });
+      
+      console.log('✅ Nota concluída:', response);
+      
+      if (response.success) {
+        return {
+          success: response.success,
+          data: response.data
+        };
+      } else {
+        return response;
+      }
     } catch (error) {
       console.error('❌ Erro ao concluir nota:', error);
       throw new Error('Não foi possível concluir a nota');
@@ -355,14 +335,17 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Cancela uma nota
+   * Cancela uma nota (linha 988)
    */
-  async cancelarNota(id: string): Promise<void> {
-    console.log('❌ NotasMovimentacaoAdapter: Cancelando nota', id);
+  async cancelarNota(id: string, motivo?: string): Promise<void> {
+    console.log('🚫 NotasMovimentacaoAdapter: Cancelando nota', id);
 
     try {
-      await api.post(`${this.baseEndpoint}/${id}/cancelar`);
-      console.log('✅ Nota cancelada com sucesso');
+      await api.post(`${this.baseEndpoint}/${id}/cancelar`, {
+        motivo: motivo || 'Cancelamento solicitado pelo usuário',
+        gerarEstorno: true
+      });
+      console.log('✅ Nota cancelada:', id);
     } catch (error) {
       console.error('❌ Erro ao cancelar nota:', error);
       throw new Error('Não foi possível cancelar a nota');
@@ -370,73 +353,145 @@ class NotasMovimentacaoAdapter {
   }
 
   /**
-   * Valida se uma nota pode ser cancelada
+   * Valida se uma nota pode ser cancelada (linha 1001)
    */
   async validarCancelamento(id: string): Promise<ValidacaoCancelamento> {
     console.log('🔍 NotasMovimentacaoAdapter: Validando cancelamento', id);
 
     try {
-      const response = await api.get<{
-        success: boolean;
-        data: ValidacaoCancelamento;
-      }>(`${this.baseEndpoint}/${id}/validar-cancelamento`);
-
-      console.log('✅ Validação realizada:', response.data.pode_cancelar);
-      return response.data;
+      const response = await api.get<any>(`${this.baseEndpoint}/${id}/validar-cancelamento`);
+      
+      console.log('✅ Validação de cancelamento:', response);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else if (response.data) {
+        return response.data;
+      } else {
+        return response;
+      }
     } catch (error) {
       console.error('❌ Erro ao validar cancelamento:', error);
-      throw new Error('Não foi possível validar o cancelamento');
+      return { pode_cancelar: false, motivo: 'Erro na validação' };
     }
   }
 
-  // ==================== UTILITIES ====================
+  // ==================== CONSULTAS AVANÇADAS ====================
 
   /**
-   * Obtém opções para filtros extraindo dados únicos
+   * Busca nota com todos os relacionamentos (mesmo que obterNota)
+   */
+  async obterNotaCompleta(id: string): Promise<NotaMovimentacao> {
+    console.log('🔍 NotasMovimentacaoAdapter: Buscando nota completa', id);
+    
+    // Endpoint individual já inclui todos os relacionamentos
+    return this.obterNota(id);
+  }
+
+  /**
+   * Validação local antes de concluir nota
+   */
+  async validarNotaAntesConcluir(id: string): Promise<{
+    pode_concluir: boolean;
+    erros: string[];
+    avisos?: string[];
+    total_itens_processados?: number;
+    movimentacoes_previstas?: number;
+  }> {
+    console.log('🔍 NotasMovimentacaoAdapter: Validação local da nota', id);
+
+    try {
+      const nota = await this.obterNota(id);
+      
+      const erros: string[] = [];
+      const avisos: string[] = [];
+      
+      // Verificar se tem itens
+      if (!nota.itens || nota.itens.length === 0) {
+        erros.push('Nota deve ter pelo menos um item');
+      }
+      
+      // Verificar status
+      if (nota.status === 'CONCLUIDA' || nota._status === 'CONCLUIDA') {
+        erros.push('Nota já foi concluída anteriormente');
+      }
+      
+      if (nota.status === 'CANCELADA' || nota._status === 'CANCELADA') {
+        erros.push('Nota cancelada não pode ser concluída');
+      }
+      
+      const podeConfirmar = erros.length === 0;
+      
+      if (podeConfirmar) {
+        avisos.push('Validação local aprovada');
+      }
+      
+      console.log('✅ Validação local concluída:', { podeConfirmar, erros: erros.length, itens: nota.itens?.length });
+      
+      return {
+        pode_concluir: podeConfirmar,
+        erros,
+        avisos,
+        total_itens_processados: nota.itens?.length || 0,
+        movimentacoes_previstas: nota.itens?.length || 0
+      };
+    } catch (error) {
+      console.error('❌ Erro na validação local:', error);
+      return {
+        pode_concluir: false,
+        erros: ['Não foi possível carregar dados da nota para validação'],
+        avisos: ['Erro na validação local']
+      };
+    }
+  }
+
+  // ==================== FILTROS E OPÇÕES ====================
+
+  /**
+   * Obtém opções para filtros - simplificado para usar endpoint /resumo
    */
   async obterOpcoesFilters(): Promise<NotasFilterOptions> {
     console.log('🔧 NotasMovimentacaoAdapter: Carregando opções de filtros');
 
     try {
-      // Para extrair opções, fazer uma busca com limite máximo permitido
-      const data = await this.listarNotas({ page: 1, limit: 100 });
+      // Usar endpoints simplificados
+      const [responsaveisResponse, almoxarifadosResponse] = await Promise.all([
+        api.get<any>('/usuarios?limit=100'),
+        api.get<any>('/estoque/almoxarifados')
+      ]);
+      
+      // Extrair dados de forma defensiva
+      const responsaveis = responsaveisResponse?.data || responsaveisResponse?.items || [];
+      const almoxarifados = almoxarifadosResponse?.data || [];
 
-      // Extrair responsáveis únicos
-      const responsaveis = [...new Set(
-        data.data
-          .filter(nota => nota.responsavel?.nome)
-          .map(nota => nota.responsavel!.nome)
-      )]
-        .sort()
-        .map(nome => ({ value: nome, label: nome }));
+      const options: NotasFilterOptions = {
+        responsaveis: responsaveis.map((r: any) => ({
+          value: r.id,
+          label: r.nome || r.name || `Usuário ${r.id.slice(0, 8)}`
+        })),
+        almoxarifados: almoxarifados.map((a: any) => ({
+          value: a.id,
+          label: a.nome || a.name || `Almoxarifado ${a.id.slice(0, 8)}`
+        })),
+        tipos: [
+          { value: 'ENTRADA', label: 'Entrada' },
+          { value: 'TRANSFERENCIA', label: 'Transferência' },
+          { value: 'DESCARTE', label: 'Descarte' },
+          { value: 'AJUSTE', label: 'Ajuste' }
+        ],
+        status: [
+          { value: 'RASCUNHO', label: 'Rascunho' },
+          { value: 'CONCLUIDA', label: 'Concluída' },
+          { value: 'CANCELADA', label: 'Cancelada' }
+        ]
+      };
 
-      // Extrair almoxarifados únicos
-      const almoxarifados = [...new Set(
-        data.data
-          .filter(nota => nota.almoxarifado?.nome)
-          .map(nota => nota.almoxarifado!.nome)
-      )]
-        .sort()
-        .map(nome => ({ value: nome, label: nome }));
+      console.log('✅ Opções de filtros carregadas:', {
+        responsaveis: options.responsaveis.length,
+        almoxarifados: options.almoxarifados.length
+      });
 
-      // Tipos fixos do enum
-      const tipos: Array<{ value: TipoNotaEnum; label: string }> = [
-        { value: 'ENTRADA', label: 'Entrada' },
-        { value: 'TRANSFERENCIA', label: 'Transferência' },
-        { value: 'DESCARTE', label: 'Descarte' },
-        { value: 'ENTRADA_AJUSTE', label: 'Entrada (Ajuste)' },
-        { value: 'SAIDA_AJUSTE', label: 'Saída (Ajuste)' }
-      ];
-
-      // Status fixos do enum
-      const status: Array<{ value: StatusNotaEnum; label: string }> = [
-        { value: 'RASCUNHO', label: 'Rascunho' },
-        { value: 'CONCLUIDA', label: 'Concluída' },
-        { value: 'CANCELADA', label: 'Cancelada' }
-      ];
-
-      console.log('✅ Opções de filtros carregadas');
-      return { responsaveis, almoxarifados, tipos, status };
+      return options;
     } catch (error) {
       console.error('❌ Erro ao carregar opções de filtros:', error);
       
@@ -448,8 +503,7 @@ class NotasMovimentacaoAdapter {
           { value: 'ENTRADA', label: 'Entrada' },
           { value: 'TRANSFERENCIA', label: 'Transferência' },
           { value: 'DESCARTE', label: 'Descarte' },
-          { value: 'ENTRADA_AJUSTE', label: 'Entrada (Ajuste)' },
-          { value: 'SAIDA_AJUSTE', label: 'Saída (Ajuste)' }
+          { value: 'AJUSTE', label: 'Ajuste' }
         ],
         status: [
           { value: 'RASCUNHO', label: 'Rascunho' },
@@ -458,44 +512,6 @@ class NotasMovimentacaoAdapter {
         ]
       };
     }
-  }
-
-  /**
-   * Obtém label amigável para tipo de nota
-   */
-  getTipoNotaLabel(tipo: TipoNotaEnum): string {
-    const labels: Record<TipoNotaEnum, string> = {
-      'ENTRADA': 'Entrada',
-      'TRANSFERENCIA': 'Transferência',
-      'DESCARTE': 'Descarte',
-      'ENTRADA_AJUSTE': 'Entrada (Ajuste)',
-      'SAIDA_AJUSTE': 'Saída (Ajuste)'
-    };
-    return labels[tipo] || tipo;
-  }
-
-  /**
-   * Obtém label amigável para status
-   */
-  getStatusNotaLabel(status: StatusNotaEnum): string {
-    const labels: Record<StatusNotaEnum, string> = {
-      'RASCUNHO': 'Rascunho',
-      'CONCLUIDA': 'Concluída',
-      'CANCELADA': 'Cancelada'
-    };
-    return labels[status] || status;
-  }
-
-  /**
-   * Obtém cor do badge para status
-   */
-  getStatusBadgeColor(status: StatusNotaEnum): 'gray' | 'green' | 'red' | 'yellow' {
-    const colors: Record<StatusNotaEnum, 'gray' | 'green' | 'red' | 'yellow'> = {
-      'RASCUNHO': 'yellow',
-      'CONCLUIDA': 'green',
-      'CANCELADA': 'red'
-    };
-    return colors[status] || 'gray';
   }
 }
 

@@ -84,7 +84,7 @@
   };
   
   // Criar store unificado
-  let dataStore = createEnhancedPaginatedStore(initialStoreConfig);
+  let dataStore = createAdvancedPaginatedStore(initialStoreConfig);
   
   // Recriar store quando configuração mudar
   $: if (config) {
@@ -98,7 +98,7 @@
       filterEndpoints: config.filterEndpoints || {}
     };
     
-    dataStore = createEnhancedPaginatedStore(newStoreConfig);
+    dataStore = createAdvancedPaginatedStore(newStoreConfig);
   }
   
   // ==================== STATE ====================

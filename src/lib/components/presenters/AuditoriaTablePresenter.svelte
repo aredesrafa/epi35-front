@@ -202,8 +202,8 @@
           id="filtro-almoxarifado"
           value={filters.almoxarifadoId || ''}
           on:change={(e) => {
-            const target = e.target as HTMLSelectElement;
-            if (target) handleFilterInput('almoxarifadoId', target.value);
+            const target = e.target;
+            if (target && 'value' in target) handleFilterInput('almoxarifadoId', target.value);
           }}
           size="sm"
           class="rounded-sm"

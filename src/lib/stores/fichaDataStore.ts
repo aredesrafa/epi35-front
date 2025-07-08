@@ -4,7 +4,7 @@
  */
 
 import { writable } from 'svelte/store';
-import type { FichaDetailData } from '$lib/services/process/fichaProcessAdapter';
+import type { FichaDetailData } from '$lib/types/serviceTypes';
 import type { EquipamentoEmPosseItem } from '$lib/types/serviceTypes';
 
 // Interface para DevolucaoItem (usada pelo store)

@@ -5,5 +5,4 @@
 <!-- Use the new Container/Presenter architecture -->
 <NotesContainer 
   initialPageSize={10}
-  autoRefresh={false}
 />

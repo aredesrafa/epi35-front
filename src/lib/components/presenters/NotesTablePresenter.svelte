@@ -28,9 +28,13 @@
     TipoNotaEnum, 
     StatusNotaEnum,
     NotasFilterOptions 
-  } from '$lib/services/process/notasMovimentacaoAdapter';
-  import { notasMovimentacaoAdapter } from '$lib/services/process/notasMovimentacaoAdapter';
+  } from '$lib/services/process/notasMovimentacaoTypes';
   import { formatarData } from '$lib/utils/dateHelpers';
+  import { 
+    getTipoNotaLabel, 
+    getStatusNotaLabel,
+    getStatusNotaBadgeColor 
+  } from '$lib/utils/notasHelpers';
 
   // ==================== PROPS ====================
   
@@ -85,12 +89,30 @@
     cancelarNota: NotaMovimentacao;
   }>();
 
+  // ==================== DEBUG LOGGING ====================
+  
+  $: if (items && items.length > 0) {
+    console.log('🔍 NotesTablePresenter: Dados recebidos', {
+      quantidade: items.length,
+      primeiraNota: {
+        id: items[0]?.id,
+        numero: items[0]?.numero,
+        responsavel_nome: items[0]?.responsavel_nome,
+        almoxarifado_nome: items[0]?.almoxarifado_nome,
+        total_itens: items[0]?.total_itens,
+        valor_total: items[0]?.valor_total,
+        status: items[0]?.status,
+        tipo: items[0]?.tipo,
+        data_documento: items[0]?.data_documento
+      }
+    });
+  }
+
   // ==================== TABS CONFIGURATION ====================
   
   const tabs = [
-    { label: 'Todas', count: pagination.total },
-    { label: 'Rascunhos', count: 0 },
     { label: 'Concluídas', count: 0 },
+    { label: 'Rascunhos', count: 0 },
     { label: 'Canceladas', count: 0 }
   ];
 
@@ -184,12 +206,6 @@
       ],
       placeholder: 'Tipo'
     },
-    filters.activeTab === 0 ? {
-      key: 'status',
-      value: filters.statusFilter,
-      options: filterOptions.status,
-      placeholder: 'Status'
-    } : null,
     {
       key: 'responsavel',
       value: filters.responsavelFilter,
@@ -226,17 +242,31 @@
     
     switch (nota.status) {
       case 'RASCUNHO':
+        // Rascunhos: podem ser editados, excluídos ou concluídos
         actions.push('edit', 'delete', 'conclude');
         break;
       case 'CONCLUIDA':
+        // Concluídas: podem ser canceladas (se permitido pelo backend)
         actions.push('cancel');
         break;
       case 'CANCELADA':
-        // Apenas visualizar
+        // Canceladas: apenas visualizar
         break;
     }
     
     return actions;
+  }
+
+  // Helper para obter tooltip das ações
+  function getActionTooltip(action: string, nota: NotaMovimentacao): string {
+    const actionLabels = {
+      'view': 'Visualizar detalhes da nota',
+      'edit': 'Editar nota (rascunho)',
+      'delete': 'Excluir nota (rascunho)',
+      'conclude': `Concluir nota e processar ${nota.total_itens || nota.itens?.length || 0} ${(nota.total_itens || nota.itens?.length || 0) === 1 ? 'item' : 'itens'}`,
+      'cancel': 'Cancelar nota (reversível)'
+    };
+    return actionLabels[action] || action;
   }
 
   // Função para mapear eventos de filtro
@@ -305,7 +335,7 @@
         >
           <span class="flex items-center space-x-2">
             <span>{tab.label}</span>
-            {#if index === 0 && pagination.total > 0}
+            {#if filters.activeTab === index && pagination.total > 0}
               <Badge color="gray" class="rounded-sm text-xs">{pagination.total}</Badge>
             {/if}
           </span>
@@ -348,7 +378,7 @@
       />
       
       <!-- Table content with responsive behavior -->
-      <div class="min-w-[1100px] overflow-x-auto">
+      <div class="min-w-[1200px] overflow-x-auto">
         <Table hoverable>
           <TableHead>
             <TableHeadCell>Número/Tipo</TableHeadCell>
@@ -356,7 +386,8 @@
             <TableHeadCell>Responsável</TableHeadCell>
             <TableHeadCell>Almoxarifado</TableHeadCell>
             <TableHeadCell>Status</TableHeadCell>
-            <TableHeadCell>Itens</TableHeadCell>
+            <TableHeadCell>Qtd. Itens</TableHeadCell>
+            <TableHeadCell>Valor Total</TableHeadCell>
             <TableHeadCell>Ações</TableHeadCell>
           </TableHead>
           <TableBody>
@@ -368,10 +399,10 @@
                 <TableBodyCell>
                   <div class="flex flex-col">
                     <span class="font-medium text-gray-900 dark:text-white">
-                      {nota.numero_documento || `#${nota.id.slice(0, 8)}`}
+                      {nota.numero || `#${nota.id.slice(0, 8)}`}
                     </span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">
-                      {notasMovimentacaoAdapter.getTipoNotaLabel(nota.tipo_nota)}
+                      {getTipoNotaLabel(nota.tipo)}
                     </span>
                   </div>
                 </TableBodyCell>
@@ -379,75 +410,87 @@
                   <span class="text-sm">{formatarData(nota.data_documento)}</span>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <span class="text-sm">{nota.responsavel?.nome || 'N/A'}</span>
+                  <span class="text-sm">{nota.responsavel_nome || 'N/A'}</span>
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex flex-col">
-                    <span class="text-sm">{nota.almoxarifado?.nome || 'N/A'}</span>
-                    {#if nota.almoxarifado_destino}
-                      <span class="text-xs text-gray-500">→ {nota.almoxarifado_destino.nome}</span>
+                    <span class="text-sm">{nota.almoxarifado_nome || 'N/A'}</span>
+                    {#if nota.almoxarifado_destino_nome && nota.tipo === 'TRANSFERENCIA'}
+                      <span class="text-xs text-gray-500">→ {nota.almoxarifado_destino_nome}</span>
                     {/if}
                   </div>
                 </TableBodyCell>
                 <TableBodyCell>
                   <Badge 
-                    color={notasMovimentacaoAdapter.getStatusBadgeColor(nota.status)} 
+                    color={getStatusNotaBadgeColor(nota.status)} 
                     class="w-fit rounded-sm"
                   >
-                    {notasMovimentacaoAdapter.getStatusNotaLabel(nota.status)}
+                    {getStatusNotaLabel(nota.status)}
                   </Badge>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <div class="flex items-center space-x-1">
+                  <div class="flex items-center space-x-2">
                     <FileDocOutline class="w-4 h-4 text-gray-400" />
-                    <span class="text-sm">{nota.total_itens || nota.itens?.length || 0}</span>
-                    {#if nota.valor_total}
-                      <span class="text-xs text-gray-500">
-                        (R$ {nota.valor_total.toFixed(2)})
-                      </span>
-                    {/if}
+                    <span class="text-sm font-medium">{nota.total_itens || nota.itens?.length || 0}</span>
+                    <span class="text-xs text-gray-500">
+                      {(nota.total_itens || nota.itens?.length || 0) === 1 ? 'item' : 'itens'}
+                    </span>
                   </div>
+                </TableBodyCell>
+                <TableBodyCell>
+                  {#if nota.valor_total && nota.valor_total > 0}
+                    <div class="flex flex-col">
+                      <span class="text-sm font-medium text-green-600 dark:text-green-400">
+                        R$ {nota.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        Médio: R$ {(nota.valor_total / (nota.total_itens || nota.itens?.length || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  {:else}
+                    <span class="text-sm text-gray-400">—</span>
+                  {/if}
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex space-x-1">
                     {#each getAvailableActions(nota) as action}
                       {#if action === 'view'}
                         <button
-                          class="p-2 rounded-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                          class="p-2 rounded-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-colors"
                           on:click={(e) => { e.stopPropagation(); handleVisualizarNota(nota); }}
-                          title="Visualizar"
+                          title={getActionTooltip('view', nota)}
                         >
                           <EyeOutline class="w-4 h-4" />
                         </button>
                       {:else if action === 'edit'}
                         <button
-                          class="p-2 rounded-sm text-blue-500 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700"
+                          class="p-2 rounded-sm text-blue-500 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-colors"
                           on:click={(e) => { e.stopPropagation(); handleEditarNota(nota); }}
-                          title="Editar"
+                          title={getActionTooltip('edit', nota)}
                         >
                           <PenOutline class="w-4 h-4" />
                         </button>
                       {:else if action === 'delete'}
                         <button
-                          class="p-2 rounded-sm text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-700"
+                          class="p-2 rounded-sm text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-700 transition-colors"
                           on:click={(e) => { e.stopPropagation(); handleExcluirNota(nota); }}
-                          title="Excluir"
+                          title={getActionTooltip('delete', nota)}
                         >
                           <TrashBinOutline class="w-4 h-4" />
                         </button>
                       {:else if action === 'conclude'}
                         <button
-                          class="p-2 rounded-sm text-green-500 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-700"
+                          class="p-2 rounded-sm text-green-500 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-700 transition-colors"
                           on:click={(e) => { e.stopPropagation(); handleConcluirNota(nota); }}
-                          title="Concluir"
+                          title={getActionTooltip('conclude', nota)}
                         >
                           <CheckOutline class="w-4 h-4" />
                         </button>
                       {:else if action === 'cancel'}
                         <button
-                          class="p-2 rounded-sm text-orange-500 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-700"
+                          class="p-2 rounded-sm text-orange-500 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-700 transition-colors"
                           on:click={(e) => { e.stopPropagation(); handleCancelarNota(nota); }}
-                          title="Cancelar"
+                          title={getActionTooltip('cancel', nota)}
                         >
                           <CloseOutline class="w-4 h-4" />
                         </button>

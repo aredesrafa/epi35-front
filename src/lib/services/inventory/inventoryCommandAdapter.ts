@@ -14,10 +14,76 @@ import type {
   NovaMovimentacaoForm,
   EstornoMovimentacaoForm,
   AjusteEstoqueForm,
-  TransferenciaEstoqueForm
+  TransferenciaEstoqueForm,
+  ItemEstoqueDTO,
+  PaginatedResponse
 } from '$lib/types/serviceTypes';
 
 class InventoryCommandAdapter {
+  
+  // ==================== QUERIES - Consultar dados de inventário ====================
+  
+  /**
+   * Obtém itens do inventário com paginação e filtros
+   */
+  async getInventoryItems(params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    status?: string;
+    categoria?: string;
+    includeExpanded?: boolean;
+  } = {}): Promise<PaginatedResponse<ItemEstoqueDTO>> {
+    console.log('📊 Buscando itens do inventário:', params);
+    
+    try {
+      const queryParams = {
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        ...(params.search && { search: params.search }),
+        ...(params.status && { status: params.status }),
+        ...(params.categoria && { categoria: params.categoria }),
+        ...(params.includeExpanded && { includeExpanded: true })
+      };
+      
+      const url = createUrlWithParams('/estoque/itens', queryParams);
+      const response = await api.get<PaginatedResponse<ItemEstoqueDTO>>(url);
+      
+      console.log('✅ Itens do inventário obtidos com sucesso:', response.data.length);
+      return response;
+    } catch (error) {
+      console.error('❌ Erro ao buscar itens do inventário:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtém histórico de movimentações de um item específico
+   */
+  async getItemMovementHistory(itemId: string, params: {
+    limit?: number;
+    dataInicio?: string;
+    dataFim?: string;
+  } = {}): Promise<MovimentacaoEstoqueDTO[]> {
+    console.log('📊 Buscando histórico do item:', itemId, params);
+    
+    try {
+      const queryParams = {
+        limit: params.limit || 100,
+        ...(params.dataInicio && { dataInicio: params.dataInicio }),
+        ...(params.dataFim && { dataFim: params.dataFim })
+      };
+      
+      const url = createUrlWithParams(`/estoque/itens/${itemId}/movimentacoes`, queryParams);
+      const response = await api.get<MovimentacaoEstoqueDTO[]>(url);
+      
+      console.log('✅ Histórico do item obtido com sucesso:', response.length);
+      return response;
+    } catch (error) {
+      console.error('❌ Erro ao buscar histórico do item:', error);
+      throw error;
+    }
+  }
   
   // ==================== COMMANDS - Registrar movimentações (Event Sourcing) ====================
   

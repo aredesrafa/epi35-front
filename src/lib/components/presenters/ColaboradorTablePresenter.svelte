@@ -28,7 +28,7 @@
   export let filters: FilterState = {};
   export let contratadas: ContratadaDTO[] = [];
   export let embedded = false;
-  export let showNovoColaboradorModal = false;
+  export const showNovoColaboradorModal = false;
   export let showEditarColaboradorModal = false;
   export let colaboradorEdicao: ColaboradorDTO | null = null;
   
@@ -70,7 +70,7 @@
   
   // ==================== REACTIVE STATEMENTS ====================
   
-  $: if (showNovoColaboradorModal && !colaboradorEdicao) {
+  $: if (showEditarColaboradorModal && !colaboradorEdicao) {
     formData = {
       nome: '',
       cpf: '',
@@ -411,7 +411,6 @@
 
 <!-- Modal: Novo/Editar Colaborador -->
 <Modal 
-  bind:open={showNovoColaboradorModal}
   bind:open={showEditarColaboradorModal}
   size="md"
   title={colaboradorEdicao ? 'Editar Colaborador' : 'Novo Colaborador'}

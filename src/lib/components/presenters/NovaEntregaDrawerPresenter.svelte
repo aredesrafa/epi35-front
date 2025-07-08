@@ -11,13 +11,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button, Input, Label } from 'flowbite-svelte';
-  import { PlusOutline, TrashBinOutline, CheckOutline, CloseOutline } from 'flowbite-svelte-icons';
+  import { PlusOutline, TrashBinOutline, CheckOutline, CloseOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
   import SearchableDropdown from '$lib/components/common/SearchableDropdown.svelte';
   import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
-  import type { 
-    EPIDisponivel,
-    NovaEntregaFormData
-  } from '$lib/services/process/fichaProcessAdapter';
+  // 🚀 MIGRADO: Importar tipos das novas interfaces
+  import type { EPIDisponivel, NovaEntregaFormData } from '$lib/services/process';
 
   // ==================== PROPS ====================
   
@@ -88,7 +86,7 @@
         ...itensSelecionados[index],
         episDisponivelId,
         nomeEquipamento: epiSelecionado.nomeEquipamento,
-        registroCA: epiSelecionado.registroCA
+        registroCA: epiSelecionado.numeroCA || epiSelecionado.registroCA
       };
     }
   }
@@ -122,11 +120,30 @@
   function handleSalvar(): void {
     console.log('📝 NovaEntregaDrawer: Preparando dados do formulário...');
     console.log('📋 Itens selecionados originais:', itensSelecionados);
+    console.log('👤 Usuario responsável ID:', usuarioResponsavelId);
+    console.log('📦 Validando itens...');
+    
+    // Validação antes de criar o payload
+    if (!usuarioResponsavelId.trim()) {
+      console.error('❌ Erro: usuário responsável não selecionado');
+      return;
+    }
+    
+    if (itensSelecionados.length === 0) {
+      console.error('❌ Erro: nenhum item selecionado');
+      return;
+    }
+    
+    const itensValidos = itensSelecionados.filter(item => item.episDisponivelId && item.quantidade > 0);
+    if (itensValidos.length === 0) {
+      console.error('❌ Erro: nenhum item válido selecionado');
+      return;
+    }
     
     const formData: NovaEntregaFormData = {
       responsavel: responsavelEntrega.trim(),
       usuarioResponsavelId: usuarioResponsavelId.trim(),
-      itens: itensSelecionados.map(item => ({
+      itens: itensValidos.map(item => ({
         episDisponivelId: item.episDisponivelId,
         nomeEquipamento: item.nomeEquipamento,
         registroCA: item.registroCA,
@@ -168,9 +185,16 @@
     { value: '', label: 'Selecione um EPI...' },
     ...episDisponiveis.map(epi => ({
       value: epi.id,
-      label: `${epi.nomeEquipamento} (CA ${epi.registroCA}) - ${epi.quantidadeDisponivel} disponíveis`
+      label: `${epi.nomeEquipamento} (CA ${epi.numeroCA || epi.registroCA}) - ${epi.quantidadeDisponivel} disponíveis`
     }))
   ];
+
+  // Debug reativo para EPIs
+  $: if (episDisponiveis?.length > 0) {
+    console.log('🎯 NovaEntregaDrawer: EPIs disponíveis atualizados:', episDisponiveis.length);
+    console.log('📦 Amostra de EPIs no drawer:', episDisponiveis.slice(0, 2));
+    console.log('🔧 Opções do select:', episOptions.slice(0, 3));
+  }
 
   $: usuarioOptions = [
     { value: '', label: 'Selecione um responsável...' },
@@ -180,15 +204,24 @@
     }))
   ];
 
-  $: canSave = usuarioResponsavelId.trim() && itensSelecionados.length > 0 && !loading;
+  $: canSave = usuarioResponsavelId.trim() && itensSelecionados.length > 0 && !loading && episDisponiveis.length > 0;
 </script>
 
 {#if show}
   <!-- Overlay -->
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-55 transition-opacity"></div>
+  <div 
+    class="fixed inset-0 bg-black bg-opacity-50 z-[60] transition-opacity"
+    on:click={handleCancelar}
+    role="presentation"
+  ></div>
 
   <!-- Drawer -->
-  <div class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-60 transform transition-transform duration-300 ease-in-out">
+  <div 
+    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out"
+    on:click|stopPropagation
+    role="dialog"
+    aria-modal="true"
+  >
     
     <!-- Header -->
     <DrawerHeader 
@@ -245,9 +278,22 @@
           </div>
 
 
-          <div class="space-y-4">
-            {#each itensSelecionados as item, index}
-              <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          {#if episDisponiveis.length === 0}
+            <div class="p-4 border-2 border-dashed border-red-300 rounded-lg bg-red-50 dark:bg-red-900/20">
+              <div class="text-center">
+                <ExclamationCircleOutline class="mx-auto mb-2 text-red-500 w-8 h-8" />
+                <h4 class="text-sm font-medium text-red-800 dark:text-red-200 mb-1">
+                  Nenhum EPI Disponível
+                </h4>
+                <p class="text-sm text-red-600 dark:text-red-400">
+                  Não há EPIs disponíveis para entrega no momento. Verifique o estoque ou entre em contato com o administrador.
+                </p>
+              </div>
+            </div>
+          {:else}
+            <div class="space-y-4">
+              {#each itensSelecionados as item, index}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <div class="flex items-start justify-between mb-4">
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">
                     Item {index + 1}
@@ -338,7 +384,8 @@
                 </Button>
               </div>
             {/if}
-          </div>
+            </div>
+          {/if}
         </div>
 
     </div>

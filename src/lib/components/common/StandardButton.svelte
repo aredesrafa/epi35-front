@@ -14,6 +14,9 @@
   // Variantes de botão padronizadas
   type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
   
+  // Cores disponíveis no Flowbite (definindo localmente para evitar import issues)
+  type ComponentColor = 'alternative' | 'blue' | 'dark' | 'green' | 'light' | 'primary' | 'purple' | 'red' | 'yellow';
+  
   // Props principais
   export let variant: ButtonVariant = 'primary';
   export let size: ButtonSize = 'sm';
@@ -36,7 +39,7 @@
   export let customClass: string = '';
   
   // Mapeamento de variantes para cores do Flowbite
-  const variantToColor: Record<ButtonVariant, string> = {
+  const variantToColor: Record<ButtonVariant, ComponentColor> = {
     primary: 'primary',
     secondary: 'alternative',
     success: 'green',
@@ -68,7 +71,7 @@
 <Button
   {type}
   {href}
-  color={buttonColor as any}
+  color={buttonColor}
   {size}
   {outline}
   disabled={isDisabled}
