@@ -7,6 +7,7 @@
 
 import { writable, type Readable } from "svelte/store";
 import type { PaginationState, FilterState } from "$lib/types";
+import { isValidCPF, isValidCNPJ } from "$lib/utils/validation";
 
 /**
  * Resposta paginada esperada do backend
@@ -828,12 +829,37 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("🆕 Criando colaborador:", data);
 
+        // Validação local antes de enviar
+        const colaboradorData = data as any;
+        
+        // Validar CPF se fornecido
+        if (colaboradorData.cpf && !isValidCPF(colaboradorData.cpf)) {
+          throw new Error("CPF inválido. Verifique o formato e os dígitos verificadores.");
+        }
+
+        // Validar se contratadaId está presente
+        if (!colaboradorData.contratadaId) {
+          throw new Error("Contratada é obrigatória. Selecione uma contratada válida.");
+        }
+
+        // Verificar se contratadaId é um UUID válido
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(colaboradorData.contratadaId)) {
+          throw new Error("ID da contratada inválido. Selecione uma contratada válida da lista.");
+        }
+
+        // Normalizar CPF (remover formatação)
+        const payload = {
+          ...colaboradorData,
+          cpf: colaboradorData.cpf ? colaboradorData.cpf.replace(/\D/g, '') : undefined,
+        };
+
         const response = await fetch("/api/colaboradores", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {

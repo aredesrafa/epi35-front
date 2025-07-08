@@ -126,6 +126,9 @@
   
   function handleSalvarColaborador(): void {
     const dados = { ...formData };
+    console.log('🚀 handleSalvarColaborador - Dados do formulário:', dados);
+    console.log('🚀 handleSalvarColaborador - contratadaId:', dados.contratadaId);
+    console.log('🚀 handleSalvarColaborador - contratadas disponíveis:', contratadas.map(c => ({ id: c.id, nome: c.nome })));
     
     if (colaboradorEdicao) {
       dispatch('atualizarColaborador', dados);
