@@ -71,7 +71,6 @@ declare module '$env/static/private' {
 	export const npm_package_name: string;
 	export const npm_config_npm_version: string;
 	export const XPC_FLAGS: string;
-	export const NODE_ENV: string;
 	export const npm_config_node_gyp: string;
 	export const npm_package_version: string;
 	export const XPC_SERVICE_NAME: string;
@@ -93,6 +92,7 @@ declare module '$env/static/private' {
 	export const CLAUDECODE: string;
 	export const npm_node_execpath: string;
 	export const npm_config_prefix: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -169,7 +169,6 @@ declare module '$env/dynamic/private' {
 		npm_package_name: string;
 		npm_config_npm_version: string;
 		XPC_FLAGS: string;
-		NODE_ENV: string;
 		npm_config_node_gyp: string;
 		npm_package_version: string;
 		XPC_SERVICE_NAME: string;
@@ -191,6 +190,7 @@ declare module '$env/dynamic/private' {
 		CLAUDECODE: string;
 		npm_node_execpath: string;
 		npm_config_prefix: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}

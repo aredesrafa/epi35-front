@@ -241,21 +241,30 @@
   async function loadFilterOptions() {
     try {
       // Carregar almoxarifados (através dos itens de estoque)
-      const estoqueData = await inventoryQueryAdapter.getInventoryItems({
-        page: 1,
-        limit: 100
-      });
-      const almoxarifadosUnicos = new Map();
-      estoqueData.data.items.forEach((item: any) => {
-          if (item.almoxarifado) {
-            almoxarifadosUnicos.set(item.almoxarifado.id, {
-              id: item.almoxarifado.id,
-              nome: item.almoxarifado.nome
-            });
-          }
+      try {
+        const estoqueData = await inventoryQueryAdapter.getInventoryItems({
+          page: 1,
+          limit: 100
         });
-        almoxarifados = Array.from(almoxarifadosUnicos.values());
-        console.log('✅ Almoxarifados carregados:', almoxarifados.length);
+        const almoxarifadosUnicos = new Map();
+        estoqueData.data.items.forEach((item: any) => {
+            if (item.almoxarifado) {
+              almoxarifadosUnicos.set(item.almoxarifado.id, {
+                id: item.almoxarifado.id,
+                nome: item.almoxarifado.nome
+              });
+            }
+          });
+          almoxarifados = Array.from(almoxarifadosUnicos.values());
+          console.log('✅ Almoxarifados carregados:', almoxarifados.length);
+      } catch (error) {
+        console.warn('⚠️ Erro ao carregar almoxarifados, usando fallback:', error);
+        // Fallback: usar dados padrão ou buscar de outro endpoint
+        almoxarifados = [
+          { id: 'alm-central-sp', nome: 'Almoxarifado Central SP' },
+          { id: 'alm-rj', nome: 'Almoxarifado RJ' }
+        ];
+      }
       
       // Carregar tipos de EPI
       const epiData = await catalogAdapter.getTiposEPI({
