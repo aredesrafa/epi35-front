@@ -8,13 +8,25 @@
 
 import { browser } from "$app/environment";
 
-// Configurações da API - Usar proxy em desenvolvimento, URL direta em produção/GitHub Pages
-export const API_BASE_URL =
-  typeof window !== "undefined" && 
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") &&
-  window.location.port !== ""
-    ? "/api" // Usar proxy em desenvolvimento local
-    : "https://epi-backend-s14g.onrender.com/api"; // URL direta em produção e GitHub Pages
+// Configurações da API - Detectar ambiente corretamente
+export const API_BASE_URL = (() => {
+  if (typeof window === "undefined") {
+    // SSR - usar URL direta sempre
+    return "https://epi-backend-s14g.onrender.com/api";
+  }
+  
+  const isLocal = window.location.hostname === "localhost" || 
+                  window.location.hostname === "127.0.0.1";
+  const isGitHubPages = window.location.hostname.includes("github.io");
+  
+  if (isLocal && window.location.port !== "") {
+    // Desenvolvimento local com porta específica - usar proxy
+    return "/api";
+  } else {
+    // Produção, GitHub Pages ou qualquer outro ambiente - URL direta
+    return "https://epi-backend-s14g.onrender.com/api";
+  }
+})();
 
 // Interfaces para request unificado
 export interface RequestConfig {
@@ -97,10 +109,15 @@ export async function apiClient<T>(
     ...fetchOptions
   } = config;
 
-  // Headers padrão
+  // Headers padrão com configuração CORS otimizada
   const headers = new Headers(fetchOptions.headers);
   headers.set("Content-Type", "application/json");
   headers.set("Accept", "application/json");
+  
+  // Headers específicos para GitHub Pages
+  if (typeof window !== "undefined" && window.location.hostname.includes("github.io")) {
+    headers.set("Origin", window.location.origin);
+  }
 
   // Headers de autenticação serão implementados por outra equipe
   // TODO: Implementar quando a equipe de auth disponibilizar o sistema
@@ -124,21 +141,44 @@ export async function apiClient<T>(
       );
     }
 
+    // Garantir URL absoluta sempre - SvelteKit requer URLs absolutas no SSR
+    let url: string;
+    if (endpoint.startsWith("http")) {
+      url = endpoint;
+    } else {
+      // Garantir que sempre temos uma URL absoluta
+      const cleanEndpoint = endpoint.startsWith("/")
+        ? endpoint
+        : "/" + endpoint;
+      url = `${API_BASE_URL}${cleanEndpoint}`;
+    }
+
+    // Em GitHub Pages, fazer preflight check para métodos não-simples
+    const isGitHubPages = typeof window !== "undefined" && window.location.hostname.includes("github.io");
+    const needsPreflight = ["POST", "PUT", "PATCH", "DELETE"].includes(fetchOptions.method?.toUpperCase() || "GET");
+    
+    if (isGitHubPages && needsPreflight) {
+      console.log(`🚀 GitHub Pages detectado - fazendo preflight para ${fetchOptions.method}`);
+      try {
+        // Fazer OPTIONS request primeiro
+        await fetch(url, {
+          method: "OPTIONS",
+          mode: "cors",
+          credentials: "omit",
+          headers: {
+            "Access-Control-Request-Method": fetchOptions.method?.toUpperCase() || "POST",
+            "Access-Control-Request-Headers": "content-type,accept",
+          },
+        });
+      } catch (preflightError) {
+        console.warn("⚠️ Preflight falhou, tentando requisição direta:", preflightError);
+      }
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-      // Garantir URL absoluta sempre - SvelteKit requer URLs absolutas no SSR
-      let url: string;
-      if (endpoint.startsWith("http")) {
-        url = endpoint;
-      } else {
-        // Garantir que sempre temos uma URL absoluta
-        const cleanEndpoint = endpoint.startsWith("/")
-          ? endpoint
-          : "/" + endpoint;
-        url = `${API_BASE_URL}${cleanEndpoint}`;
-      }
 
       console.log(`🌐 Fazendo requisição para: ${url}`);
 
@@ -147,6 +187,7 @@ export async function apiClient<T>(
         headers,
         signal: controller.signal,
         mode: "cors", // Forçar modo CORS
+        credentials: "omit", // Não enviar cookies para evitar problemas CORS
       });
 
       clearTimeout(timeoutId);
@@ -162,6 +203,18 @@ export async function apiClient<T>(
           } catch {
             // Se não conseguir fazer parse do JSON, usar resposta vazia
           }
+        }
+
+        // Tratamento específico para erro 405 em GitHub Pages (geralmente CORS)
+        if (response.status === 405 && isGitHubPages) {
+          const message = "Erro de CORS no GitHub Pages. Verifique se o backend está configurado corretamente.";
+          console.error("❌ Erro 405 detectado no GitHub Pages - provável problema de CORS:", {
+            url,
+            method: fetchOptions.method,
+            status: response.status,
+            statusText: response.statusText
+          });
+          throw new ApiError(message, response.status, errorData, endpoint);
         }
 
         const message =
