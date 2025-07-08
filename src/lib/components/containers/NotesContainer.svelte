@@ -27,7 +27,7 @@
   import { businessConfigStore } from '$lib/stores/businessConfigStore';
   import { notify } from '$lib/stores';
   import NotesTablePresenter from '$lib/components/presenters/NotesTablePresenter.svelte';
-  import NotesFormModalPresenter from '$lib/components/presenters/NotesFormModalPresenter.svelte';
+  import NotesDetailDrawer from '$lib/components/presenters/NotesDetailDrawer.svelte';
   import BackendStatusIndicator from '$lib/components/common/BackendStatusIndicator.svelte';
   import { getTipoNotaLabel } from '$lib/utils/notasHelpers';
 
@@ -72,10 +72,10 @@
   // Tab state
   let activeTab = 0; // 0 = Concluídas, 1 = Rascunhos, 2 = Canceladas
 
-  // Modal state
-  let showNotaModal = false;
-  let modalMode: 'create' | 'edit' | 'view' = 'create';
-  let modalTipo: TipoNotaEnum = 'ENTRADA';
+  // Drawer state
+  let showNotaDrawer = false;
+  let drawerMode: 'create' | 'edit' | 'view' = 'create';
+  let drawerTipo: TipoNotaEnum = 'ENTRADA';
   let selectedNota: NotaMovimentacao | null = null;
   let notaFormLoading = false;
 
@@ -261,11 +261,11 @@
 
   // ==================== NOTA CRUD HANDLERS ====================
   
-  function handleNovaNota(tipo: TipoNotaEnum): void {
+  function handleNovaNota(): void {
     selectedNota = null;
-    modalMode = 'create';
-    modalTipo = tipo;
-    showNotaModal = true;
+    drawerMode = 'create';
+    drawerTipo = 'ENTRADA'; // Padrão: ENTRADA
+    showNotaDrawer = true;
   }
 
   async function handleEditarNota(nota: NotaMovimentacao): Promise<void> {
@@ -276,9 +276,9 @@
       const notaCompleta = await notasMovimentacaoAdapter.obterNota(nota.id);
       
       selectedNota = notaCompleta;
-      modalMode = 'edit';
-      modalTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
-      showNotaModal = true;
+      drawerMode = 'edit';
+      drawerTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
+      showNotaDrawer = true;
       
       console.log('✅ Dados completos carregados para edição:', {
         id: notaCompleta.id,
@@ -290,9 +290,9 @@
       
       // Fallback para dados básicos (do resumo)
       selectedNota = nota;
-      modalMode = 'edit';
-      modalTipo = nota.tipo;
-      showNotaModal = true;
+      drawerMode = 'edit';
+      drawerTipo = nota.tipo;
+      showNotaDrawer = true;
       
       notify.warning('Aviso', 'Alguns detalhes podem não estar disponíveis');
     }
@@ -306,9 +306,9 @@
       const notaCompleta = await notasMovimentacaoAdapter.obterNota(nota.id);
       
       selectedNota = notaCompleta;
-      modalMode = 'view';
-      modalTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
-      showNotaModal = true;
+      drawerMode = 'view';
+      drawerTipo = notaCompleta.tipo_nota || notaCompleta.tipo;
+      showNotaDrawer = true;
       
       console.log('✅ Dados completos carregados:', {
         id: notaCompleta.id,
@@ -320,9 +320,9 @@
       
       // Fallback para dados básicos (do resumo)
       selectedNota = nota;
-      modalMode = 'view';
-      modalTipo = nota.tipo;
-      showNotaModal = true;
+      drawerMode = 'view';
+      drawerTipo = nota.tipo;
+      showNotaDrawer = true;
       
       notify.warning('Aviso', 'Alguns detalhes podem não estar disponíveis');
     }
@@ -442,8 +442,8 @@
       // Recarregar opções de filtros para incluir novos dados
       await loadFilterOptions();
       
-      // Fechar modal
-      showNotaModal = false;
+      // Fechar drawer
+      showNotaDrawer = false;
       selectedNota = null;
       
       const mensagem = modo === 'rascunho' ? 'Rascunho salvo com sucesso' : 'Nota concluída com sucesso';
@@ -452,7 +452,7 @@
       // Emitir eventos apropriados
       if (modo === 'rascunho') {
         const notaAtualizada = await notasMovimentacaoAdapter.obterNota(notaId);
-        if (modalMode === 'create') {
+        if (drawerMode === 'create') {
           dispatch('notaCreated', notaAtualizada);
         } else {
           dispatch('notaUpdated', notaAtualizada);
@@ -468,7 +468,13 @@
   }
 
   function handleFormCancel(): void {
-    showNotaModal = false;
+    showNotaDrawer = false;
+    selectedNota = null;
+    notaFormLoading = false;
+  }
+
+  function handleDrawerClose(): void {
+    showNotaDrawer = false;
     selectedNota = null;
     notaFormLoading = false;
   }
@@ -483,9 +489,9 @@
     dataInicioFilter !== '' ||
     dataFimFilter !== '';
 
-  $: modalTitle = modalMode === 'create' ? `Nova Nota - ${getTipoNotaLabel(modalTipo)}` : 
-    modalMode === 'edit' ? `Editar Nota - ${getTipoNotaLabel(modalTipo)}` : 
-    `Visualizar Nota - ${getTipoNotaLabel(modalTipo)}`;
+  $: drawerTitle = drawerMode === 'create' ? `Nova Nota - ${getTipoNotaLabel(drawerTipo)}` : 
+    drawerMode === 'edit' ? `Editar Nota - ${getTipoNotaLabel(drawerTipo)}` : 
+    `Visualizar Nota - ${getTipoNotaLabel(drawerTipo)}`;
 
   // ==================== PRESENTER PROPS ====================
   
@@ -545,9 +551,7 @@
   on:tabChange={(e) => handleTabChange(e.detail)}
   on:pageChange={(e) => handlePageChange(e.detail)}
   on:pageSizeChange={(e) => handlePageSizeChange(e.detail)}
-  on:novaNotaEntrada={() => handleNovaNota('ENTRADA')}
-  on:novaNotaTransferencia={() => handleNovaNota('TRANSFERENCIA')}
-  on:novaNotaDescarte={() => handleNovaNota('DESCARTE')}
+  on:novaNota={handleNovaNota}
   on:editarNota={(e) => { handleEditarNota(e.detail); }}
   on:visualizarNota={(e) => { handleVisualizarNota(e.detail); }}
   on:excluirNota={(e) => handleExcluirNota(e.detail)}
@@ -555,14 +559,14 @@
   on:cancelarNota={(e) => handleCancelarNota(e.detail)}
 />
 
-<!-- Modal de Formulário Nota Dual -->
-<NotesFormModalPresenter
-  show={showNotaModal}
-  mode={modalMode}
-  tipo={modalTipo}
-  title={modalTitle}
+<!-- Drawer de Nota -->
+<NotesDetailDrawer
+  open={showNotaDrawer}
+  mode={drawerMode}
+  tipo={drawerTipo}
   nota={selectedNota}
   loading={notaFormLoading}
   on:salvar={handleFormSave}
   on:cancelar={handleFormCancel}
+  on:close={handleDrawerClose}
 />

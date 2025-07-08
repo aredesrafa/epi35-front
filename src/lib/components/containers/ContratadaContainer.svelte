@@ -2,7 +2,7 @@
   Contratada Container - Sistema DataLife EPI
   
   Container inteligente que gerencia lógica de negócio para gestão de contratadas.
-  Utiliza Enhanced Paginated Store para paginação server-side e operações CRUD.
+  Utiliza store paginado para paginação server-side e operações CRUD.
 -->
 
 <script lang="ts">
@@ -17,29 +17,33 @@
   export let initialPageSize = 10;
   export let embedded = false; // Para uso em tabs
   
-  // ==================== ENHANCED PAGINATED STORE ====================
+  // ==================== ADVANCED PAGINATED STORE ====================
   
-  // ✅ Enhanced Store conectado ao endpoint de contratadas
   const contratadaStore = createAdvancedPaginatedStore<ContratadaDTO>({
     baseEndpoint: '/contratadas',
     defaultPageSize: initialPageSize,
     debounceDelay: 300,
-    cacheTimeout: 5 * 60 * 1000, // 5 min cache
-    autoRefresh: false,
-    filterEndpoints: {}
+    cacheTimeout: 5 * 60 * 1000
   });
   
   // ==================== DERIVED STORES ====================
   
-  $: items = $contratadaStore.data;
+  $: items = $contratadaStore.items || [];
   $: loading = $contratadaStore.loading;
   $: error = $contratadaStore.error;
-  $: pagination = $contratadaStore.pagination;
-  $: filters = $contratadaStore.filters;
+  $: pagination = {
+    currentPage: $contratadaStore.page,
+    itemsPerPage: $contratadaStore.pageSize,
+    totalItems: $contratadaStore.total,
+    totalPages: $contratadaStore.totalPages
+  };
+  $: filters = contratadaStore.filters;
   
-  // ==================== LOCAL STATE ====================
+  // Debug logs
+  $: console.log('🏢 ContratadaContainer - items:', items.length, items);
+  $: console.log('🏢 ContratadaContainer - loading:', loading);
+  $: console.log('🏢 ContratadaContainer - pagination:', pagination);
   
-  let showNovaContratadaModal = false;
   let showEditarContratadaModal = false;
   let contratadaEdicao: ContratadaDTO | null = null;
   
@@ -79,7 +83,8 @@
   
   function handleNovaContratada(): void {
     console.log('➕ Nova contratada...');
-    showNovaContratadaModal = true;
+    showEditarContratadaModal = true;
+    contratadaEdicao = null;
   }
   
   function handleEditarContratada(contratada: ContratadaDTO): void {
@@ -92,12 +97,10 @@
     try {
       console.log('💾 Salvando contratada:', dados);
       
-      // TODO: Implementar salvamento real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Usar método create do store para salvar via API real
+      await contratadaStore.create(dados);
       
-      showNovaContratadaModal = false;
-      
-      await contratadaStore.refresh();
+      showEditarContratadaModal = false;
       notify.success('Sucesso', 'Contratada salva com sucesso');
       
     } catch (error) {
@@ -110,13 +113,15 @@
     try {
       console.log('💾 Atualizando contratada:', contratadaEdicao?.id, dados);
       
-      // TODO: Implementar atualização real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!contratadaEdicao?.id) {
+        throw new Error('ID da contratada não encontrado');
+      }
+      
+      // Usar método update do store para atualizar via API real
+      await contratadaStore.update(contratadaEdicao.id, dados);
       
       showEditarContratadaModal = false;
       contratadaEdicao = null;
-      
-      await contratadaStore.refresh();
       notify.success('Sucesso', 'Contratada atualizada com sucesso');
       
     } catch (error) {
@@ -129,10 +134,9 @@
     try {
       console.log('🗑️ Excluir contratada:', contratada.id);
       
-      // TODO: Implementar exclusão real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Usar método delete do store para excluir via API real
+      await contratadaStore.delete(contratada.id);
       
-      await contratadaStore.refresh();
       notify.success('Sucesso', 'Contratada excluída com sucesso');
       
     } catch (error) {
@@ -142,7 +146,6 @@
   }
   
   function handleCancelarModal(): void {
-    showNovaContratadaModal = false;
     showEditarContratadaModal = false;
     contratadaEdicao = null;
   }
@@ -161,7 +164,6 @@
   {pagination}
   {filters}
   {embedded}
-  {showNovaContratadaModal}
   {showEditarContratadaModal}
   {contratadaEdicao}
   on:pageChange={(e) => handlePageChange(e.detail)}

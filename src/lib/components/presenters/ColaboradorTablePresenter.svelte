@@ -17,7 +17,7 @@
   import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
   import ErrorDisplay from '$lib/components/common/ErrorDisplay.svelte';
   import type { ColaboradorDTO, ContratadaDTO } from '$lib/types/serviceTypes';
-  import type { PaginationState, FilterState } from '$lib/stores/paginatedStore';
+  import type { PaginationState, FilterState } from '$lib/types';
   
   // ==================== PROPS ====================
   
@@ -28,7 +28,6 @@
   export let filters: FilterState = {};
   export let contratadas: ContratadaDTO[] = [];
   export let embedded = false;
-  export const showNovoColaboradorModal = false;
   export let showEditarColaboradorModal = false;
   export let colaboradorEdicao: ColaboradorDTO | null = null;
   
@@ -50,23 +49,27 @@
   
   // ==================== LOCAL STATE ====================
   
+  // Form data - campos obrigatórios + cargo
   let formData = {
     nome: '',
     cpf: '',
-    email: '',
-    telefone: '',
     cargo: '',
-    dataAdmissao: '',
     contratadaId: ''
   };
   
   // ==================== COMPUTED VALUES ====================
   
-  $: startIndex = (pagination.page - 1) * pagination.pageSize + 1;
-  $: endIndex = Math.min(pagination.page * pagination.pageSize, pagination.total);
+  $: startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage + 1;
+  $: endIndex = Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems);
   $: hasFiltersApplied = Object.values(filters).some(value => 
     value !== null && value !== undefined && value !== ''
   );
+  
+  // Debug logs
+  $: console.log('👨‍💼 ColaboradorTablePresenter - items:', items.length, items);
+  $: console.log('👨‍💼 ColaboradorTablePresenter - loading:', loading);
+  $: console.log('👨‍💼 ColaboradorTablePresenter - pagination:', pagination);
+  $: console.log('👨‍💼 ColaboradorTablePresenter - contratadas:', contratadas.length, contratadas);
   
   // ==================== REACTIVE STATEMENTS ====================
   
@@ -74,10 +77,7 @@
     formData = {
       nome: '',
       cpf: '',
-      email: '',
-      telefone: '',
       cargo: '',
-      dataAdmissao: '',
       contratadaId: ''
     };
   }
@@ -86,23 +86,13 @@
     formData = {
       nome: colaboradorEdicao.nome || '',
       cpf: colaboradorEdicao.cpf || '',
-      email: colaboradorEdicao.email || '',
-      telefone: colaboradorEdicao.telefone || '',
       cargo: colaboradorEdicao.cargo || '',
-      dataAdmissao: colaboradorEdicao.dataAdmissao || '',
       contratadaId: colaboradorEdicao.contratadaId || ''
     };
   }
   
   // ==================== HELPER FUNCTIONS ====================
   
-  function getStatusBadgeColor(ativo: boolean): 'green' | 'red' {
-    return ativo ? 'green' : 'red';
-  }
-  
-  function getStatusLabel(ativo: boolean): string {
-    return ativo ? 'Ativo' : 'Inativo';
-  }
   
   function formatCPF(cpf: string): string {
     const numbers = cpf.replace(/\D/g, '');
@@ -111,7 +101,7 @@
   
   function generatePageNumbers(): number[] {
     const totalPages = pagination.totalPages;
-    const currentPage = pagination.page;
+    const currentPage = pagination.currentPage;
     const maxVisible = 5;
     
     if (totalPages <= maxVisible) {
@@ -182,7 +172,7 @@
           size="sm" 
           color="primary" 
           class="rounded-sm"
-          on:click={() => dispatch('novoColaborador')}
+          on:click={() => { dispatch('novoColaborador'); console.log('🚀 Botão Novo Colaborador clicado'); }}
         >
           <PlusOutline class="w-4 h-4 mr-2" />
           Novo Colaborador
@@ -203,7 +193,7 @@
         size="sm" 
         color="primary" 
         class="rounded-sm"
-        on:click={() => dispatch('novoColaborador')}
+        on:click={() => { dispatch('novoColaborador'); console.log('🚀 Botão Novo Colaborador clicado'); }}
       >
         <PlusOutline class="w-4 h-4 mr-2" />
         Colaborador
@@ -242,25 +232,11 @@
         </Select>
       </div>
       
-      <div>
-        <Label for="filtro-status" class="mb-2">Status</Label>
-        <Select
-          id="filtro-status"
-          value={filters.ativo || ''}
-          on:change={(e) => handleFilterInput('ativo', e.target.value)}
-          size="sm"
-          class="rounded-sm"
-        >
-          <option value="">Todos os status</option>
-          <option value="true">Ativos</option>
-          <option value="false">Inativos</option>
-        </Select>
-      </div>
     </div>
     
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <div class="text-sm text-gray-600 dark:text-gray-400">
-        <span class="font-medium">{pagination.total}</span> colaborador(es) encontrado(s)
+        <span class="font-medium">{pagination.totalItems}</span> colaborador(es) encontrado(s)
       </div>
       
       {#if hasFiltersApplied}
@@ -309,7 +285,6 @@
             <TableHeadCell>CPF</TableHeadCell>
             <TableHeadCell>Cargo</TableHeadCell>
             <TableHeadCell>Contratada</TableHeadCell>
-            <TableHeadCell>Status</TableHeadCell>
             <TableHeadCell>Ações</TableHeadCell>
           </TableHead>
           <TableBody>
@@ -327,18 +302,10 @@
                   <span class="font-mono text-sm">{formatCPF(colaborador.cpf)}</span>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <span class="text-sm">{colaborador.cargo}</span>
+                  <span class="text-sm">{colaborador.cargo || '-'}</span>
                 </TableBodyCell>
                 <TableBodyCell>
                   <span class="text-sm">{colaborador.contratada?.nome || '-'}</span>
-                </TableBodyCell>
-                <TableBodyCell>
-                  <Badge 
-                    color={getStatusBadgeColor(colaborador.ativo)} 
-                    class="w-fit rounded-sm"
-                  >
-                    {getStatusLabel(colaborador.ativo)}
-                  </Badge>
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex items-center space-x-1">
@@ -368,7 +335,7 @@
       {#if pagination.totalPages > 1}
         <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <div class="text-sm text-gray-500 dark:text-gray-400">
-            Mostrando {startIndex} a {endIndex} de {pagination.total} resultados
+            Mostrando {startIndex} a {endIndex} de {pagination.totalItems} resultados
           </div>
           
           <div class="flex space-x-2">
@@ -376,8 +343,8 @@
               size="sm"
               color="alternative"
               class="rounded-sm"
-              disabled={pagination.page <= 1}
-              on:click={() => handlePageClick(pagination.page - 1)}
+              disabled={pagination.currentPage <= 1}
+              on:click={() => handlePageClick(pagination.currentPage - 1)}
             >
               Anterior
             </Button>
@@ -385,7 +352,7 @@
             {#each generatePageNumbers() as pageNum}
               <Button
                 size="sm"
-                color={pageNum === pagination.page ? 'primary' : 'alternative'}
+                color={pageNum === pagination.currentPage ? 'primary' : 'alternative'}
                 class="rounded-sm min-w-[40px]"
                 on:click={() => handlePageClick(pageNum)}
               >
@@ -397,8 +364,8 @@
               size="sm"
               color="alternative"
               class="rounded-sm"
-              disabled={pagination.page >= pagination.totalPages}
-              on:click={() => handlePageClick(pagination.page + 1)}
+              disabled={pagination.currentPage >= pagination.totalPages}
+              on:click={() => handlePageClick(pagination.currentPage + 1)}
             >
               Próximo
             </Button>
@@ -409,16 +376,16 @@
   {/if}
 </div>
 
-<!-- Modal: Novo/Editar Colaborador -->
+<!-- Modal: Novo/Editar Colaborador (Formulário Simplificado) -->
 <Modal 
   bind:open={showEditarColaboradorModal}
-  size="md"
+  size="sm"
   title={colaboradorEdicao ? 'Editar Colaborador' : 'Novo Colaborador'}
   class="rounded-sm"
 >
   <div class="space-y-4">
     <div>
-      <Label for="nome-colaborador" class="mb-2">Nome Completo</Label>
+      <Label for="nome-colaborador" class="mb-2">Nome Completo *</Label>
       <Input 
         id="nome-colaborador"
         bind:value={formData.nome}
@@ -428,31 +395,30 @@
       />
     </div>
     
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <Label for="cpf-colaborador" class="mb-2">CPF</Label>
-        <Input 
-          id="cpf-colaborador"
-          bind:value={formData.cpf}
-          placeholder="000.000.000-00"
-          class="rounded-sm"
-          required
-        />
-      </div>
-      
-      <div>
-        <Label for="cargo-colaborador" class="mb-2">Cargo</Label>
-        <Input 
-          id="cargo-colaborador"
-          bind:value={formData.cargo}
-          placeholder="Função/cargo"
-          class="rounded-sm"
-        />
-      </div>
+    <div>
+      <Label for="cpf-colaborador" class="mb-2">CPF *</Label>
+      <Input 
+        id="cpf-colaborador"
+        bind:value={formData.cpf}
+        placeholder="000.000.000-00"
+        class="rounded-sm"
+        required
+      />
     </div>
     
     <div>
-      <Label for="contratada-colaborador" class="mb-2">Contratada</Label>
+      <Label for="cargo-colaborador" class="mb-2">Cargo *</Label>
+      <Input 
+        id="cargo-colaborador"
+        bind:value={formData.cargo}
+        placeholder="Digite o cargo do colaborador"
+        class="rounded-sm"
+        required
+      />
+    </div>
+    
+    <div>
+      <Label for="contratada-colaborador" class="mb-2">Contratada *</Label>
       <Select
         id="contratada-colaborador"
         bind:value={formData.contratadaId}
@@ -466,39 +432,9 @@
       </Select>
     </div>
     
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <Label for="email-colaborador" class="mb-2">Email</Label>
-        <Input 
-          id="email-colaborador"
-          type="email"
-          bind:value={formData.email}
-          placeholder="email@exemplo.com"
-          class="rounded-sm"
-        />
-      </div>
-      
-      <div>
-        <Label for="telefone-colaborador" class="mb-2">Telefone</Label>
-        <Input 
-          id="telefone-colaborador"
-          bind:value={formData.telefone}
-          placeholder="(00) 00000-0000"
-          class="rounded-sm"
-        />
-      </div>
-    </div>
-    
-    <div>
-      <Label for="data-admissao" class="mb-2">Data de Admissão</Label>
-      <Input 
-        id="data-admissao"
-        type="date"
-        bind:value={formData.dataAdmissao}
-        class="rounded-sm"
-        required
-      />
-    </div>
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      * Campos obrigatórios
+    </p>
   </div>
   
   <svelte:fragment slot="footer">
@@ -513,7 +449,7 @@
       color="primary" 
       class="rounded-sm"
       on:click={handleSalvarColaborador}
-      disabled={!formData.nome || !formData.cpf || !formData.contratadaId}
+      disabled={!formData.nome || !formData.cpf || !formData.cargo || !formData.contratadaId}
     >
       {colaboradorEdicao ? 'Atualizar' : 'Salvar'}
     </Button>

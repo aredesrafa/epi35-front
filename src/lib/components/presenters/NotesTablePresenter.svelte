@@ -79,9 +79,7 @@
     tabChange: number;
     pageChange: number;
     pageSizeChange: number;
-    novaNotaEntrada: void;
-    novaNotaTransferencia: void;
-    novaNotaDescarte: void;
+    novaNota: void;
     editarNota: NotaMovimentacao;
     visualizarNota: NotaMovimentacao;
     excluirNota: NotaMovimentacao;
@@ -161,16 +159,8 @@
     dispatch('pageChange', page);
   }
 
-  function handleNovaNotaEntrada(): void {
-    dispatch('novaNotaEntrada');
-  }
-
-  function handleNovaNotaTransferencia(): void {
-    dispatch('novaNotaTransferencia');
-  }
-
-  function handleNovaNotaDescarte(): void {
-    dispatch('novaNotaDescarte');
+  function handleNovaNota(): void {
+    dispatch('novaNota');
   }
 
   function handleEditarNota(nota: NotaMovimentacao): void {
@@ -310,17 +300,9 @@
       </p>
     </div>
     <div class="flex space-x-2">
-      <Button size="sm" color="green" class="rounded-sm" on:click={handleNovaNotaEntrada}>
+      <Button size="sm" color="primary" class="rounded-sm" on:click={handleNovaNota}>
         <PlusOutline class="w-4 h-4 mr-2" />
-        Nova Entrada
-      </Button>
-      <Button size="sm" color="blue" class="rounded-sm" on:click={handleNovaNotaTransferencia}>
-        <PlusOutline class="w-4 h-4 mr-2" />
-        Nova Transferência
-      </Button>
-      <Button size="sm" color="red" class="rounded-sm" on:click={handleNovaNotaDescarte}>
-        <PlusOutline class="w-4 h-4 mr-2" />
-        Novo Descarte
+        Nova Nota
       </Button>
     </div>
   </div>
@@ -549,16 +531,10 @@
             ? 'Tente ajustar os filtros ou termo de busca'
             : 'Comece criando uma nova nota de movimentação'}
         </p>
-        <div class="flex justify-center space-x-2">
-          <Button size="sm" color="green" class="rounded-sm" on:click={handleNovaNotaEntrada}>
-            <PlusOutline class="w-4 h-4 mr-2" />
-            Nova Entrada
-          </Button>
-          <Button size="sm" color="blue" class="rounded-sm" on:click={handleNovaNotaTransferencia}>
-            <PlusOutline class="w-4 h-4 mr-2" />
-            Nova Transferência
-          </Button>
-        </div>
+        <Button size="sm" color="primary" class="rounded-sm" on:click={handleNovaNota}>
+          <PlusOutline class="w-4 h-4 mr-2" />
+          Nova Nota
+        </Button>
       </div>
     </Card>
   {/if}

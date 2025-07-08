@@ -33,16 +33,26 @@
   
   // ==================== DERIVED STORES ====================
   
-  $: items = $colaboradorStore.data;
+  $: items = $colaboradorStore.items || [];
   $: loading = $colaboradorStore.loading;
   $: error = $colaboradorStore.error;
-  $: pagination = $colaboradorStore.pagination;
-  $: filters = $colaboradorStore.filters;
-  $: contratadas = $colaboradorStore.filterOptions.contratadas || [];
+  $: pagination = {
+    currentPage: $colaboradorStore.page,
+    itemsPerPage: $colaboradorStore.pageSize,
+    totalItems: $colaboradorStore.total,
+    totalPages: $colaboradorStore.totalPages
+  };
+  $: filters = colaboradorStore.filters;
+  $: contratadas = colaboradorStore.filterOptions.contratadas || [];
+  
+  // Debug logs
+  $: console.log('👥 ColaboradorContainer - items:', items.length, items);
+  $: console.log('👥 ColaboradorContainer - loading:', loading);
+  $: console.log('👥 ColaboradorContainer - pagination:', pagination);
+  $: console.log('👥 ColaboradorContainer - contratadas:', contratadas.length, contratadas);
   
   // ==================== LOCAL STATE ====================
   
-  let showNovoColaboradorModal = false;
   let showEditarColaboradorModal = false;
   let colaboradorEdicao: ColaboradorDTO | null = null;
   
@@ -82,7 +92,8 @@
   
   function handleNovoColaborador(): void {
     console.log('➕ Novo colaborador...');
-    showNovoColaboradorModal = true;
+    showEditarColaboradorModal = true;
+    colaboradorEdicao = null;
   }
   
   function handleEditarColaborador(colaborador: ColaboradorDTO): void {
@@ -95,12 +106,10 @@
     try {
       console.log('💾 Salvando colaborador:', dados);
       
-      // TODO: Implementar salvamento real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Usar método create do store para salvar via API real
+      await colaboradorStore.create(dados);
       
-      showNovoColaboradorModal = false;
-      
-      await colaboradorStore.refresh();
+      showEditarColaboradorModal = false;
       notify.success('Sucesso', 'Colaborador salvo com sucesso');
       
     } catch (error) {
@@ -113,13 +122,15 @@
     try {
       console.log('💾 Atualizando colaborador:', colaboradorEdicao?.id, dados);
       
-      // TODO: Implementar atualização real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!colaboradorEdicao?.id) {
+        throw new Error('ID do colaborador não encontrado');
+      }
+      
+      // Usar método update do store para atualizar via API real
+      await colaboradorStore.update(colaboradorEdicao.id, dados);
       
       showEditarColaboradorModal = false;
       colaboradorEdicao = null;
-      
-      await colaboradorStore.refresh();
       notify.success('Sucesso', 'Colaborador atualizado com sucesso');
       
     } catch (error) {
@@ -132,10 +143,9 @@
     try {
       console.log('🗑️ Excluir colaborador:', colaborador.id);
       
-      // TODO: Implementar exclusão real quando endpoint estiver disponível
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Usar método delete do store para excluir via API real
+      await colaboradorStore.delete(colaborador.id);
       
-      await colaboradorStore.refresh();
       notify.success('Sucesso', 'Colaborador excluído com sucesso');
       
     } catch (error) {
@@ -145,7 +155,6 @@
   }
   
   function handleCancelarModal(): void {
-    showNovoColaboradorModal = false;
     showEditarColaboradorModal = false;
     colaboradorEdicao = null;
   }
@@ -165,7 +174,6 @@
   {filters}
   {contratadas}
   {embedded}
-  {showNovoColaboradorModal}
   {showEditarColaboradorModal}
   {colaboradorEdicao}
   on:pageChange={(e) => handlePageChange(e.detail)}

@@ -76,7 +76,7 @@
   </Button>
   
   {#if dropdownOpen}
-    <div class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+    <div class="absolute z-[9999] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
       <!-- Search input -->
       <div class="p-2 border-b border-gray-200 dark:border-gray-600">
         <div class="relative">

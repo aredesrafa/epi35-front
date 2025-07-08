@@ -50,60 +50,8 @@ class InventoryCommandAdapter {
       const url = createUrlWithParams('/estoque/itens', queryParams);
       console.log('🔗 URL construída:', url);
       
-      // TESTE: Usar dados temporários para verificar se o problema está na API ou na UI
-      console.log('🧪 TESTE: Usando dados mock temporários');
-      const mockResponse = {
-        data: {
-          items: [
-            {
-              id: "test-1",
-              almoxarifadoId: "alm-1", 
-              tipoEpiId: "epi-1",
-              quantidade: 10,
-              status: "DISPONIVEL",
-              createdAt: "2025-01-07T10:00:00Z",
-              tipoEpi: {
-                id: "epi-1",
-                nomeEquipamento: "Capacete de Teste",
-                numeroCa: "CA-99999",
-                categoriaEpi: "PROTECAO_CABECA"
-              },
-              almoxarifado: {
-                id: "alm-1",
-                nome: "Almoxarifado Teste"
-              }
-            },
-            {
-              id: "test-2", 
-              almoxarifadoId: "alm-1",
-              tipoEpiId: "epi-2",
-              quantidade: 25,
-              status: "DISPONIVEL", 
-              createdAt: "2025-01-07T10:00:00Z",
-              tipoEpi: {
-                id: "epi-2",
-                nomeEquipamento: "Luvas de Teste",
-                numeroCa: "CA-88888",
-                categoriaEpi: "PROTECAO_MAOS"
-              },
-              almoxarifado: {
-                id: "alm-1",
-                nome: "Almoxarifado Teste"
-              }
-            }
-          ],
-          pagination: {
-            page: 1,
-            limit: 20,
-            total: 2,
-            totalPages: 1
-          }
-        }
-      };
-      
-      // Comentar a chamada real temporariamente
-      // const response = await api.get<any>(url);
-      const response = mockResponse;
+      // Fazer chamada real para o backend
+      const response = await api.get<any>(url);
       
       console.log('🔍 Resposta bruta do backend estoque:', response);
       console.log('🔍 Estrutura dos dados:', {
@@ -115,24 +63,35 @@ class InventoryCommandAdapter {
       });
       
       // Mapear resposta do backend para o formato esperado pelo frontend
-      const mappedItems = (response.data?.items || []).map((item: any) => ({
+      // O backend retorna { success: true, data: { items: [...], pagination: {...} } }
+      const items = response.data?.items || response.items || [];
+      
+      console.log('🔍 Items encontrados no backend:', items.length);
+      
+      const mappedItems = items.map((item: any) => ({
         ...item,
         // Mapear tipoEpi -> tipoEPI para compatibilidade frontend
         tipoEPI: item.tipoEpi ? {
           ...item.tipoEpi,
-          numeroCA: item.tipoEpi.numeroCa, // Mapear numeroCa -> numeroCA
-          nomeEquipamento: item.tipoEpi.nomeEquipamento || item.tipoEpi.nome // Compatibilidade
+          numeroCA: item.tipoEpi.numeroCa || item.tipoEpi.numeroCA, // Mapear numeroCa -> numeroCA
+          nomeEquipamento: item.tipoEpi.nomeEquipamento || item.tipoEpi.nome, // Compatibilidade
+          categoria: item.tipoEpi.categoriaEpi || item.tipoEpi.categoria // Mapear categoria
         } : undefined,
-        // Manter status do backend como está
-        status: item.status || 'DISPONIVEL'
+        // Mapear status para lowercase para compatibilidade com frontend
+        status: (item.status || 'DISPONIVEL').toLowerCase(),
+        // Manter dados do almoxarifado
+        almoxarifado: item.almoxarifado
       }));
+      
+      // Mapear paginação - o backend pode usar diferentes estruturas
+      const pagination = response.data?.pagination || response.pagination || {};
       
       const mappedResponse: PaginatedResponse<ItemEstoqueDTO> = {
         data: mappedItems,
-        total: response.data?.pagination?.total || 0,
-        page: response.data?.pagination?.page || 1,
-        pageSize: response.data?.pagination?.limit || 20,
-        totalPages: response.data?.pagination?.totalPages || 1
+        total: pagination.total || mappedItems.length,
+        page: pagination.page || params.page || 1,
+        pageSize: pagination.limit || pagination.pageSize || params.pageSize || 20,
+        totalPages: pagination.totalPages || Math.ceil((pagination.total || mappedItems.length) / (pagination.limit || pagination.pageSize || params.pageSize || 20))
       };
       
       console.log('✅ Itens do inventário mapeados:', mappedResponse);

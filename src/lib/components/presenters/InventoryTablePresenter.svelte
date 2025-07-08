@@ -104,24 +104,40 @@
   // ==================== UTILITY FUNCTIONS ====================
   
   function getStatusInfo(status: string) {
-    switch (status) {
+    const normalizedStatus = status?.toLowerCase();
+    switch (normalizedStatus) {
       case 'disponivel':
+      case 'ativo':
         return { color: 'green' as const, label: 'Disponível' };
       case 'baixo':
         return { color: 'yellow' as const, label: 'Estoque baixo' };
+      case 'indisponivel':
+      case 'inativo':
+        return { color: 'red' as const, label: 'Indisponível' };
       case 'vencendo':
         return { color: 'orange' as const, label: 'Próximo ao vencimento' };
       case 'vencido':
         return { color: 'red' as const, label: 'Vencido' };
       case 'esgotado':
+      case 'zero':
         return { color: 'gray' as const, label: 'Esgotado' };
       default:
-        return { color: 'gray' as const, label: 'Indefinido' };
+        return { color: 'blue' as const, label: status || 'Indefinido' };
     }
   }
 
 
   // ==================== REACTIVE STATEMENTS ====================
+  
+  // DEBUG: Log para verificar se items chegam ao presenter
+  $: {
+    console.log('🎨 PRESENTER: items recebidos:', {
+      itemsLength: items?.length || 0,
+      items: items,
+      loading,
+      error
+    });
+  }
   
   // Sincronizar searchInput com searchTerm quando vem do container
   $: if (searchTerm !== undefined && searchTerm !== searchInput) {

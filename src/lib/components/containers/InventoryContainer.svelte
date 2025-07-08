@@ -338,6 +338,16 @@
   
   // ==================== PRESENTER PROPS ====================
   
+  // DEBUG: Log para verificar dados do store
+  $: {
+    console.log('🏗️ CONTAINER: dados do store:', {
+      storeItems: $inventoryStore.items?.length || 0,
+      storeLoading: $inventoryStore.loading,
+      storeError: $inventoryStore.error,
+      storeTotal: $inventoryStore.total
+    });
+  }
+  
   $: presentationData = {
     items: $inventoryStore.items || [],
     loading: $inventoryStore.loading,

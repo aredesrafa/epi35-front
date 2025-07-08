@@ -27,7 +27,6 @@
   export let pagination: PaginationState;
   export let filters: FilterState = {};
   export let embedded = false; // Para uso em tabs
-  export const showNovaContratadaModal = false;
   export let showEditarContratadaModal = false;
   export let contratadaEdicao: ContratadaDTO | null = null;
   
@@ -56,29 +55,25 @@
     { value: 50, label: '50 por página' }
   ];
   
-  let statusOptions = [
-    { value: '', label: 'Todos os status' },
-    { value: 'true', label: 'Ativas' },
-    { value: 'false', label: 'Inativas' }
-  ];
   
-  // Form data
+  // Form data simplificado - apenas campos obrigatórios
   let formData = {
     nome: '',
-    cnpj: '',
-    endereco: '',
-    telefone: '',
-    email: '',
-    responsavel: ''
+    cnpj: ''
   };
   
   // ==================== COMPUTED VALUES ====================
   
-  $: startIndex = (pagination.page - 1) * pagination.pageSize + 1;
-  $: endIndex = Math.min(pagination.page * pagination.pageSize, pagination.total);
+  $: startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage + 1;
+  $: endIndex = Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems);
   $: hasFiltersApplied = Object.values(filters).some(value => 
     value !== null && value !== undefined && value !== ''
   );
+  
+  // Debug logs
+  $: console.log('🎨 ContratadaTablePresenter - items:', items.length, items);
+  $: console.log('🎨 ContratadaTablePresenter - loading:', loading);
+  $: console.log('🎨 ContratadaTablePresenter - pagination:', pagination);
   
   // ==================== REACTIVE STATEMENTS ====================
   
@@ -86,11 +81,7 @@
   $: if (showEditarContratadaModal && !contratadaEdicao) {
     formData = {
       nome: '',
-      cnpj: '',
-      endereco: '',
-      telefone: '',
-      email: '',
-      responsavel: ''
+      cnpj: ''
     };
   }
   
@@ -98,23 +89,12 @@
   $: if (showEditarContratadaModal && contratadaEdicao) {
     formData = {
       nome: contratadaEdicao.nome || '',
-      cnpj: contratadaEdicao.cnpj || '',
-      endereco: contratadaEdicao.endereco || '',
-      telefone: contratadaEdicao.telefone || '',
-      email: contratadaEdicao.email || '',
-      responsavel: contratadaEdicao.responsavel || ''
+      cnpj: contratadaEdicao.cnpj || ''
     };
   }
   
   // ==================== HELPER FUNCTIONS ====================
   
-  function getStatusBadgeColor(ativo: boolean): 'green' | 'red' {
-    return ativo ? 'green' : 'red';
-  }
-  
-  function getStatusLabel(ativo: boolean): string {
-    return ativo ? 'Ativa' : 'Inativa';
-  }
   
   function formatCNPJ(cnpj: string): string {
     // Remove caracteres não numéricos
@@ -126,7 +106,7 @@
   
   function generatePageNumbers(): number[] {
     const totalPages = pagination.totalPages;
-    const currentPage = pagination.page;
+    const currentPage = pagination.currentPage;
     const maxVisible = 5;
     
     if (totalPages <= maxVisible) {
@@ -205,7 +185,7 @@
           size="sm" 
           color="primary" 
           class="rounded-sm"
-          on:click={() => dispatch('novaContratada')}
+          on:click={() => { dispatch('novaContratada'); console.log('🚀 Botão Nova Contratada clicado'); }}
         >
           <PlusOutline class="w-4 h-4 mr-2" />
           Nova Contratada
@@ -227,7 +207,7 @@
         size="sm" 
         color="primary" 
         class="rounded-sm"
-        on:click={() => dispatch('novaContratada')}
+        on:click={() => { dispatch('novaContratada'); console.log('🚀 Botão Nova Contratada clicado'); }}
       >
         <PlusOutline class="w-4 h-4 mr-2" />
         Contratada
@@ -237,7 +217,7 @@
 
   <!-- Filtros -->
   <Card class="p-4 rounded-sm !max-w-none">
-    <div class="grid gap-4 md:grid-cols-3">
+    <div>
       <!-- Busca por Nome -->
       <div>
         <Label for="filtro-nome" class="mb-2">Buscar por Nome</Label>
@@ -250,44 +230,28 @@
           class="rounded-sm"
         />
       </div>
-      
-      <!-- Status -->
-      <div>
-        <Label for="filtro-status" class="mb-2">Status</Label>
-        <Select
-          id="filtro-status"
-          value={filters.ativo || ''}
-          on:change={(e) => handleFilterInput('ativo', e.target.value)}
-          items={statusOptions}
-          size="sm"
-          class="rounded-sm"
-        />
-      </div>
-      
-      <!-- Ações -->
-      <div class="flex items-end">
-        {#if hasFiltersApplied}
-          <Button 
-            size="sm" 
-            color="alternative" 
-            class="rounded-sm"
-            on:click={() => dispatch('clearFilters')}
-          >
-            <TrashBinOutline class="w-4 h-4 mr-2" />
-            Limpar Filtros
-          </Button>
-        {/if}
-      </div>
     </div>
     
     <!-- Contador de resultados -->
-    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <div class="text-sm text-gray-600 dark:text-gray-400">
-        <span class="font-medium">{pagination.total}</span> contratada(s) encontrada(s)
+        <span class="font-medium">{pagination.totalItems}</span> contratada(s) encontrada(s)
         {#if hasFiltersApplied}
-          <span class="text-blue-600 dark:text-blue-400">com filtros aplicados</span>
+          <span class="text-blue-600 dark:text-blue-400"> com filtros aplicados</span>
         {/if}
       </div>
+      
+      {#if hasFiltersApplied}
+        <Button 
+          size="sm" 
+          color="alternative" 
+          class="rounded-sm"
+          on:click={() => dispatch('clearFilters')}
+        >
+          <TrashBinOutline class="w-4 h-4 mr-2" />
+          Limpar Filtros
+        </Button>
+      {/if}
     </div>
   </Card>
 
@@ -316,7 +280,7 @@
             size="sm" 
             color="primary" 
             class="rounded-sm mt-4"
-            on:click={() => dispatch('novaContratada')}
+            on:click={() => { dispatch('novaContratada'); console.log('🚀 Botão Nova Contratada clicado'); }}
           >
             <PlusOutline class="w-4 h-4 mr-2" />
             Cadastrar Primeira Contratada
@@ -332,9 +296,6 @@
           <TableHead>
             <TableHeadCell>Empresa</TableHeadCell>
             <TableHeadCell>CNPJ</TableHeadCell>
-            <TableHeadCell>Responsável</TableHeadCell>
-            <TableHeadCell>Contato</TableHeadCell>
-            <TableHeadCell>Status</TableHeadCell>
             <TableHeadCell>Data Cadastro</TableHeadCell>
             <TableHeadCell>Ações</TableHeadCell>
           </TableHead>
@@ -355,43 +316,19 @@
                   <span class="font-mono text-sm">{formatCNPJ(contratada.cnpj)}</span>
                 </TableBodyCell>
                 <TableBodyCell>
-                  <span class="text-sm">{contratada.responsavel || '-'}</span>
-                </TableBodyCell>
-                <TableBodyCell>
-                  <div class="text-sm">
-                    {#if contratada.telefone}
-                      <div>{contratada.telefone}</div>
-                    {/if}
-                    {#if contratada.email}
-                      <div class="text-blue-600 dark:text-blue-400">{contratada.email}</div>
-                    {/if}
-                    {#if !contratada.telefone && !contratada.email}
-                      <span class="text-gray-400">-</span>
-                    {/if}
-                  </div>
-                </TableBodyCell>
-                <TableBodyCell>
-                  <Badge 
-                    color={getStatusBadgeColor(contratada.ativo)} 
-                    class="w-fit rounded-sm"
-                  >
-                    {getStatusLabel(contratada.ativo)}
-                  </Badge>
-                </TableBodyCell>
-                <TableBodyCell>
                   <span class="text-sm">{new Date(contratada.createdAt).toLocaleDateString('pt-BR')}</span>
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex items-center space-x-1">
                     <button
-                      class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      class="p-2 rounded-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-colors"
                       on:click={() => handleEditClick(contratada)}
                       title="Editar"
                     >
                       <EditOutline class="w-4 h-4" />
                     </button>
                     <button
-                      class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      class="p-2 rounded-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-colors"
                       on:click={() => handleDeleteClick(contratada)}
                       title="Excluir"
                     >
@@ -410,10 +347,10 @@
         <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <div class="flex items-center space-x-4">
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              Mostrando {startIndex} a {endIndex} de {pagination.total} resultados
+              Mostrando {startIndex} a {endIndex} de {pagination.totalItems} resultados
             </div>
             <Select
-              value={pagination.pageSize.toString()}
+              value={pagination.itemsPerPage.toString()}
               on:change={(e) => handleItemsPerPageChange(e.target.value)}
               items={itemsPerPageOptions}
               size="sm"
@@ -426,8 +363,8 @@
               size="sm"
               color="alternative"
               class="rounded-sm"
-              disabled={pagination.page <= 1}
-              on:click={() => handlePageClick(pagination.page - 1)}
+              disabled={pagination.currentPage <= 1}
+              on:click={() => handlePageClick(pagination.currentPage - 1)}
             >
               Anterior
             </Button>
@@ -436,7 +373,7 @@
             {#each generatePageNumbers() as pageNum}
               <Button
                 size="sm"
-                color={pageNum === pagination.page ? 'primary' : 'alternative'}
+                color={pageNum === pagination.currentPage ? 'primary' : 'alternative'}
                 class="rounded-sm min-w-[40px]"
                 on:click={() => handlePageClick(pageNum)}
               >
@@ -448,8 +385,8 @@
               size="sm"
               color="alternative"
               class="rounded-sm"
-              disabled={pagination.page >= pagination.totalPages}
-              on:click={() => handlePageClick(pagination.page + 1)}
+              disabled={pagination.currentPage >= pagination.totalPages}
+              on:click={() => handlePageClick(pagination.currentPage + 1)}
             >
               Próximo
             </Button>
@@ -462,16 +399,16 @@
 
 <!-- ==================== MODALS ==================== -->
 
-<!-- Modal: Nova/Editar Contratada -->
+<!-- Modal: Nova/Editar Contratada (Formulário Simplificado) -->
 <Modal 
   bind:open={showEditarContratadaModal}
-  size="md"
+  size="sm"
   title={contratadaEdicao ? 'Editar Contratada' : 'Nova Contratada'}
   class="rounded-sm"
 >
   <div class="space-y-4">
     <div>
-      <Label for="nome-contratada" class="mb-2">Nome da Empresa</Label>
+      <Label for="nome-contratada" class="mb-2">Nome da Empresa *</Label>
       <Input 
         id="nome-contratada"
         bind:value={formData.nome}
@@ -482,7 +419,7 @@
     </div>
     
     <div>
-      <Label for="cnpj-contratada" class="mb-2">CNPJ</Label>
+      <Label for="cnpj-contratada" class="mb-2">CNPJ *</Label>
       <Input 
         id="cnpj-contratada"
         bind:value={formData.cnpj}
@@ -492,48 +429,9 @@
       />
     </div>
     
-    <div>
-      <Label for="endereco-contratada" class="mb-2">Endereço</Label>
-      <Input 
-        id="endereco-contratada"
-        bind:value={formData.endereco}
-        placeholder="Endereço completo"
-        class="rounded-sm"
-      />
-    </div>
-    
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <Label for="telefone-contratada" class="mb-2">Telefone</Label>
-        <Input 
-          id="telefone-contratada"
-          bind:value={formData.telefone}
-          placeholder="(00) 00000-0000"
-          class="rounded-sm"
-        />
-      </div>
-      
-      <div>
-        <Label for="email-contratada" class="mb-2">Email</Label>
-        <Input 
-          id="email-contratada"
-          type="email"
-          bind:value={formData.email}
-          placeholder="contato@empresa.com"
-          class="rounded-sm"
-        />
-      </div>
-    </div>
-    
-    <div>
-      <Label for="responsavel-contratada" class="mb-2">Responsável</Label>
-      <Input 
-        id="responsavel-contratada"
-        bind:value={formData.responsavel}
-        placeholder="Nome do responsável"
-        class="rounded-sm"
-      />
-    </div>
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      * Campos obrigatórios
+    </p>
   </div>
   
   <svelte:fragment slot="footer">

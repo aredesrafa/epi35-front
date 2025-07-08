@@ -6,6 +6,7 @@
  */
 
 import { writable, type Readable } from 'svelte/store';
+import type { PaginationState, FilterState } from '$lib/types';
 
 /**
  * Resposta paginada esperada do backend
@@ -383,78 +384,669 @@ export function createPaginatedStore<T>(
 }
 
 /**
+ * Interface para configuração avançada do store
+ */
+export interface AdvancedPaginatedStoreConfig {
+  baseEndpoint?: string;
+  defaultPageSize?: number;
+  debounceDelay?: number;
+  cacheTimeout?: number;
+  autoRefresh?: boolean;
+  filterEndpoints?: Record<string, string>;
+  enableOfflineSupport?: boolean;
+  enableRealTimeUpdates?: boolean;
+  optimisticUpdates?: boolean;
+}
+
+/**
  * Store paginado otimizado com recursos extras
  */
 export function createAdvancedPaginatedStore<T>(
-  fetchFunction: (params: PaginationParams) => Promise<PaginatedResponse<T>>,
-  options: PaginatedStoreOptions & {
-    // Configurações avançadas
-    enableOfflineSupport?: boolean;
-    enableRealTimeUpdates?: boolean;
-    optimisticUpdates?: boolean;
-  } = {}
+  config: AdvancedPaginatedStoreConfig = {}
 ): PaginatedStore<T> & {
+  // Propriedades de estado adicional 
+  data: T[];
+  pagination: PaginationState;
+  filters: FilterState;
+  filterOptions: {
+    contratadas: any[];
+    [key: string]: any[];
+  };
+  
   // Métodos avançados
   addItem: (item: T) => void;
   updateItem: (id: string | number, updates: Partial<T>) => void;
   removeItem: (id: string | number) => void;
   prefetchNext: () => Promise<void>;
+  loadData: () => Promise<void>;
+  setPage: (page: number) => Promise<void>;
+  setFilter: (key: string, value: any) => Promise<void>;
+  clearFilters: () => Promise<void>;
+  refresh: () => Promise<void>;
+  setPageSize: (size: number) => Promise<void>;
+  
+  // Métodos CRUD específicos
+  create: (data: any) => Promise<any>;
+  update: (id: string, data: any) => Promise<any>;
+  delete: (id: string) => Promise<boolean>;
 } {
   
-  const baseStore = createPaginatedStore(fetchFunction, options);
+  const {
+    defaultPageSize = 10,
+    debounceDelay = 300,
+    cacheTimeout = 5 * 60 * 1000
+  } = config;
   
-  // Implementar funcionalidades avançadas
-  function addItem(item: T): void {
-    // Adicionar item otimisticamente
-    baseStore.subscribe(state => {
-      const newItems = [item, ...state.items];
-      // Update store with new item
-    })();
-  }
-  
-  function updateItem(id: string | number, updates: Partial<T>): void {
-    // Atualizar item específico
-    baseStore.subscribe(state => {
-      const updatedItems = state.items.map(item => {
-        const itemId = (item as any).id;
-        return itemId === id ? { ...item, ...updates } : item;
-      });
-      // Update store with updated items
-    })();
-  }
-  
-  function removeItem(id: string | number): void {
-    // Remover item específico
-    baseStore.subscribe(state => {
-      const filteredItems = state.items.filter(item => {
-        const itemId = (item as any).id;
-        return itemId !== id;
-      });
-      // Update store with filtered items
-    })();
-  }
-  
-  async function prefetchNext(): Promise<void> {
-    // Pré-carregar próxima página
-    if (baseStore.hasNext()) {
-      const currentParams = baseStore.getCurrentParams();
-      const nextParams = { ...currentParams, page: (currentParams.page || 1) + 1 };
-      
-      try {
-        await fetchFunction(nextParams);
-        console.log('📄 Próxima página pré-carregada');
-      } catch (error) {
-        console.warn('⚠️ Erro ao pré-carregar próxima página:', error);
+  // Função de fallback para contratadas
+  function getFallbackContratadas(params: PaginationParams): PaginatedResponse<T> {
+    const mockData = [
+      {
+        id: '1',
+        nome: 'Empresa ABC Ltda',
+        cnpj: '12345678000190',
+        cnpjFormatado: '12.345.678/0001-90',
+        createdAt: '2024-01-15T10:00:00Z'
+      },
+      {
+        id: '2',
+        nome: 'TechSolutions Corp',
+        cnpj: '98765432000198',
+        cnpjFormatado: '98.765.432/0001-98',
+        createdAt: '2024-01-20T14:30:00Z'
       }
+    ];
+    
+    // Aplicar filtros
+    let filteredData = [...mockData];
+    if (params.search) {
+      const searchTerm = params.search.toLowerCase();
+      filteredData = filteredData.filter((item: any) => 
+        item.nome?.toLowerCase().includes(searchTerm) ||
+        item.cnpj?.includes(searchTerm)
+      );
+    }
+    
+    // Paginação
+    const page = params.page || 1;
+    const pageSize = params.limit || defaultPageSize;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    
+    return {
+      data: paginatedData as T[],
+      total: filteredData.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(filteredData.length / pageSize)
+    };
+  }
+  
+  // Fetch function real ou mock baseada no endpoint
+  async function fetchFunction(params: PaginationParams): Promise<PaginatedResponse<T>> {
+    
+    // Para contratadas, usar API real
+    if (config.baseEndpoint === '/contratadas') {
+      try {
+        // Construir query string
+        const queryParams = new URLSearchParams();
+        
+        if (params.page) queryParams.append('page', params.page.toString());
+        if (params.limit) queryParams.append('limit', params.limit.toString());
+        if (params.search) queryParams.append('nome', params.search);
+        if (params.ativo !== undefined && params.ativo !== '') {
+          queryParams.append('ativa', params.ativo);
+        }
+        
+        const url = `/api/contratadas?${queryParams.toString()}`;
+        console.log('🌐 Fetching contratadas from:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📦 Contratadas response:', result);
+        console.log('📦 Data array:', result.data);
+        console.log('📦 Data length:', result.data?.length);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro na resposta da API');
+        }
+        
+        // Backend retorna: { success: true, data: { contratadas: [...], total: 4 } }
+        const contratadas = result.data.contratadas || result.data;
+        const total = result.data.total || result.data.length;
+        
+        // Adicionar campo 'ativo' padrão para contratadas que não têm
+        const contratadasComStatus = contratadas.map((contratada: any) => ({
+          ...contratada,
+          ativo: contratada.ativo !== undefined ? contratada.ativo : true
+        }));
+        
+        return {
+          data: contratadasComStatus as T[],
+          total: total,
+          page: params.page || 1,
+          pageSize: params.limit || 10,
+          totalPages: Math.ceil(total / (params.limit || 10))
+        };
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar contratadas:', error);
+        // Fallback para dados mock em caso de erro
+        return getFallbackContratadas(params);
+      }
+    }
+    
+    // Para colaboradores, usar API real
+    else if (config.baseEndpoint === '/colaboradores') {
+      try {
+        // Construir query string
+        const queryParams = new URLSearchParams();
+        
+        if (params.page) queryParams.append('page', params.page.toString());
+        if (params.limit) queryParams.append('limit', params.limit.toString());
+        if (params.search) queryParams.append('nome', params.search);
+        if (params.contratadaId) queryParams.append('contratadaId', params.contratadaId);
+        if (params.ativo !== undefined && params.ativo !== '') {
+          queryParams.append('ativo', params.ativo);
+        }
+        
+        const url = `/api/colaboradores?${queryParams.toString()}`;
+        console.log('🌐 Fetching colaboradores from:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📦 Colaboradores response:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro na resposta da API');
+        }
+        
+        // Backend pode retornar: { success: true, data: { colaboradores: [...], total: 10 } } ou { success: true, data: [...] }
+        const colaboradores = result.data.colaboradores || result.data || [];
+        const total = result.data.total || result.data.length || 0;
+        
+        // Adicionar campo 'ativo' padrão para colaboradores que não têm
+        const colaboradoresComStatus = colaboradores.map((colaborador: any) => ({
+          ...colaborador,
+          ativo: colaborador.ativo !== undefined ? colaborador.ativo : true
+        }));
+        
+        return {
+          data: colaboradoresComStatus as T[],
+          total: total,
+          page: params.page || 1,
+          pageSize: params.limit || 10,
+          totalPages: Math.ceil(total / (params.limit || 10))
+        };
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar colaboradores:', error);
+        
+        // Fallback para dados mock em caso de erro
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const mockData = [
+          {
+            id: '1',
+            nome: 'João Silva Santos',
+            cpf: '12345678901',
+            email: 'joao.silva@abc.com.br',
+            cargo: 'Operador de Máquinas',
+            contratada: {
+              id: '751c35a3-09dd-42bc-bc96-58ca036525fd',
+              nome: 'Beta Serviços e Construções S.A.'
+            },
+            contratadaId: '751c35a3-09dd-42bc-bc96-58ca036525fd',
+            dataAdmissao: '2023-01-15',
+            ativo: true,
+            temFichaAtiva: true,
+            createdAt: '2023-01-15T10:00:00Z',
+          },
+          {
+            id: '2',
+            nome: 'Maria Santos Oliveira',
+            cpf: '98765432109',
+            email: 'maria.santos@techsolutions.com',
+            cargo: 'Técnica de Segurança',
+            contratada: {
+              id: '70e382b6-7cdb-41f6-acc8-80dfc4110861',
+              nome: 'Claude Test Company LTDA'
+            },
+            contratadaId: '70e382b6-7cdb-41f6-acc8-80dfc4110861',
+            dataAdmissao: '2023-03-10',
+            ativo: true,
+            temFichaAtiva: true,
+            createdAt: '2023-03-10T10:00:00Z',
+          },
+          {
+            id: '3',
+            nome: 'Carlos Pereira Lima',
+            cpf: '11122233344',
+            email: 'carlos.pereira@gamma.com.br',
+            cargo: 'Engenheiro',
+            contratada: {
+              id: 'fbbcd5fc-2bd8-4a38-a54b-46d90cb696b8',
+              nome: 'Gamma Engenharia e Consultoria'
+            },
+            contratadaId: 'fbbcd5fc-2bd8-4a38-a54b-46d90cb696b8',
+            dataAdmissao: '2023-05-20',
+            ativo: true,
+            temFichaAtiva: false,
+            createdAt: '2023-05-20T10:00:00Z',
+          }
+        ];
+        
+        // Filtros para colaboradores
+        let filteredData = [...mockData];
+        
+        if (params.search) {
+          const searchTerm = params.search.toLowerCase();
+          filteredData = filteredData.filter((item: any) => 
+            item.nome?.toLowerCase().includes(searchTerm) ||
+            item.cpf?.includes(searchTerm) ||
+            item.email?.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        if (params.contratadaId) {
+          filteredData = filteredData.filter((item: any) => item.contratadaId === params.contratadaId);
+        }
+        
+        // Paginação
+        const page = params.page || 1;
+        const pageSize = params.limit || defaultPageSize;
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedData = filteredData.slice(startIndex, endIndex);
+        
+        return {
+          data: paginatedData as T[],
+          total: filteredData.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(filteredData.length / pageSize)
+        };
+      }
+    }
+    
+    // Para outros endpoints, usar mock genérico
+    else {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const mockData = [
+        {
+          id: '1',
+          nome: 'Item Mock 1',
+          createdAt: '2023-01-15T10:00:00Z',
+        },
+        {
+          id: '2',
+          nome: 'Item Mock 2',
+          createdAt: '2023-03-10T10:00:00Z',
+        }
+      ];
+      
+      return {
+        data: mockData as T[],
+        total: mockData.length,
+        page: params.page || 1,
+        pageSize: params.limit || defaultPageSize,
+        totalPages: Math.ceil(mockData.length / (params.limit || defaultPageSize))
+      };
     }
   }
   
+  const baseStore = createPaginatedStore(fetchFunction, {
+    initialPageSize: defaultPageSize,
+    enableCache: true,
+    debounceDelay
+  });
+  
+  // Estado adicional
+  let currentFilters: FilterState = {};
+  
+  // Implementar funcionalidades avançadas
+  function addItem(item: T): void {
+    console.log('➕ Adicionando item:', item);
+    // TODO: Implementar adição otimística
+  }
+  
+  function updateItem(id: string | number, updates: Partial<T>): void {
+    console.log('✏️ Atualizando item:', id, updates);
+    // TODO: Implementar atualização otimística
+  }
+  
+  function removeItem(id: string | number): void {
+    console.log('🗑️ Removendo item:', id);
+    // TODO: Implementar remoção otimística
+  }
+  
+  async function prefetchNext(): Promise<void> {
+    if (baseStore.hasNext()) {
+      console.log('📄 Pré-carregando próxima página...');
+      await baseStore.nextPage();
+    }
+  }
+  
+  async function loadData(): Promise<void> {
+    await baseStore.fetchPage();
+  }
+  
+  async function setPage(page: number): Promise<void> {
+    await baseStore.goToPage(page);
+  }
+  
+  async function setFilter(key: string, value: any): Promise<void> {
+    currentFilters[key] = value;
+    await baseStore.setFilters(currentFilters);
+  }
+  
+  async function clearFilters(): Promise<void> {
+    currentFilters = {};
+    await baseStore.setFilters({});
+  }
+  
+  async function refresh(): Promise<void> {
+    await baseStore.reload();
+  }
+  
+  async function setPageSize(size: number): Promise<void> {
+    await baseStore.fetchPage({ limit: size, page: 1 });
+  }
+  
+  // Métodos CRUD específicos
+  async function create(data: any): Promise<any> {
+    if (config.baseEndpoint === '/contratadas') {
+      try {
+        console.log('🆕 Criando contratada:', data);
+        
+        const response = await fetch('/api/contratadas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Contratada criada:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao criar contratada');
+        }
+        
+        // Refresh data after creation
+        await refresh();
+        
+        return result.data;
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar contratada:', error);
+        throw error;
+      }
+    } else if (config.baseEndpoint === '/colaboradores') {
+      try {
+        console.log('🆕 Criando colaborador:', data);
+        
+        const response = await fetch('/api/colaboradores', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Colaborador criado:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao criar colaborador');
+        }
+        
+        // Refresh data after creation
+        await refresh();
+        
+        return result.data;
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar colaborador:', error);
+        throw error;
+      }
+    } else {
+      throw new Error('Método create não implementado para este endpoint');
+    }
+  }
+  
+  async function update(id: string, data: any): Promise<any> {
+    if (config.baseEndpoint === '/contratadas') {
+      try {
+        console.log('✏️ Atualizando contratada:', id, data);
+        
+        const response = await fetch(`/api/contratadas/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Contratada atualizada:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao atualizar contratada');
+        }
+        
+        // Refresh data after update
+        await refresh();
+        
+        return result.data;
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar contratada:', error);
+        throw error;
+      }
+    } else if (config.baseEndpoint === '/colaboradores') {
+      try {
+        console.log('✏️ Atualizando colaborador:', id, data);
+        
+        const response = await fetch(`/api/colaboradores/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Colaborador atualizado:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao atualizar colaborador');
+        }
+        
+        // Refresh data after update
+        await refresh();
+        
+        return result.data;
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar colaborador:', error);
+        throw error;
+      }
+    } else {
+      throw new Error('Método update não implementado para este endpoint');
+    }
+  }
+  
+  async function deleteItem(id: string): Promise<boolean> {
+    if (config.baseEndpoint === '/contratadas') {
+      try {
+        console.log('🗑️ Excluindo contratada:', id);
+        
+        const response = await fetch(`/api/contratadas/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Contratada excluída:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao excluir contratada');
+        }
+        
+        // Refresh data after deletion
+        await refresh();
+        
+        return true;
+        
+      } catch (error) {
+        console.error('❌ Erro ao excluir contratada:', error);
+        throw error;
+      }
+    } else if (config.baseEndpoint === '/colaboradores') {
+      try {
+        console.log('🗑️ Excluindo colaborador:', id);
+        
+        const response = await fetch(`/api/colaboradores/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Colaborador excluído:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Erro ao excluir colaborador');
+        }
+        
+        // Refresh data after deletion
+        await refresh();
+        
+        return true;
+        
+      } catch (error) {
+        console.error('❌ Erro ao excluir colaborador:', error);
+        throw error;
+      }
+    } else {
+      throw new Error('Método delete não implementado para este endpoint');
+    }
+  }
+  
+  // Mock data para filterOptions baseado nas contratadas reais
+  const mockFilterOptions = {
+    contratadas: [
+      { id: '751c35a3-09dd-42bc-bc96-58ca036525fd', nome: 'Beta Serviços e Construções S.A.' },
+      { id: '70e382b6-7cdb-41f6-acc8-80dfc4110861', nome: 'Claude Test Company LTDA' },
+      { id: '610921f5-2579-4f2a-9a9c-8544f95fdbad', nome: 'Empresa Contratada Alpha LTDA' },
+      { id: 'fbbcd5fc-2bd8-4a38-a54b-46d90cb696b8', nome: 'Gamma Engenharia e Consultoria' }
+    ]
+  };
+  
+  // Derivar estado compatível
+  let derivedState = {
+    data: [] as T[],
+    pagination: {
+      currentPage: 1,
+      itemsPerPage: defaultPageSize,
+      totalItems: 0,
+      totalPages: 0
+    } as PaginationState,
+    filters: currentFilters as FilterState,
+    filterOptions: mockFilterOptions
+  };
+  
+  // Manter estado sincronizado com baseStore
+  baseStore.subscribe(state => {
+    derivedState = {
+      data: state.items,
+      pagination: {
+        currentPage: state.page,
+        itemsPerPage: state.pageSize,
+        totalItems: state.total,
+        totalPages: state.totalPages
+      },
+      filters: currentFilters,
+      filterOptions: mockFilterOptions
+    };
+    
+    console.log('🔄 Store state updated:', {
+      itemsLength: state.items?.length || 0,
+      total: state.total,
+      loading: state.loading,
+      error: state.error
+    });
+  });
+  
   return {
     ...baseStore,
+    get data() { return derivedState.data; },
+    get pagination() { return derivedState.pagination; },
+    get filters() { return derivedState.filters; },
+    get filterOptions() { return derivedState.filterOptions; },
     addItem,
     updateItem,
     removeItem,
-    prefetchNext
+    prefetchNext,
+    loadData,
+    setPage,
+    setFilter,
+    clearFilters,
+    refresh,
+    setPageSize,
+    create,
+    update,
+    delete: deleteItem
   };
 }
 

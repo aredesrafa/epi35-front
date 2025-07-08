@@ -197,21 +197,47 @@
     
     try {
       loadingContratadas = true;
-      // TODO: Implementar chamada real para API de contratadas
-      // const response = await apiClient.get('/api/contratadas');
+      console.log('🔄 Carregando contratadas da API...');
       
-      // Mock temporário - substituir por chamada real
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Chamada real para API de contratadas  
+      const response = await fetch('/api/contratadas');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log('📦 Raw API response for contratadas:', result);
+      console.log('📦 result.data structure:', result.data);
+      
+      if (result.success && result.data) {
+        // Backend retorna: { success: true, data: { contratadas: [...], total: 4 } }
+        const contratadasArray = result.data.contratadas || result.data;
+        
+        if (Array.isArray(contratadasArray)) {
+          contratadas = contratadasArray.map((contratada: any) => ({
+            value: contratada.id,
+            label: contratada.nome
+          }));
+          console.log('✅ Contratadas carregadas da API:', contratadas.length);
+        } else {
+          throw new Error('Dados de contratadas não são um array');
+        }
+      } else {
+        throw new Error('Resposta inválida da API de contratadas');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar contratadas:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      notify.error('Erro ao carregar contratadas', `Não foi possível carregar a lista de empresas: ${errorMessage}`);
+      
+      // Fallback para dados mock em caso de erro
       contratadas = [
         { value: 'empresa-alpha', label: 'Empresa Alpha LTDA' },
         { value: 'empresa-beta', label: 'Empresa Beta Serviços' },
         { value: 'empresa-gamma', label: 'Gamma Construções' }
       ];
-      
-      console.log('📋 Contratadas carregadas:', contratadas.length);
-    } catch (error) {
-      console.error('❌ Erro ao carregar contratadas:', error);
-      notify.error('Erro ao carregar contratadas', 'Não foi possível carregar a lista de empresas');
     } finally {
       loadingContratadas = false;
     }
@@ -220,35 +246,73 @@
   async function loadColaboradores(contratadaId: string): Promise<void> {
     try {
       loadingColaboradores = true;
-      // TODO: Implementar chamada real para API de colaboradores
-      // const response = await apiClient.get(`/api/colaboradores?contratadaId=${contratadaId}`);
+      console.log('🔄 Carregando colaboradores para contratada:', contratadaId);
       
-      // Mock temporário - substituir por chamada real
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Usar endpoint dedicado de colaboradores com filtro por contratada
+      const response = await fetch(`/api/colaboradores?contratadaId=${contratadaId}&limit=100`);
       
-      // Colaboradores simulados baseados na contratada
-      const colaboradoresMock = {
-        'empresa-alpha': [
-          { value: 'colab-001', label: 'Carlos Oliveira', empresa: 'empresa-alpha' },
-          { value: 'colab-002', label: 'Ana Santos', empresa: 'empresa-alpha' },
-          { value: 'colab-003', label: 'João Silva', empresa: 'empresa-alpha' }
-        ],
-        'empresa-beta': [
-          { value: 'colab-004', label: 'Maria Costa', empresa: 'empresa-beta' },
-          { value: 'colab-005', label: 'Pedro Alves', empresa: 'empresa-beta' }
-        ],
-        'empresa-gamma': [
-          { value: 'colab-006', label: 'Roberto Lima', empresa: 'empresa-gamma' },
-          { value: 'colab-007', label: 'Fernanda Rocha', empresa: 'empresa-gamma' },
-          { value: 'colab-008', label: 'Marcos Pereira', empresa: 'empresa-gamma' }
-        ]
-      };
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
-      colaboradores = colaboradoresMock[contratadaId] || [];
-      console.log('👥 Colaboradores carregados:', colaboradores.length);
+      const result = await response.json();
+      
+      console.log('📦 Raw API response for colaboradores:', result);
+      console.log('📦 result.data structure:', result.data);
+      
+      if (result.success && result.data) {
+        // Backend retorna: { success: true, data: [...], pagination: {...} }
+        const colaboradoresArray = result.data;
+        
+        if (Array.isArray(colaboradoresArray)) {
+          colaboradores = colaboradoresArray.map((colaborador: any) => ({
+            value: colaborador.id,
+            label: colaborador.nome,
+            empresa: contratadaId,
+            cpf: colaborador.cpf || colaborador.cpfFormatado,
+            cargo: colaborador.cargo,
+            matricula: colaborador.matricula,
+            setor: colaborador.setor
+          }));
+          
+          console.log('✅ Colaboradores carregados da API:', colaboradores.length);
+        } else {
+          throw new Error('Dados de colaboradores não são um array');
+        }
+      } else {
+        throw new Error('Resposta inválida da API de colaboradores');
+      }
     } catch (error) {
       console.error('❌ Erro ao carregar colaboradores:', error);
-      notify.error('Erro ao carregar colaboradores', 'Não foi possível carregar a lista de profissionais');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      notify.error('Erro ao carregar colaboradores', `Não foi possível carregar a lista de profissionais: ${errorMessage}`);
+      
+      // Fallback para dados mock em caso de erro - usar dados genéricos para qualquer contratada
+      colaboradores = [
+        { 
+          value: `mock-colab-001-${contratadaId}`, 
+          label: 'Carlos Oliveira (Mock)', 
+          empresa: contratadaId,
+          cpf: '123.456.789-01',
+          cargo: 'Operador'
+        },
+        { 
+          value: `mock-colab-002-${contratadaId}`, 
+          label: 'Ana Santos (Mock)', 
+          empresa: contratadaId,
+          cpf: '987.654.321-02',
+          cargo: 'Técnica'
+        },
+        { 
+          value: `mock-colab-003-${contratadaId}`, 
+          label: 'João Silva (Mock)', 
+          empresa: contratadaId,
+          cpf: '456.789.123-03',
+          cargo: 'Supervisor'
+        }
+      ];
+      
+      console.log('⚠️ Usando dados mock para colaboradores:', colaboradores.length);
     } finally {
       loadingColaboradores = false;
     }
@@ -274,29 +338,47 @@
       submittingNovaFicha = true;
       console.log('📝 Criando nova ficha:', { contratadaId, colaboradorId });
       
-      // TODO: Implementar chamada real para API de criação de ficha
-      // const response = await apiClient.post('/api/fichas-epi', {
-      //   colaboradorId,
-      //   status: 'ATIVA'
-      // });
+      // Chamada real para API de criação de ficha
+      const payload = {
+        colaboradorId,
+        status: 'ATIVA'
+      };
       
-      // Simulação temporária
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('📤 Enviando payload para criação de ficha:', payload);
       
-      // Fechar modal e recarregar dados
-      showNovaFicha = false;
-      await loadFichasData();
+      const response = await fetch('/api/fichas-epi', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
       
-      // Encontrar nome do colaborador para notificação
-      const colaborador = colaboradores.find(c => c.value === colaboradorId);
-      const nomeColaborador = colaborador?.label || 'Colaborador';
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
-      notify.success(
-        'Ficha criada com sucesso',
-        `Ficha de EPI criada para ${nomeColaborador}`
-      );
+      const result = await response.json();
+      console.log('📥 Resposta da API ao criar ficha:', result);
       
-      console.log('✅ Nova ficha criada com sucesso');
+      if (result.success) {
+        // Fechar modal e recarregar dados
+        showNovaFicha = false;
+        await loadFichasData();
+        
+        // Encontrar nome do colaborador para notificação
+        const colaborador = colaboradores.find(c => c.value === colaboradorId);
+        const nomeColaborador = colaborador?.label || 'Colaborador';
+        
+        notify.success(
+          'Ficha criada com sucesso',
+          `Ficha de EPI criada para ${nomeColaborador}`
+        );
+        
+        console.log('✅ Nova ficha criada com sucesso:', result.data);
+      } else {
+        throw new Error(result.message || 'Erro ao criar ficha');
+      }
     } catch (error) {
       console.error('❌ Erro ao criar nova ficha:', error);
       notify.error('Erro ao criar ficha', 'Não foi possível criar a ficha de EPI');
