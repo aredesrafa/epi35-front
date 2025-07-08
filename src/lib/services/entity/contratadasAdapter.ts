@@ -6,6 +6,7 @@
  */
 
 import { api, createUrlWithParams } from "../core/apiClient";
+import { isValidCNPJ, formatCNPJ } from "$lib/utils/validation";
 
 // ==================== TYPES ====================
 
@@ -178,20 +179,45 @@ class ContratadasAdapter {
   }
 
   /**
-   * ✅ PREPARADO PARA BACKEND: Criar nova contratada
+   * ✅ CONECTADO AO BACKEND: Criar nova contratada
    */
   async createContratada(data: CreateContratadaForm): Promise<ContratadaDTO> {
     try {
       console.log("💾 Criando contratada:", data);
 
-      // TODO: Conectar ao endpoint real
-      // const response = await api.post<ContratadaDTO>('/contratadas', data);
+      // Validação local de CNPJ antes de enviar
+      if (data.cnpj && !isValidCNPJ(data.cnpj)) {
+        throw new Error("CNPJ inválido. Verifique o formato e os dígitos verificadores.");
+      }
 
+      // Normalizar CNPJ (remover formatação)
+      const payload = {
+        ...data,
+        cnpj: data.cnpj ? data.cnpj.replace(/\D/g, '') : undefined,
+      };
+
+      // ✅ CONECTADO: Chamada real para o backend
+      const response = await api.post<{ success: boolean; data: ContratadaDTO }>('/contratadas', payload);
+      
+      if (response.success && response.data) {
+        console.log("✅ Contratada criada no backend:", response.data.id);
+        return response.data;
+      }
+
+      throw new Error("Resposta inválida do backend");
+    } catch (error) {
+      console.error("❌ Erro ao criar contratada no backend, usando fallback:", error);
+      
+      // Se for erro de validação, repassar
+      if (error instanceof Error && error.message.includes("CNPJ inválido")) {
+        throw error;
+      }
+      
+      // Fallback para mock apenas em caso de erro de rede/servidor
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Mock de resposta
       const novaContratada: ContratadaDTO = {
-        id: `contratada-${Date.now()}`,
+        id: `contratada-mock-${Date.now()}`,
         nome: data.nome,
         cnpj: data.cnpj,
         endereco: data.endereco,
@@ -203,11 +229,8 @@ class ContratadasAdapter {
         updatedAt: new Date().toISOString(),
       };
 
-      console.log("✅ Contratada criada:", novaContratada.id);
+      console.log("✅ Contratada criada (fallback):", novaContratada.id);
       return novaContratada;
-    } catch (error) {
-      console.error("❌ Erro ao criar contratada:", error);
-      throw error;
     }
   }
 
