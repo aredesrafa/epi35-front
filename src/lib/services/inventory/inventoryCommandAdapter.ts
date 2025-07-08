@@ -34,7 +34,8 @@ class InventoryCommandAdapter {
     categoria?: string;
     includeExpanded?: boolean;
   } = {}): Promise<PaginatedResponse<ItemEstoqueDTO>> {
-    console.log('📊 Buscando itens do inventário:', params);
+    console.log('🚨 ADAPTER CHAMADO: Buscando itens do inventário:', params);
+    console.log('🚨 API_BASE_URL atual:', import.meta.env?.MODE);
     
     try {
       const queryParams = {
@@ -47,10 +48,95 @@ class InventoryCommandAdapter {
       };
       
       const url = createUrlWithParams('/estoque/itens', queryParams);
-      const response = await api.get<PaginatedResponse<ItemEstoqueDTO>>(url);
+      console.log('🔗 URL construída:', url);
       
-      console.log('✅ Itens do inventário obtidos com sucesso:', response.data.length);
-      return response;
+      // TESTE: Usar dados temporários para verificar se o problema está na API ou na UI
+      console.log('🧪 TESTE: Usando dados mock temporários');
+      const mockResponse = {
+        data: {
+          items: [
+            {
+              id: "test-1",
+              almoxarifadoId: "alm-1", 
+              tipoEpiId: "epi-1",
+              quantidade: 10,
+              status: "DISPONIVEL",
+              createdAt: "2025-01-07T10:00:00Z",
+              tipoEpi: {
+                id: "epi-1",
+                nomeEquipamento: "Capacete de Teste",
+                numeroCa: "CA-99999",
+                categoriaEpi: "PROTECAO_CABECA"
+              },
+              almoxarifado: {
+                id: "alm-1",
+                nome: "Almoxarifado Teste"
+              }
+            },
+            {
+              id: "test-2", 
+              almoxarifadoId: "alm-1",
+              tipoEpiId: "epi-2",
+              quantidade: 25,
+              status: "DISPONIVEL", 
+              createdAt: "2025-01-07T10:00:00Z",
+              tipoEpi: {
+                id: "epi-2",
+                nomeEquipamento: "Luvas de Teste",
+                numeroCa: "CA-88888",
+                categoriaEpi: "PROTECAO_MAOS"
+              },
+              almoxarifado: {
+                id: "alm-1",
+                nome: "Almoxarifado Teste"
+              }
+            }
+          ],
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 2,
+            totalPages: 1
+          }
+        }
+      };
+      
+      // Comentar a chamada real temporariamente
+      // const response = await api.get<any>(url);
+      const response = mockResponse;
+      
+      console.log('🔍 Resposta bruta do backend estoque:', response);
+      console.log('🔍 Estrutura dos dados:', {
+        hasData: !!response.data,
+        hasItems: !!response.data?.items,
+        itemsLength: response.data?.items?.length,
+        firstItem: response.data?.items?.[0],
+        pagination: response.data?.pagination
+      });
+      
+      // Mapear resposta do backend para o formato esperado pelo frontend
+      const mappedItems = (response.data?.items || []).map((item: any) => ({
+        ...item,
+        // Mapear tipoEpi -> tipoEPI para compatibilidade frontend
+        tipoEPI: item.tipoEpi ? {
+          ...item.tipoEpi,
+          numeroCA: item.tipoEpi.numeroCa, // Mapear numeroCa -> numeroCA
+          nomeEquipamento: item.tipoEpi.nomeEquipamento || item.tipoEpi.nome // Compatibilidade
+        } : undefined,
+        // Manter status do backend como está
+        status: item.status || 'DISPONIVEL'
+      }));
+      
+      const mappedResponse: PaginatedResponse<ItemEstoqueDTO> = {
+        data: mappedItems,
+        total: response.data?.pagination?.total || 0,
+        page: response.data?.pagination?.page || 1,
+        pageSize: response.data?.pagination?.limit || 20,
+        totalPages: response.data?.pagination?.totalPages || 1
+      };
+      
+      console.log('✅ Itens do inventário mapeados:', mappedResponse);
+      return mappedResponse;
     } catch (error) {
       console.error('❌ Erro ao buscar itens do inventário:', error);
       throw error;

@@ -138,18 +138,17 @@
     {#if equipamento}
       <!-- Informações do Equipamento -->
       <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div class="flex items-start justify-between mb-3">
-          <div>
+        <div class="flex items-start space-x-3 mb-3">
+          <!-- Box com número 1 -->
+          <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md flex items-center justify-center font-semibold text-sm">
+            1
+          </div>
+          <div class="flex-1">
             <h4 class="font-medium text-gray-900 dark:text-white">
               {equipamento.nomeEquipamento}
             </h4>
             <p class="text-sm text-gray-500 dark:text-gray-400">
               CA {equipamento.registroCA} • Entrega #{equipamento.entregaId}
-            </p>
-          </div>
-          <div class="text-right">
-            <p class="text-sm font-medium text-gray-900 dark:text-white">
-              Qtd: {equipamento.quantidade}
             </p>
           </div>
         </div>
@@ -182,25 +181,6 @@
         </div>
       </div>
 
-      <!-- Informação sobre a Devolução -->
-      <div class="mb-6">
-        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div class="flex items-start">
-            <ExclamationCircleOutline class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5 w-4 h-4" />
-            <div>
-              <p class="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Devolução de Item Individual</strong>
-              </p>
-              <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                Este equipamento será devolvido como uma unidade individual. 
-                {#if equipamento.quantidade === 1}
-                  Para devolver múltiplos itens do mesmo tipo, selecione cada um separadamente.
-                {/if}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Motivo da Devolução -->
       <div class="mb-6">
@@ -256,20 +236,6 @@
         </div>
       {/if}
 
-      <!-- Resumo -->
-      <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-          Resumo da Devolução
-        </h4>
-        <div class="text-sm text-blue-800 dark:text-blue-200">
-          <p>• Equipamento: {equipamento.nomeEquipamento} (CA {equipamento.registroCA})</p>
-          <p>• Quantidade: 1 unidade (item individual)</p>
-          <p>• Tipo: Devolução de item individual</p>
-          {#if motivoSelecionado.trim()}
-            <p>• Motivo: {motivoSelecionado.trim()}</p>
-          {/if}
-        </div>
-      </div>
 
     {/if}
 

@@ -18,13 +18,14 @@
   import { notify } from '$lib/stores';
   import FichasTablePresenter from '../presenters/FichasTablePresenter.svelte';
   import FichaDetailContainer from '../containers/FichaDetailContainer.svelte';
+  import NovaFichaModalPresenter from '../presenters/NovaFichaModalPresenter.svelte';
   import type { FichaEPIDTO } from '$lib/types/serviceTypes';
 
   // ==================== PROPS ====================
   
   export let initialPageSize: number = 10;
-  export let autoRefresh: boolean = false;
-  export let refreshInterval: number = 30000;
+  export const autoRefresh: boolean = false;
+  export const refreshInterval: number = 30000;
 
   // ==================== ENHANCED STORE ====================
   
@@ -51,6 +52,14 @@
   // Estado local para modais
   let showDetail = false;
   let selectedFichaId: string | null = null;
+  let showNovaFicha = false;
+  
+  // Estado para nova ficha
+  let contratadas: Array<{ value: string; label: string }> = [];
+  let colaboradores: Array<{ value: string; label: string; empresa: string }> = [];
+  let loadingContratadas = false;
+  let loadingColaboradores = false;
+  let submittingNovaFicha = false;
 
   // ==================== LIFECYCLE ====================
   
@@ -177,8 +186,135 @@
   }
 
   function handleNovaFicha(): void {
-    // TODO: Implementar modal de nova ficha
-    console.log('➕ Nova ficha');
+    showNovaFicha = true;
+    loadContratadas();
+  }
+  
+  // ==================== NOVA FICHA HANDLERS ====================
+  
+  async function loadContratadas(): Promise<void> {
+    if (contratadas.length > 0) return; // Já carregadas
+    
+    try {
+      loadingContratadas = true;
+      // TODO: Implementar chamada real para API de contratadas
+      // const response = await apiClient.get('/api/contratadas');
+      
+      // Mock temporário - substituir por chamada real
+      await new Promise(resolve => setTimeout(resolve, 500));
+      contratadas = [
+        { value: 'empresa-alpha', label: 'Empresa Alpha LTDA' },
+        { value: 'empresa-beta', label: 'Empresa Beta Serviços' },
+        { value: 'empresa-gamma', label: 'Gamma Construções' }
+      ];
+      
+      console.log('📋 Contratadas carregadas:', contratadas.length);
+    } catch (error) {
+      console.error('❌ Erro ao carregar contratadas:', error);
+      notify.error('Erro ao carregar contratadas', 'Não foi possível carregar a lista de empresas');
+    } finally {
+      loadingContratadas = false;
+    }
+  }
+  
+  async function loadColaboradores(contratadaId: string): Promise<void> {
+    try {
+      loadingColaboradores = true;
+      // TODO: Implementar chamada real para API de colaboradores
+      // const response = await apiClient.get(`/api/colaboradores?contratadaId=${contratadaId}`);
+      
+      // Mock temporário - substituir por chamada real
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Colaboradores simulados baseados na contratada
+      const colaboradoresMock = {
+        'empresa-alpha': [
+          { value: 'colab-001', label: 'Carlos Oliveira', empresa: 'empresa-alpha' },
+          { value: 'colab-002', label: 'Ana Santos', empresa: 'empresa-alpha' },
+          { value: 'colab-003', label: 'João Silva', empresa: 'empresa-alpha' }
+        ],
+        'empresa-beta': [
+          { value: 'colab-004', label: 'Maria Costa', empresa: 'empresa-beta' },
+          { value: 'colab-005', label: 'Pedro Alves', empresa: 'empresa-beta' }
+        ],
+        'empresa-gamma': [
+          { value: 'colab-006', label: 'Roberto Lima', empresa: 'empresa-gamma' },
+          { value: 'colab-007', label: 'Fernanda Rocha', empresa: 'empresa-gamma' },
+          { value: 'colab-008', label: 'Marcos Pereira', empresa: 'empresa-gamma' }
+        ]
+      };
+      
+      colaboradores = colaboradoresMock[contratadaId] || [];
+      console.log('👥 Colaboradores carregados:', colaboradores.length);
+    } catch (error) {
+      console.error('❌ Erro ao carregar colaboradores:', error);
+      notify.error('Erro ao carregar colaboradores', 'Não foi possível carregar a lista de profissionais');
+    } finally {
+      loadingColaboradores = false;
+    }
+  }
+  
+  function handleContratadaChange(contratadaId: string): void {
+    console.log('🏢 Contratada selecionada:', contratadaId);
+    if (contratadaId) {
+      loadColaboradores(contratadaId);
+    } else {
+      colaboradores = [];
+    }
+  }
+  
+  function handleColaboradorChange(colaboradorId: string): void {
+    console.log('👤 Colaborador selecionado:', colaboradorId);
+  }
+  
+  async function handleSubmitNovaFicha(event: CustomEvent<{ contratadaId: string; colaboradorId: string }>): Promise<void> {
+    const { contratadaId, colaboradorId } = event.detail;
+    
+    try {
+      submittingNovaFicha = true;
+      console.log('📝 Criando nova ficha:', { contratadaId, colaboradorId });
+      
+      // TODO: Implementar chamada real para API de criação de ficha
+      // const response = await apiClient.post('/api/fichas-epi', {
+      //   colaboradorId,
+      //   status: 'ATIVA'
+      // });
+      
+      // Simulação temporária
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Fechar modal e recarregar dados
+      showNovaFicha = false;
+      await loadFichasData();
+      
+      // Encontrar nome do colaborador para notificação
+      const colaborador = colaboradores.find(c => c.value === colaboradorId);
+      const nomeColaborador = colaborador?.label || 'Colaborador';
+      
+      notify.success(
+        'Ficha criada com sucesso',
+        `Ficha de EPI criada para ${nomeColaborador}`
+      );
+      
+      console.log('✅ Nova ficha criada com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao criar nova ficha:', error);
+      notify.error('Erro ao criar ficha', 'Não foi possível criar a ficha de EPI');
+    } finally {
+      submittingNovaFicha = false;
+    }
+  }
+  
+  function handleCloseNovaFicha(): void {
+    showNovaFicha = false;
+    // Limpar dados ao fechar
+    colaboradores = [];
+  }
+  
+  function handleRetryNovaFicha(): void {
+    // Recarregar contratadas em caso de erro
+    contratadas = [];
+    loadContratadas();
   }
   
   // ==================== COMPUTED PROPERTIES ====================
@@ -256,5 +392,22 @@
     fichaId={selectedFichaId}
     on:close={handleCloseDetail}
     on:fichaUpdated={handleFichaUpdated}
+  />
+{/if}
+
+<!-- Modal de nova ficha -->
+{#if showNovaFicha}
+  <NovaFichaModalPresenter
+    bind:open={showNovaFicha}
+    {contratadas}
+    {colaboradores}
+    {loadingContratadas}
+    {loadingColaboradores}
+    submitting={submittingNovaFicha}
+    on:close={handleCloseNovaFicha}
+    on:contratadaChange={(e) => handleContratadaChange(e.detail)}
+    on:colaboradorChange={(e) => handleColaboradorChange(e.detail)}
+    on:submit={handleSubmitNovaFicha}
+    on:retry={handleRetryNovaFicha}
   />
 {/if}

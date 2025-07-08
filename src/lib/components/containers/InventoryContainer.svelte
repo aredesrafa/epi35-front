@@ -66,7 +66,7 @@
   // ==================== LIFECYCLE ====================
   
   onMount(async () => {
-    console.log('🚀 InventoryContainer: Inicializando...');
+    console.log('🚨 CONTAINER INICIADO: InventoryContainer carregando...');
     
     // Aguardar configurações de negócio
     await businessConfigStore.initialize();
@@ -75,6 +75,7 @@
     await loadAuxiliaryData();
     
     // Carregar dados iniciais
+    console.log('🚨 CHAMANDO loadInventoryData...');
     await loadInventoryData();
     
     console.log('✅ InventoryContainer: Inicializado com sucesso');
