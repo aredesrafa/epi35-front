@@ -71,17 +71,21 @@
   onMount(async () => {
     console.log('🚨 CONTAINER INICIADO: InventoryContainer carregando...');
     
-    // Aguardar configurações de negócio
-    await businessConfigStore.initialize();
-    
-    // Carregar dados auxiliares
-    await loadAuxiliaryData();
-    
-    // Carregar dados iniciais
-    console.log('🚨 CHAMANDO loadInventoryData...');
-    await loadInventoryData();
-    
-    console.log('✅ InventoryContainer: Inicializado com sucesso');
+    try {
+      // Aguardar configurações de negócio
+      await businessConfigStore.initialize();
+      
+      // Carregar dados auxiliares
+      await loadAuxiliaryData();
+      
+      // Carregar dados iniciais
+      console.log('🚨 CHAMANDO loadInventoryData...');
+      await loadInventoryData();
+      
+      console.log('✅ InventoryContainer: Inicializado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar InventoryContainer:', error);
+    }
   });
   
   // ==================== DATA LOADING ====================
@@ -214,13 +218,13 @@
     
     try {
       // Verificar se o item tem os dados necessários
-      if (!selectedItemForHistory.almoxarifadoId || !selectedItemForHistory.tipoEpiId) {
+      if (!selectedItemForHistory.almoxarifadoId || !selectedItemForHistory.tipoEPIId) {
         throw new Error('Item não possui dados necessários para buscar histórico');
       }
 
       const params = {
         almoxarifadoId: selectedItemForHistory.almoxarifadoId,
-        tipoEpiId: selectedItemForHistory.tipoEpiId,
+        tipoEpiId: selectedItemForHistory.tipoEPIId,
         dataInicio,
         dataFim
       };

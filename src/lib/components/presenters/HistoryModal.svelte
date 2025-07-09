@@ -29,7 +29,7 @@
     FileDocOutline,
     ArrowUpOutline,
     ArrowDownOutline,
-    CalendarOutline,
+    CalendarDaysOutline,
     CloseOutline
   } from 'flowbite-svelte-icons';
   import { formatDate } from '$lib/utils/dateHelpers';
@@ -184,7 +184,7 @@
     <!-- Period Filter -->
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-2">
-        <CalendarOutline class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        <CalendarDaysOutline class="w-4 h-4 text-gray-500 dark:text-gray-400" />
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
           Período:
         </span>
