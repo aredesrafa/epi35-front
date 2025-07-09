@@ -125,7 +125,7 @@ class EstoqueItensAdapter {
       const response = await this.listarItensEstoque({
         almoxarifado_id: almoxarifadoId,
         status: "DISPONIVEL",
-        limit: 200, // Limite alto para pegar todos os itens disponíveis
+        limit: 100, // Limite máximo permitido pela API
       });
 
       const itensDisponiveis = response.data

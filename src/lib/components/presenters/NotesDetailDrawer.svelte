@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { Drawer, Badge, Button, Input, Textarea, Label, Select, Alert } from 'flowbite-svelte';
+  import { Drawer, Badge, Button, Input, Textarea, Label, Radio, Alert } from 'flowbite-svelte';
   import { 
     CheckOutline, 
     FloppyDiskOutline, 
@@ -96,6 +96,7 @@
     resetForm();
     loadFormData();
   }
+  
 
   // ==================== DATA LOADING ====================
   
@@ -141,6 +142,7 @@
         if (almoxarifadoOptions.length > 0) {
           const almoxarifadoPadrao = almoxarifadoOptions.find(opt => opt.isPrincipal) || almoxarifadoOptions[0];
           
+          
           if (formData.tipo_nota === 'ENTRADA') {
             // Para ENTRADA: almoxarifado de destino é obrigatório (onde os itens vão entrar)
             if (!formData.almoxarifado_destino_id) {
@@ -158,13 +160,6 @@
             }
           }
           
-          console.log('🔧 Auto-selecionando almoxarifado baseado no tipo:', {
-            tipo: formData.tipo_nota,
-            selecionado: almoxarifadoPadrao.label,
-            isPrincipal: almoxarifadoPadrao.isPrincipal,
-            origem_id: formData.almoxarifado_origem_id,
-            destino_id: formData.almoxarifado_destino_id
-          });
         }
       }
       
@@ -192,7 +187,6 @@
         }
       }
       
-      console.log('⚠️ NotesDetailDrawer: Usando fallback para almoxarifados - auto-selecionado:', almoxarifadoOptions[0].label);
     } finally {
       dataLoading = false;
     }
@@ -234,7 +228,8 @@
   // ==================== FORM MANAGEMENT ====================
   
   function resetForm(): void {
-    formData = {
+    // Criar um objeto completamente novo para garantir reatividade
+    const newFormData = {
       tipo_nota: tipo,
       almoxarifado_origem_id: '',
       almoxarifado_destino_id: '',
@@ -242,10 +237,14 @@
       data_documento: new Date().toISOString().split('T')[0],
       itens: []
     };
+    
+    // Forçar uma nova referência para garantir reatividade
+    formData = newFormData;
     itens = [];
     formErrors = {};
     showValidationErrors = false;
     itemValidationErrors = [];
+    
   }
 
   // Validação flexível para rascunho - permite campos vazios
@@ -472,11 +471,6 @@
   ];
 
   // ==================== REACTIVE STATEMENTS ====================
-  
-  // Atualizar opções de almoxarifado destino baseado no tipo
-  $: if (formData.tipo_nota !== 'TRANSFERENCIA') {
-    formData.almoxarifado_destino_id = '';
-  }
 
   // Filtrar almoxarifado destino para não incluir o de origem
   $: almoxarifadoDestinoFiltrado = almoxarifadoDestinoOptions.filter(
@@ -591,55 +585,61 @@
 
           <!-- Almoxarifado - baseado no tipo de nota -->
           {#if formData.tipo_nota === 'ENTRADA'}
-            <!-- Para ENTRADA: mostrar apenas almoxarifado de destino -->
+            <!-- Para ENTRADA: Radio buttons para almoxarifado de destino -->
             <div>
-              <Label for="almoxarifado_destino_id" class="mb-2 text-gray-900 dark:text-white">
+              <Label class="mb-3 text-gray-900 dark:text-white">
                 Almoxarifado de Destino
-                {#if almoxarifadoOptions.find(opt => opt.value === formData.almoxarifado_destino_id)?.isPrincipal}
-                  <span class="text-xs text-primary-600 dark:text-primary-400 font-medium">(Principal)</span>
-                {/if}
               </Label>
-              <Select
-                id="almoxarifado_destino_id"
-                bind:value={formData.almoxarifado_destino_id}
-                disabled={mode === 'view'}
-                class="rounded-sm {formErrors.almoxarifado_destino_id ? 'border-red-500' : ''}"
-              >
-                <option value="">Selecione um almoxarifado</option>
+              <div class="space-y-2">
                 {#each almoxarifadoOptions as option}
-                  <option value={option.value}>
-                    {option.label}{option.isPrincipal ? ' (Principal)' : ''}
-                  </option>
+                  <div class="flex items-center">
+                    <Radio
+                      name="almoxarifado_destino_id"
+                      value={option.value}
+                      bind:group={formData.almoxarifado_destino_id}
+                      disabled={mode === 'view'}
+                      class="text-primary-600 focus:ring-primary-500"
+                    />
+                    <Label class="ml-2 text-sm text-gray-900 dark:text-white">
+                      {option.label}
+                      {#if option.isPrincipal}
+                        <span class="text-xs text-primary-600 dark:text-primary-400 font-medium ml-1">(Principal)</span>
+                      {/if}
+                    </Label>
+                  </div>
                 {/each}
-              </Select>
+              </div>
               {#if formErrors.almoxarifado_destino_id}
-                <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.almoxarifado_destino_id}</p>
+                <p class="text-red-500 dark:text-red-400 text-sm mt-2">{formErrors.almoxarifado_destino_id}</p>
               {/if}
             </div>
           {:else}
-            <!-- Para TRANSFERENCIA e DESCARTE: mostrar almoxarifado de origem -->
+            <!-- Para TRANSFERENCIA e DESCARTE: Radio buttons para almoxarifado de origem -->
             <div>
-              <Label for="almoxarifado_origem_id" class="mb-2 text-gray-900 dark:text-white">
+              <Label class="mb-3 text-gray-900 dark:text-white">
                 Almoxarifado de Origem
-                {#if almoxarifadoOptions.find(opt => opt.value === formData.almoxarifado_origem_id)?.isPrincipal}
-                  <span class="text-xs text-primary-600 dark:text-primary-400 font-medium">(Principal)</span>
-                {/if}
               </Label>
-              <Select
-                id="almoxarifado_origem_id"
-                bind:value={formData.almoxarifado_origem_id}
-                disabled={mode === 'view'}
-                class="rounded-sm {formErrors.almoxarifado_origem_id ? 'border-red-500' : ''}"
-              >
-                <option value="">Selecione um almoxarifado</option>
+              <div class="space-y-2">
                 {#each almoxarifadoOptions as option}
-                  <option value={option.value}>
-                    {option.label}{option.isPrincipal ? ' (Principal)' : ''}
-                  </option>
+                  <div class="flex items-center">
+                    <Radio
+                      name="almoxarifado_origem_id"
+                      value={option.value}
+                      bind:group={formData.almoxarifado_origem_id}
+                      disabled={mode === 'view'}
+                      class="text-primary-600 focus:ring-primary-500"
+                    />
+                    <Label class="ml-2 text-sm text-gray-900 dark:text-white">
+                      {option.label}
+                      {#if option.isPrincipal}
+                        <span class="text-xs text-primary-600 dark:text-primary-400 font-medium ml-1">(Principal)</span>
+                      {/if}
+                    </Label>
+                  </div>
                 {/each}
-              </Select>
+              </div>
               {#if formErrors.almoxarifado_origem_id}
-                <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.almoxarifado_origem_id}</p>
+                <p class="text-red-500 dark:text-red-400 text-sm mt-2">{formErrors.almoxarifado_origem_id}</p>
               {/if}
             </div>
           {/if}
@@ -647,20 +647,28 @@
           <!-- Almoxarifado Destino (apenas para transferência) -->
           {#if formData.tipo_nota === 'TRANSFERENCIA'}
             <div>
-              <Label for="almoxarifado_destino_id" class="mb-2 text-gray-900 dark:text-white">Almoxarifado Destino</Label>
-              <Select
-                id="almoxarifado_destino_id"
-                bind:value={formData.almoxarifado_destino_id}
-                disabled={mode === 'view'}
-                class="rounded-sm {formErrors.almoxarifado_destino_id ? 'border-red-500' : ''}"
-              >
-                <option value="">Selecione o destino</option>
+              <Label class="mb-3 text-gray-900 dark:text-white">Almoxarifado de Destino</Label>
+              <div class="space-y-2">
                 {#each almoxarifadoDestinoFiltrado as option}
-                  <option value={option.value}>{option.label}</option>
+                  <div class="flex items-center">
+                    <Radio
+                      name="almoxarifado_destino_id"
+                      value={option.value}
+                      bind:group={formData.almoxarifado_destino_id}
+                      disabled={mode === 'view'}
+                      class="text-primary-600 focus:ring-primary-500"
+                    />
+                    <Label class="ml-2 text-sm text-gray-900 dark:text-white">
+                      {option.label}
+                      {#if option.isPrincipal}
+                        <span class="text-xs text-primary-600 dark:text-primary-400 font-medium ml-1">(Principal)</span>
+                      {/if}
+                    </Label>
+                  </div>
                 {/each}
-              </Select>
+              </div>
               {#if formErrors.almoxarifado_destino_id}
-                <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.almoxarifado_destino_id}</p>
+                <p class="text-red-500 dark:text-red-400 text-sm mt-2">{formErrors.almoxarifado_destino_id}</p>
               {/if}
             </div>
           {/if}

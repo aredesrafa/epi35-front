@@ -162,14 +162,6 @@
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
       <p class="text-sm text-gray-600 dark:text-gray-400">Visão geral do sistema de gerenciamento de EPIs</p>
     </div>
-    <div class="flex space-x-2">
-      <Button size="sm" color="primary" class="rounded-sm">
-        Novo EPI
-      </Button>
-      <Button size="sm" color="alternative" class="rounded-sm">
-        Relatório
-      </Button>
-    </div>
   </div>
   
   <!-- Metrics Cards -->
@@ -214,7 +206,7 @@
   
   <!-- Main Content Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Recent Activities -->
+    <!-- Recent Activities - Expandido para ocupar 2/3 -->
     <div class="lg:col-span-2">
       <Card size="sm" class="rounded-sm">
         <div class="flex items-center justify-between mb-4">
@@ -241,7 +233,7 @@
       </Card>
     </div>
     
-    <!-- Quick Stats & Actions -->
+    <!-- Quick Stats & Alerts -->
     <div class="space-y-6">
       <!-- Quick Stats -->
       <Card size="sm" class="rounded-sm">
@@ -264,26 +256,6 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">Entregas Hoje</span>
             <Badge color="green" class="w-fit rounded-sm">{$quickStatsStore.entregasHoje}</Badge>
           </div>
-        </div>
-      </Card>
-      
-      <!-- Quick Actions -->
-      <Card size="sm" class="rounded-sm">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ações Rápidas</h3>
-        
-        <div class="space-y-3">
-          <Button color="primary" class="w-full rounded-sm" size="sm">
-            Nova Entrega de EPI
-          </Button>
-          <Button color="alternative" class="w-full rounded-sm" size="sm">
-            Cadastrar Colaborador
-          </Button>
-          <Button color="alternative" class="w-full rounded-sm" size="sm">
-            Entrada no Estoque
-          </Button>
-          <Button color="alternative" class="w-full rounded-sm" size="sm">
-            Gerar Relatório
-          </Button>
         </div>
       </Card>
       
