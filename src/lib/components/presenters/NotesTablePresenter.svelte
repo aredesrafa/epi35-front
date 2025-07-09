@@ -398,7 +398,7 @@
                   <div class="flex flex-col">
                     <span class="text-sm">{nota.almoxarifado_nome || 'N/A'}</span>
                     {#if nota.almoxarifado_destino_nome && nota.tipo === 'TRANSFERENCIA'}
-                      <span class="text-xs text-gray-500">→ {nota.almoxarifado_destino_nome}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400">→ {nota.almoxarifado_destino_nome}</span>
                     {/if}
                   </div>
                 </TableBodyCell>
@@ -412,9 +412,9 @@
                 </TableBodyCell>
                 <TableBodyCell>
                   <div class="flex items-center space-x-2">
-                    <FileDocOutline class="w-4 h-4 text-gray-400" />
+                    <FileDocOutline class="w-4 h-4 text-gray-400 dark:text-gray-500" />
                     <span class="text-sm font-medium">{nota.total_itens || nota.itens?.length || 0}</span>
-                    <span class="text-xs text-gray-500">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
                       {(nota.total_itens || nota.itens?.length || 0) === 1 ? 'item' : 'itens'}
                     </span>
                   </div>
@@ -425,12 +425,12 @@
                       <span class="text-sm font-medium text-green-600 dark:text-green-400">
                         R$ {nota.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span class="text-xs text-gray-500">
+                      <span class="text-xs text-gray-500 dark:text-gray-400">
                         Médio: R$ {(nota.valor_total / (nota.total_itens || nota.itens?.length || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   {:else}
-                    <span class="text-sm text-gray-400">—</span>
+                    <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
                   {/if}
                 </TableBodyCell>
                 <TableBodyCell>

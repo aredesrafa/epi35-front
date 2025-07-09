@@ -175,7 +175,7 @@
         {#each additionalInfo as info, index}
           <span>{info}</span>
           {#if index < additionalInfo.length - 1}
-            <span class="text-gray-400">•</span>
+            <span class="text-gray-400 dark:text-gray-500">•</span>
           {/if}
         {/each}
       </div>

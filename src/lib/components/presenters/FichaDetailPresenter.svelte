@@ -278,12 +278,12 @@
         ] as tab}
           <button
             class="py-4 px-1 border-b-2 font-medium text-sm transition-colors {activeTab === tab.id 
-              ? 'border-primary-500 text-primary-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400' 
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}"
             on:click={() => activeTab = tab.id}
           >
             {tab.label}
-            <span class="ml-2 py-0.5 px-2 rounded-full text-xs bg-gray-200 dark:bg-gray-700">
+            <span class="ml-2 py-0.5 px-2 rounded-full text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
               {tab.count}
             </span>
           </button>
@@ -298,7 +298,7 @@
       {#if activeTab === 'equipamentos'}
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <h3 class="text-xl font-semibold">Equipamentos com o Colaborador</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Equipamentos com o Colaborador</h3>
           </div>
 
           {#if equipamentosEmPosse.length === 0}
@@ -312,11 +312,11 @@
               {#each equipamentosEmPosse as equipamento (equipamento.id)}
                 <ItemCard>
                   <div slot="content">
-                    <h4 class="font-medium">{equipamento.nomeEquipamento}</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <h4 class="font-medium text-gray-900 dark:text-white">{equipamento.nomeEquipamento}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                       CA: {equipamento.numeroCA || equipamento.registroCA} • {equipamento.categoria}
                     </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                       Entregue em: {equipamento.dataEntrega}
                     </p>
                     
@@ -328,7 +328,7 @@
                       >
                         {equipamento.statusVencimentoDisplay.texto}
                       </Badge>
-                      <span class="ml-2 text-sm text-gray-600">
+                      <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">
                         {UIMappingHelpers.formatDaysRemaining(
                           equipamento.statusVencimentoDisplay.diasRestantes,
                           equipamento.statusVencimentoDisplay.statusDetalhado
@@ -359,7 +359,7 @@
       <!-- TAB: Devoluções -->
       {:else if activeTab === 'devolucoes'}
         <div class="space-y-4">
-          <h3 class="text-xl font-semibold">Devoluções Efetuadas</h3>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Devoluções Efetuadas</h3>
 
           {#if devolucoes.length === 0}
             <EmptyState 
@@ -431,7 +431,7 @@
       <!-- TAB: Entregas -->
       {:else if activeTab === 'entregas'}
         <div class="space-y-4">
-          <h3 class="text-xl font-semibold">Entregas Registradas</h3>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Entregas Registradas</h3>
 
           {#if entregas.length === 0}
             <EmptyState 
@@ -444,8 +444,8 @@
               {#each entregas as entrega (entrega.id)}
                 <ItemCard>
                   <div slot="content">
-                    <h4 class="font-medium">Entrega {entrega.numero}</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <h4 class="font-medium text-gray-900 dark:text-white">Entrega {entrega.numero}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                       Data: {entrega.dataEntrega}
                     </p>
                     
@@ -461,14 +461,14 @@
 
                     <!-- Itens da entrega -->
                     <div class="mt-2">
-                      <p class="text-sm font-medium">Itens:</p>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">Itens:</p>
                       <div class="mt-1 space-y-1">
                         {#each entrega.itens as item (item.id)}
                           <div class="flex items-center space-x-2">
                             <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-gray-700 rounded">
                               {item.quantidade}
                             </span>
-                            <div class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono text-gray-800 dark:text-gray-200">
+                            <div class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-800 dark:text-gray-200">
                               {item.nomeEquipamento} (CA: {item.numeroCA || item.registroCA})
                             </div>
                           </div>
@@ -504,7 +504,7 @@
       <!-- TAB: Histórico -->
       {:else if activeTab === 'historico'}
         <div class="space-y-4">
-          <h3 class="text-xl font-semibold">Histórico Completo</h3>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Histórico Completo</h3>
 
           {#if historico.length === 0}
             <EmptyState 
@@ -525,11 +525,11 @@
                     <div class="flex items-center justify-between">
                       <div>
                         <!-- ✅ SIMPLIFICADO: Label já vem do backend -->
-                        <h4 class="font-medium">{evento.tipoDisplay.label}</h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">{evento.acao}</p>
+                        <h4 class="font-medium text-gray-900 dark:text-white">{evento.tipoDisplay.label}</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">{evento.acao}</p>
                       </div>
                       <!-- ✅ SIMPLIFICADO: Data já vem formatada -->
-                      <span class="text-sm text-gray-500">{evento.dataFormatada}</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{evento.dataFormatada}</span>
                     </div>
 
                     <!-- ✅ SIMPLIFICADO: Mudança de status já vem formatada -->
@@ -541,12 +541,12 @@
 
                     <!-- ✅ SIMPLIFICADO: Resumo já vem pronto do backend -->
                     {#if evento.detalhes?.resumo}
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         {evento.detalhes.resumo}
                       </p>
                     {/if}
 
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Responsável: {evento.responsavel}
                     </p>
                   </div>
@@ -558,7 +558,7 @@
       {/if}
     </div>
   {:else}
-    <div class="text-center py-8 text-gray-500">
+    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
       <p>Nenhum dado disponível</p>
     </div>
   {/if}

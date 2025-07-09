@@ -432,7 +432,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Tipo -->
           <div>
-            <Label for="tipo" class="mb-2">Tipo de Nota</Label>
+            <Label for="tipo" class="mb-2 text-gray-900 dark:text-white">Tipo de Nota</Label>
             <Select
               id="tipo"
               bind:value={formData.tipo}
@@ -444,13 +444,13 @@
               <option value="DESCARTE">Descarte</option>
             </Select>
             {#if formErrors.tipo}
-              <p class="text-red-500 text-sm mt-1">{formErrors.tipo}</p>
+              <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.tipo}</p>
             {/if}
           </div>
 
           <!-- Data do Documento -->
           <div>
-            <Label for="data_documento" class="mb-2">Data do Documento</Label>
+            <Label for="data_documento" class="mb-2 text-gray-900 dark:text-white">Data do Documento</Label>
             <Input
               id="data_documento"
               type="date"
@@ -459,13 +459,13 @@
               class="rounded-sm {formErrors.data_documento ? 'border-red-500' : ''}"
             />
             {#if formErrors.data_documento}
-              <p class="text-red-500 text-sm mt-1">{formErrors.data_documento}</p>
+              <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.data_documento}</p>
             {/if}
           </div>
 
           <!-- Almoxarifado Origem -->
           <div>
-            <Label for="almoxarifado_id" class="mb-2">Almoxarifado</Label>
+            <Label for="almoxarifado_id" class="mb-2 text-gray-900 dark:text-white">Almoxarifado</Label>
             <Select
               id="almoxarifado_id"
               bind:value={formData.almoxarifado_id}
@@ -478,14 +478,14 @@
               {/each}
             </Select>
             {#if formErrors.almoxarifado_id}
-              <p class="text-red-500 text-sm mt-1">{formErrors.almoxarifado_id}</p>
+              <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.almoxarifado_id}</p>
             {/if}
           </div>
 
           <!-- Almoxarifado Destino (apenas para transferência) -->
           {#if formData.tipo === 'TRANSFERENCIA'}
             <div>
-              <Label for="almoxarifado_destino_id" class="mb-2">Almoxarifado Destino</Label>
+              <Label for="almoxarifado_destino_id" class="mb-2 text-gray-900 dark:text-white">Almoxarifado Destino</Label>
               <Select
                 id="almoxarifado_destino_id"
                 bind:value={formData.almoxarifado_destino_id}
@@ -498,7 +498,7 @@
                 {/each}
               </Select>
               {#if formErrors.almoxarifado_destino_id}
-                <p class="text-red-500 text-sm mt-1">{formErrors.almoxarifado_destino_id}</p>
+                <p class="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.almoxarifado_destino_id}</p>
               {/if}
             </div>
           {/if}
@@ -506,7 +506,7 @@
 
         <!-- Descrição -->
         <div>
-          <Label for="descricao" class="mb-2">Descrição</Label>
+          <Label for="descricao" class="mb-2 text-gray-900 dark:text-white">Descrição</Label>
           <Textarea
             id="descricao"
             bind:value={formData.descricao}
@@ -519,7 +519,7 @@
 
         <!-- Observações -->
         <div>
-          <Label for="observacoes" class="mb-2">Observações</Label>
+          <Label for="observacoes" class="mb-2 text-gray-900 dark:text-white">Observações</Label>
           <Textarea
             id="observacoes"
             bind:value={formData.observacoes}
