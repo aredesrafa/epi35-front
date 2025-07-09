@@ -107,8 +107,21 @@
       // Carregar dados auxiliares
       const almoxarifadosResponse = await almoxarifadosAdapter.listarAlmoxarifados();
 
-      almoxarifadoOptions = almoxarifadosResponse;
-      almoxarifadoDestinoOptions = almoxarifadosResponse;
+      // Converter para opções de select
+      almoxarifadoOptions = almoxarifadosResponse.map(alm => ({
+        value: alm.id,
+        label: alm.nome,
+        isPrincipal: alm.isPrincipal,
+        unidadeNegocio: alm.unidadeNegocio?.nome
+      }));
+      
+      almoxarifadoDestinoOptions = almoxarifadoOptions;
+      
+      console.log('📋 NotesDetailDrawer: Almoxarifados carregados:', {
+        original: almoxarifadosResponse.length,
+        options: almoxarifadoOptions.length,
+        samples: almoxarifadoOptions.slice(0, 2).map(opt => ({ value: opt.value, label: opt.label }))
+      });
 
       // Se é edição, carregar dados da nota
       if (mode === 'edit' && nota) {
@@ -120,6 +133,15 @@
       
     } catch (error) {
       console.error('Erro ao carregar dados do formulário:', error);
+      
+      // Fallback para dados básicos em caso de erro
+      almoxarifadoOptions = [
+        { value: '567a1885-0763-4a13-b9f6-157daa39ddc3', label: 'Almoxarifado Central SP' },
+        { value: '1a743859-33e6-4ce3-9158-025dee47922b', label: 'Almoxarifado RJ' }
+      ];
+      almoxarifadoDestinoOptions = almoxarifadoOptions;
+      
+      console.log('⚠️ NotesDetailDrawer: Usando fallback para almoxarifados');
     } finally {
       dataLoading = false;
     }

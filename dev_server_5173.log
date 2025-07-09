@@ -1,0 +1,10 @@
+
+> datalife-epi-svelte@0.1.0 dev
+> vite dev --port 5173
+
+Port 5173 is in use, trying another one...
+
+  VITE v5.4.19  ready in 678 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: http://192.168.1.17:5174/

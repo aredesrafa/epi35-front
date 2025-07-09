@@ -47,6 +47,7 @@ class AlmoxarifadosAdapter {
     try {
       // Primeiro, tentar endpoint direto (se existir)
       try {
+        console.log("🔍 Tentando endpoint direto:", this.baseEndpoint);
         const response = await api.get<{
           success: boolean;
           data: Almoxarifado[];
@@ -55,6 +56,8 @@ class AlmoxarifadosAdapter {
           retries: 1,
         });
 
+        console.log("📦 Resposta recebida:", response);
+
         let items: Almoxarifado[] = [];
 
         // ✅ CORREÇÃO: Backend retorna { success: true, data: [...] }
@@ -62,6 +65,9 @@ class AlmoxarifadosAdapter {
           items = Array.isArray(response.data) ? response.data : [];
         } else if (Array.isArray(response)) {
           items = response;
+        } else {
+          console.warn('⚠️ Estrutura de resposta inesperada:', response);
+          items = [];
         }
 
         console.log("🔍 Almoxarifados recebidos do backend:", items.map(a => ({ id: a.id, nome: a.nome })));
@@ -70,6 +76,12 @@ class AlmoxarifadosAdapter {
           "✅ Almoxarifados listados via endpoint direto:",
           items.length,
         );
+        
+        if (items.length === 0) {
+          console.warn("⚠️ Nenhum almoxarifado retornado, usando fallback");
+          return this.getFallbackAlmoxarifados();
+        }
+        
         return items;
       } catch (directError) {
         console.log(

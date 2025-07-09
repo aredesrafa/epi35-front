@@ -6,26 +6,23 @@
 **Data:** 07/07/2025  
 **Ambiente de Produção:** https://epi-backend-s14g.onrender.com  
 **Documentação Swagger:** `/api/docs`  
-**Health Check:** `/health`
+**Health Check:** `/health`  
 
 ---
 
 ## **1. Informações Gerais**
 
 ### **1.1. Base URLs**
-
 - **Produção:** `https://epi-backend-s14g.onrender.com`
 - **API Base:** `/api`
 - **Documentação:** `/api/docs` (Swagger UI)
 - **Health Check:** `/health`
 
 ### **1.2. Autenticação**
-
 - **Implementação:** A ser implementada por outra equipe em momento posterior
 - **Status Atual:** Todos os endpoints disponíveis sem autenticação
 
 ### **1.3. Formato de Resposta Padrão**
-
 ```json
 {
   "success": boolean,
@@ -43,7 +40,6 @@
 ```
 
 ### **1.4. Códigos de Status HTTP**
-
 - **200:** Sucesso
 - **201:** Criado com sucesso
 - **400:** Dados inválidos
@@ -58,7 +54,6 @@
 ## **2. Health Controller**
 
 ### **2.1. Health Check**
-
 ```http
 GET /health
 ```
@@ -66,7 +61,6 @@ GET /health
 **Descrição:** Verifica a saúde da aplicação e conectividade com banco de dados.
 
 **Resposta:**
-
 ```json
 {
   "status": "ok",
@@ -80,7 +74,6 @@ GET /health
 ```
 
 ### **2.2. Database Seed**
-
 ```http
 POST /health/seed
 ```
@@ -88,7 +81,6 @@ POST /health/seed
 **Descrição:** Executa o seed do banco de dados (apenas desenvolvimento).
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -110,7 +102,6 @@ POST /health/seed
 **Base Route:** `/api/configuracoes`
 
 ### **3.1. Listar Configurações**
-
 ```http
 GET /api/configuracoes
 ```
@@ -118,7 +109,6 @@ GET /api/configuracoes
 **Descrição:** Lista todas as configurações do sistema.
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -133,7 +123,6 @@ GET /api/configuracoes
 ```
 
 ### **3.2. Status do Sistema**
-
 ```http
 GET /api/configuracoes/status
 ```
@@ -141,7 +130,6 @@ GET /api/configuracoes/status
 **Descrição:** Obtém o status geral do sistema com todas as configurações críticas.
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -158,20 +146,17 @@ GET /api/configuracoes/status
 ```
 
 ### **3.3. Obter Configuração Específica**
-
 ```http
 GET /api/configuracoes/:chave
 ```
 
 **Parâmetros:**
-
 - `chave`: Chave da configuração
   - `PERMITIR_ESTOQUE_NEGATIVO`
   - `PERMITIR_AJUSTES_FORCADOS`
   - `ESTOQUE_MINIMO_EQUIPAMENTO`
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -185,13 +170,11 @@ GET /api/configuracoes/:chave
 ```
 
 ### **3.4. Atualizar Configuração**
-
 ```http
 PUT /api/configuracoes/:chave
 ```
 
 **Body:**
-
 ```json
 {
   "valor": "true",
@@ -200,13 +183,11 @@ PUT /api/configuracoes/:chave
 ```
 
 ### **3.5. Atualizar Configuração Booleana**
-
 ```http
 PATCH /api/configuracoes/:chave/boolean
 ```
 
 **Body:**
-
 ```json
 {
   "ativo": true,
@@ -215,13 +196,11 @@ PATCH /api/configuracoes/:chave/boolean
 ```
 
 ### **3.6. Atualizar Configuração Numérica**
-
 ```http
 PATCH /api/configuracoes/:chave/number
 ```
 
 **Body:**
-
 ```json
 {
   "valor": 25,
@@ -230,13 +209,11 @@ PATCH /api/configuracoes/:chave/number
 ```
 
 ### **3.7. Atualização em Lote**
-
 ```http
 POST /api/configuracoes/batch
 ```
 
 **Body:**
-
 ```json
 {
   "configuracoes": [
@@ -253,7 +230,6 @@ POST /api/configuracoes/batch
 ```
 
 ### **3.8. Reset para Padrão**
-
 ```http
 POST /api/configuracoes/reset
 ```
@@ -267,20 +243,17 @@ POST /api/configuracoes/reset
 **Base Route:** `/api/usuarios`
 
 ### **4.1. Listar Usuários**
-
 ```http
 GET /api/usuarios
 ```
 
 **Query Parameters:**
-
 - `nome`: Filtro por nome (string, opcional)
 - `email`: Filtro por email (string, opcional)
 - `page`: Página (number, padrão: 1)
 - `limit`: Itens por página (number, padrão: 10, máximo: 100)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -304,17 +277,14 @@ GET /api/usuarios
 ```
 
 ### **4.2. Obter Usuário por ID**
-
 ```http
 GET /api/usuarios/:id
 ```
 
 **Parâmetros:**
-
 - `id`: ID do usuário (UUID ou formato customizado)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -334,7 +304,6 @@ GET /api/usuarios/:id
 **Base Route:** `/api/colaboradores`
 
 ### **5.1. Criar Colaborador**
-
 ```http
 POST /api/colaboradores
 ```
@@ -342,7 +311,6 @@ POST /api/colaboradores
 **Descrição:** Cria um novo colaborador vinculado a uma contratada.
 
 **Body:**
-
 ```json
 {
   "nome": "João da Silva",
@@ -357,21 +325,18 @@ POST /api/colaboradores
 ```
 
 **Campos Obrigatórios:**
-
 - `nome` (string): Nome completo do colaborador
 - `cpf` (string): CPF do colaborador (11 dígitos)
 - `contratadaId` (string, UUID): ID da empresa contratada
 - `unidadeNegocioId` (string, UUID): ID da unidade de negócio
 
 **Campos Opcionais:**
-
 - `matricula` (string): Matrícula do colaborador
 - `cargo` (string): Cargo do colaborador
 - `setor` (string): Setor de trabalho
 - `ativo` (boolean): Status ativo (padrão: true)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -397,14 +362,12 @@ POST /api/colaboradores
 ```
 
 **Códigos de Status:**
-
 - **201:** Colaborador criado com sucesso
 - **400:** Dados inválidos
 - **404:** Contratada não encontrada
 - **409:** CPF já cadastrado
 
 ### **5.2. Listar Colaboradores**
-
 ```http
 GET /api/colaboradores
 ```
@@ -412,7 +375,6 @@ GET /api/colaboradores
 **Descrição:** Lista colaboradores com filtros opcionais e paginação.
 
 **Query Parameters:**
-
 - `nome`: Filtro por nome (string, opcional)
 - `cpf`: Filtro por CPF (string, opcional)
 - `contratadaId`: Filtro por contratada (string UUID, opcional)
@@ -423,7 +385,6 @@ GET /api/colaboradores
 - `limit`: Itens por página (number, padrão: 10, máximo: 100)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -455,7 +416,6 @@ GET /api/colaboradores
 ```
 
 ### **5.3. Obter Colaborador por ID**
-
 ```http
 GET /api/colaboradores/:id
 ```
@@ -463,11 +423,9 @@ GET /api/colaboradores/:id
 **Descrição:** Retorna os detalhes de um colaborador específico.
 
 **Parâmetros:**
-
 - `id`: ID do colaborador (UUID)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -490,7 +448,6 @@ GET /api/colaboradores/:id
 ```
 
 **Códigos de Status:**
-
 - **200:** Colaborador encontrado
 - **404:** Colaborador não encontrado
 
@@ -501,13 +458,11 @@ GET /api/colaboradores/:id
 **Base Route:** `/api/tipos-epi`
 
 ### **6.1. Criar Tipo de EPI**
-
 ```http
 POST /api/tipos-epi
 ```
 
 **Body:**
-
 ```json
 {
   "nomeEquipamento": "Capacete de Segurança Premium",
@@ -520,25 +475,21 @@ POST /api/tipos-epi
 ```
 
 **Campos Obrigatórios:**
-
 - `nomeEquipamento` (string, max 255)
 - `numeroCa` (string, único, max 50)
 - `categoria` (enum: PROTECAO_CABECA, PROTECAO_OLHOS_ROSTO, etc.)
 
 **Campos Opcionais:**
-
 - `descricao` (string)
 - `vidaUtilDias` (number, em dias)
 - `status` (enum: ATIVO, DESCONTINUADO, padrão: ATIVO)
 
 ### **6.2. Listar Tipos de EPI**
-
 ```http
 GET /api/tipos-epi
 ```
 
 **Query Parameters:**
-
 - `ativo`: Filtrar apenas ativos (boolean)
 - `categoria`: Filtrar por categoria (enum)
 - `status`: Filtrar por status (enum)
@@ -547,25 +498,21 @@ GET /api/tipos-epi
 - `limit`: Itens por página (number)
 
 ### **6.3. Obter Tipo de EPI por ID**
-
 ```http
 GET /api/tipos-epi/:id
 ```
 
 ### **6.4. Atualizar Tipo de EPI**
-
 ```http
 PUT /api/tipos-epi/:id
 ```
 
 ### **6.5. Ativar Tipo de EPI**
-
 ```http
 PATCH /api/tipos-epi/:id/ativar
 ```
 
 **Body:**
-
 ```json
 {
   "motivo": "Equipamento aprovado para uso"
@@ -573,13 +520,11 @@ PATCH /api/tipos-epi/:id/ativar
 ```
 
 ### **6.6. Inativar Tipo de EPI**
-
 ```http
 PATCH /api/tipos-epi/:id/inativar
 ```
 
 **Body:**
-
 ```json
 {
   "motivo": "Equipamento descontinuado pelo fabricante"
@@ -587,28 +532,26 @@ PATCH /api/tipos-epi/:id/inativar
 ```
 
 ### **6.7. Estatísticas do Tipo**
-
 ```http
 GET /api/tipos-epi/:id/estatisticas
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
   "data": {
-    "totalEstoque": 150,
-    "totalComColaboradores": 45,
-    "totalEntregas": 320,
-    "totalDevolucoes": 275,
-    "vidaMediaUso": 540
+    "totalFichas": 0,
+    "fichasAtivas": 0,
+    "totalEstoque": 25,
+    "estoqueDisponivel": 20,
+    "totalEntregas": 15,
+    "entregasAtivas": 5
   }
 }
 ```
 
 ### **6.8. Estatísticas por Categoria**
-
 ```http
 GET /api/tipos-epi/estatisticas/por-categoria
 ```
@@ -620,13 +563,11 @@ GET /api/tipos-epi/estatisticas/por-categoria
 **Base Route:** `/api/estoque`
 
 ### **6.1. Posição de Estoque**
-
 ```http
 GET /api/estoque/posicao
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
@@ -634,7 +575,6 @@ GET /api/estoque/posicao
 - `apenasAbaixoMinimo`: Apenas abaixo do mínimo (boolean, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -648,12 +588,12 @@ GET /api/estoque/posicao
         "status": "DISPONIVEL",
         "situacao": "NORMAL",
         "estoqueMinimo": 20,
-        "custoTotal": 4250.0
+        "custoTotal": 4250.00
       }
     ],
     "resumo": {
       "totalItens": 15,
-      "valorTotal": 45750.0,
+      "valorTotal": 45750.00,
       "itensAbaixoMinimo": 3
     }
   }
@@ -661,18 +601,15 @@ GET /api/estoque/posicao
 ```
 
 ### **6.2. Kardex de Item**
-
 ```http
 GET /api/estoque/kardex/:almoxarifadoId/:tipoEpiId
 ```
 
 **Query Parameters:**
-
 - `dataInicio`: Data inicial (date, opcional)
 - `dataFim`: Data final (date, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -704,28 +641,24 @@ GET /api/estoque/kardex/:almoxarifadoId/:tipoEpiId
 ```
 
 ### **6.3. Análise de Giro**
-
 ```http
 GET /api/estoque/analise-giro
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `periodo`: Período de análise (string: "30d", "90d", "180d", "365d")
 
 ### **6.4. Ajuste Direto de Estoque**
-
 ```http
 POST /api/estoque/ajuste-direto
 ```
 
 **Body:**
-
 ```json
 {
   "almoxarifadoId": "uuid",
-  "tipoEpiId": "uuid",
+  "tipoEpiId": "uuid", 
   "novaQuantidade": 150,
   "motivo": "Inventário físico - diferença encontrada",
   "validarPermissao": true
@@ -733,13 +666,11 @@ POST /api/estoque/ajuste-direto
 ```
 
 ### **6.5. Simular Ajuste**
-
 ```http
 POST /api/estoque/ajuste-direto/simular
 ```
 
 **Body:**
-
 ```json
 {
   "almoxarifadoId": "uuid",
@@ -749,7 +680,6 @@ POST /api/estoque/ajuste-direto/simular
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -758,20 +688,18 @@ POST /api/estoque/ajuste-direto/simular
     "novaQuantidade": 150,
     "diferenca": 25,
     "tipoAjuste": "POSITIVO",
-    "impactoFinanceiro": 1250.0,
+    "impactoFinanceiro": 1250.00,
     "permitido": true
   }
 }
 ```
 
 ### **6.6. Executar Inventário**
-
 ```http
 POST /api/estoque/inventario
 ```
 
 **Body:**
-
 ```json
 {
   "almoxarifadoId": "uuid",
@@ -787,19 +715,16 @@ POST /api/estoque/inventario
 ```
 
 ### **6.7. Validar Divergências de Inventário**
-
 ```http
 POST /api/estoque/inventario/validar-divergencias
 ```
 
 ### **6.8. Histórico de Ajustes**
-
 ```http
 GET /api/estoque/ajustes/historico
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `dataInicio`: Data inicial (date, opcional)
@@ -808,25 +733,21 @@ GET /api/estoque/ajustes/historico
 - `limit`: Itens por página (number)
 
 ### **6.9. Resumo de Estoque**
-
 ```http
 GET /api/estoque/resumo
 ```
 
 ### **6.10. Alertas de Estoque**
-
 ```http
 GET /api/estoque/alertas
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
 - `severidade`: Severidade do alerta ("baixo", "critico", "zerado")
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -853,13 +774,11 @@ GET /api/estoque/alertas
 ```
 
 ### **6.11. Listar Itens de Estoque**
-
 ```http
 GET /api/estoque/itens
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `apenasDisponiveis`: Apenas itens disponíveis (boolean, opcional)
@@ -868,7 +787,6 @@ GET /api/estoque/itens
 - `limit`: Itens por página (number)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -911,13 +829,11 @@ GET /api/estoque/itens
 ```
 
 ### **6.12. Listar Almoxarifados**
-
 ```http
 GET /api/estoque/almoxarifados
 ```
 
 **Query Parameters:**
-
 - `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
 - `incluirContadores`: Incluir contadores de itens (boolean, opcional)
 
@@ -928,7 +844,6 @@ GET /api/estoque/almoxarifados
 **Base Route:** `/api/contratadas`
 
 ### **8.1. Criar Contratada**
-
 ```http
 POST /api/contratadas
 ```
@@ -936,7 +851,6 @@ POST /api/contratadas
 **Descrição:** Cria uma nova empresa contratada no sistema.
 
 **Body:**
-
 ```json
 {
   "nome": "Empresa Alpha Serviços LTDA",
@@ -945,12 +859,10 @@ POST /api/contratadas
 ```
 
 **Campos Obrigatórios:**
-
 - `nome` (string): Nome da empresa contratada (máximo 255 caracteres)
 - `cnpj` (string): CNPJ da empresa (14 dígitos, único, com validação matemática)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -965,13 +877,11 @@ POST /api/contratadas
 ```
 
 **Códigos de Status:**
-
 - **201:** Contratada criada com sucesso
 - **400:** Dados inválidos
 - **409:** CNPJ já cadastrado
 
 ### **8.2. Listar Contratadas**
-
 ```http
 GET /api/contratadas
 ```
@@ -979,12 +889,10 @@ GET /api/contratadas
 **Descrição:** Lista todas as contratadas com filtros opcionais.
 
 **Query Parameters:**
-
 - `nome`: Filtro por nome (string, opcional)
 - `cnpj`: Filtro por CNPJ (string, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1004,7 +912,6 @@ GET /api/contratadas
 ```
 
 ### **8.3. Estatísticas de Contratadas**
-
 ```http
 GET /api/contratadas/estatisticas
 ```
@@ -1012,7 +919,6 @@ GET /api/contratadas/estatisticas
 **Descrição:** Retorna estatísticas gerais das contratadas e colaboradores vinculados.
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1035,7 +941,6 @@ GET /api/contratadas/estatisticas
 ```
 
 ### **8.4. Buscar Contratadas por Nome**
-
 ```http
 GET /api/contratadas/buscar
 ```
@@ -1043,11 +948,9 @@ GET /api/contratadas/buscar
 **Descrição:** Busca contratadas por nome (limitado a 10 resultados).
 
 **Query Parameters:**
-
 - `nome`: Nome para busca (string, obrigatório)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1064,7 +967,6 @@ GET /api/contratadas/buscar
 ```
 
 ### **8.5. Obter Contratada por ID**
-
 ```http
 GET /api/contratadas/:id
 ```
@@ -1072,11 +974,9 @@ GET /api/contratadas/:id
 **Descrição:** Retorna os dados de uma contratada específica.
 
 **Parâmetros:**
-
 - `id`: ID da contratada (UUID)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1091,12 +991,10 @@ GET /api/contratadas/:id
 ```
 
 **Códigos de Status:**
-
 - **200:** Contratada encontrada
 - **404:** Contratada não encontrada
 
 ### **8.6. Atualizar Contratada**
-
 ```http
 PUT /api/contratadas/:id
 ```
@@ -1104,11 +1002,9 @@ PUT /api/contratadas/:id
 **Descrição:** Atualiza os dados de uma contratada existente.
 
 **Parâmetros:**
-
 - `id`: ID da contratada (UUID)
 
 **Body:**
-
 ```json
 {
   "nome": "Empresa Alpha Serviços LTDA - Atualizada",
@@ -1117,7 +1013,6 @@ PUT /api/contratadas/:id
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1132,14 +1027,12 @@ PUT /api/contratadas/:id
 ```
 
 **Códigos de Status:**
-
 - **200:** Contratada atualizada com sucesso
 - **400:** Dados inválidos
 - **404:** Contratada não encontrada
 - **409:** CNPJ já cadastrado
 
 ### **8.7. Excluir Contratada**
-
 ```http
 DELETE /api/contratadas/:id
 ```
@@ -1147,11 +1040,9 @@ DELETE /api/contratadas/:id
 **Descrição:** Exclui uma contratada do sistema (apenas se não houver colaboradores vinculados).
 
 **Parâmetros:**
-
 - `id`: ID da contratada (UUID)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1160,7 +1051,6 @@ DELETE /api/contratadas/:id
 ```
 
 **Códigos de Status:**
-
 - **200:** Contratada excluída com sucesso
 - **400:** Não é possível excluir contratada com colaboradores vinculados
 - **404:** Contratada não encontrada
@@ -1172,13 +1062,11 @@ DELETE /api/contratadas/:id
 **Base Route:** `/api/notas-movimentacao`
 
 ### **9.1. Criar Nota de Movimentação**
-
 ```http
 POST /api/notas-movimentacao
 ```
 
 **Body:**
-
 ```json
 {
   "tipo": "ENTRADA",
@@ -1188,14 +1076,12 @@ POST /api/notas-movimentacao
 ```
 
 **Tipos Disponíveis:**
-
 - `ENTRADA`: Requer `almoxarifadoDestinoId`
 - `TRANSFERENCIA`: Requer `almoxarifadoOrigemId` e `almoxarifadoDestinoId`
 - `DESCARTE`: Requer `almoxarifadoOrigemId`
 - `AJUSTE`: Requer `almoxarifadoDestinoId`
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1213,13 +1099,11 @@ POST /api/notas-movimentacao
 ```
 
 ### **8.2. Listar Notas de Movimentação**
-
 ```http
 GET /api/notas-movimentacao
 ```
 
 **Query Parameters:**
-
 - `page`: Página (number, padrão: 1)
 - `limit`: Itens por página (number, padrão: 10, máximo: 100)
 - `numero`: Filtrar por número (string, opcional)
@@ -1229,7 +1113,6 @@ GET /api/notas-movimentacao
 - `dataFim`: Data final (date, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1258,7 +1141,6 @@ GET /api/notas-movimentacao
 ```
 
 ### **8.3. Listar Rascunhos**
-
 ```http
 GET /api/notas-movimentacao/rascunhos
 ```
@@ -1266,13 +1148,11 @@ GET /api/notas-movimentacao/rascunhos
 **Descrição:** Lista apenas as notas no status RASCUNHO do usuário atual.
 
 ### **8.4. Obter Nota por ID**
-
 ```http
 GET /api/notas-movimentacao/:id
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1300,13 +1180,11 @@ GET /api/notas-movimentacao/:id
 ```
 
 ### **8.5. Atualizar Nota**
-
 ```http
 PUT /api/notas-movimentacao/:id
 ```
 
 **Body:**
-
 ```json
 {
   "observacoes": "Observações atualizadas"
@@ -1314,7 +1192,6 @@ PUT /api/notas-movimentacao/:id
 ```
 
 ### **8.6. Excluir Nota (Rascunho)**
-
 ```http
 DELETE /api/notas-movimentacao/:id
 ```
@@ -1322,13 +1199,11 @@ DELETE /api/notas-movimentacao/:id
 **Restrições:** Apenas notas em status RASCUNHO podem ser excluídas.
 
 ### **8.7. Adicionar Item à Nota**
-
 ```http
 POST /api/notas-movimentacao/:id/itens
 ```
 
 **Body:**
-
 ```json
 {
   "tipoEpiId": "uuid",
@@ -1338,19 +1213,16 @@ POST /api/notas-movimentacao/:id/itens
 ```
 
 **Validações:**
-
 - Nota deve estar em status RASCUNHO
 - Tipo de EPI não pode estar duplicado na nota
 - Quantidade deve ser positiva
 
 ### **8.8. Atualizar Quantidade do Item**
-
 ```http
 PUT /api/notas-movimentacao/:id/itens/:tipoEpiId
 ```
 
 **Body:**
-
 ```json
 {
   "quantidade": 30
@@ -1358,19 +1230,16 @@ PUT /api/notas-movimentacao/:id/itens/:tipoEpiId
 ```
 
 ### **8.9. Remover Item da Nota**
-
 ```http
 DELETE /api/notas-movimentacao/:id/itens/:itemId
 ```
 
 ### **8.10. Concluir Nota de Movimentação**
-
 ```http
 POST /api/notas-movimentacao/:id/concluir
 ```
 
 **Body:**
-
 ```json
 {
   "validarEstoque": true
@@ -1380,7 +1249,6 @@ POST /api/notas-movimentacao/:id/concluir
 **Descrição:** Processa uma nota em rascunho, criando movimentações de estoque e atualizando saldos.
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1413,13 +1281,11 @@ POST /api/notas-movimentacao/:id/concluir
 ```
 
 ### **8.11. Cancelar Nota de Movimentação**
-
 ```http
 POST /api/notas-movimentacao/:id/cancelar
 ```
 
 **Body:**
-
 ```json
 {
   "motivo": "Erro na entrada de dados",
@@ -1428,13 +1294,11 @@ POST /api/notas-movimentacao/:id/cancelar
 ```
 
 ### **8.12. Validar Cancelamento**
-
 ```http
 GET /api/notas-movimentacao/:id/validar-cancelamento
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1458,7 +1322,6 @@ GET /api/notas-movimentacao/:id/validar-cancelamento
 ```
 
 ### **8.13. Resumo de Notas de Movimentação**
-
 ```http
 GET /api/notas-movimentacao/resumo
 ```
@@ -1466,7 +1329,6 @@ GET /api/notas-movimentacao/resumo
 **Descrição:** Obtém um resumo das notas de movimentação do sistema.
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1487,13 +1349,11 @@ GET /api/notas-movimentacao/resumo
 **Base Route:** `/api/fichas-epi`
 
 ### **8.1. Criar Ficha de EPI**
-
 ```http
 POST /api/fichas-epi
 ```
 
 **Body:**
-
 ```json
 {
   "colaboradorId": "uuid",
@@ -1502,19 +1362,16 @@ POST /api/fichas-epi
 ```
 
 **Validações:**
-
 - Um colaborador pode ter apenas uma ficha ativa
 - `colaboradorId` deve ser único
 - `status` padrão é ATIVA
 
 ### **8.2. Criar ou Ativar Ficha**
-
 ```http
 POST /api/fichas-epi/criar-ou-ativar
 ```
 
 **Body:**
-
 ```json
 {
   "colaboradorId": "uuid",
@@ -1525,13 +1382,11 @@ POST /api/fichas-epi/criar-ou-ativar
 **Descrição:** Cria nova ficha ou ativa ficha existente inativa.
 
 ### **8.3. Listar Fichas de EPI**
-
 ```http
 GET /api/fichas-epi
 ```
 
 **Query Parameters:**
-
 - `page`: Página (number)
 - `limit`: Itens por página (number)
 - `colaboradorId`: ID do colaborador (string, opcional)
@@ -1541,7 +1396,6 @@ GET /api/fichas-epi
 - `devolucaoPendente`: Fichas com devolução pendente (boolean, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1590,17 +1444,14 @@ GET /api/fichas-epi
 ```
 
 ### **8.4. Estatísticas de Fichas**
-
 ```http
 GET /api/fichas-epi/estatisticas
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1626,31 +1477,26 @@ GET /api/fichas-epi/estatisticas
 ```
 
 ### **8.5. Obter Ficha por ID**
-
 ```http
 GET /api/fichas-epi/:id
 ```
 
 ### **8.6. Ativar Ficha**
-
 ```http
 PUT /api/fichas-epi/:id/ativar
 ```
 
 ### **8.7. Inativar Ficha**
-
 ```http
 PUT /api/fichas-epi/:id/inativar
 ```
 
 ### **8.8. Suspender Ficha**
-
 ```http
 PUT /api/fichas-epi/:id/suspender
 ```
 
 **Body:**
-
 ```json
 {
   "motivo": "Colaborador afastado por acidente"
@@ -1658,13 +1504,11 @@ PUT /api/fichas-epi/:id/suspender
 ```
 
 ### **8.9. Histórico da Ficha**
-
 ```http
 GET /api/fichas-epi/:id/historico
 ```
 
 **Query Parameters:**
-
 - `tipoAcao`: Tipo da ação (enum: CRIACAO, ENTREGA, DEVOLUCAO, CANCELAMENTO, ALTERACAO_STATUS, ITEM_VENCIDO, EDICAO)
 - `dataInicio`: Data inicial (date, opcional)
 - `dataFim`: Data final (date, opcional)
@@ -1672,7 +1516,6 @@ GET /api/fichas-epi/:id/historico
 - `limit`: Itens por página (number)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1734,13 +1577,11 @@ GET /api/fichas-epi/:id/historico
 ## **10. Fichas EPI - Entregas**
 
 ### **10.1. Criar Entrega**
-
 ```http
 POST /api/fichas-epi/:fichaId/entregas
 ```
 
 **Body:**
-
 ```json
 {
   "quantidade": 2,
@@ -1761,14 +1602,12 @@ POST /api/fichas-epi/:fichaId/entregas
 ```
 
 **Validações:**
-
 - `quantidade` deve corresponder ao número de itens no array
 - `estoqueItemOrigemId` deve existir e ter saldo suficiente
 - Ficha deve estar ativa
 - Cada item representa uma unidade física (rastreabilidade unitária)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1811,13 +1650,11 @@ POST /api/fichas-epi/:fichaId/entregas
 ```
 
 ### **10.2. Validar Entrega**
-
 ```http
 POST /api/fichas-epi/entregas/validar
 ```
 
 **Body:**
-
 ```json
 {
   "fichaEpiId": "uuid",
@@ -1826,7 +1663,6 @@ POST /api/fichas-epi/entregas/validar
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1841,13 +1677,11 @@ POST /api/fichas-epi/entregas/validar
 ```
 
 ### **10.3. Listar Entregas da Ficha**
-
 ```http
 GET /api/fichas-epi/:fichaId/entregas
 ```
 
 **Query Parameters:**
-
 - `page`: Página (number)
 - `limit`: Itens por página (number)
 - `status`: Status da entrega (enum)
@@ -1855,28 +1689,23 @@ GET /api/fichas-epi/:fichaId/entregas
 - `dataFim`: Data final (date)
 
 ### **10.4. Listar Entregas do Colaborador**
-
 ```http
 GET /api/fichas-epi/colaborador/:colaboradorId/entregas
 ```
 
 **Query Parameters:**
-
 - `status`: Status da entrega (enum, opcional)
 
 ### **10.5. Posse Atual do Colaborador**
-
 ```http
 GET /api/fichas-epi/colaborador/:colaboradorId/posse-atual
 ```
 
 **Query Parameters:**
-
 - `incluirVencidos`: Incluir itens vencidos (boolean, padrão: false)
 - `incluirProximosVencimento`: Incluir próximos ao vencimento (boolean, padrão: true)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1903,13 +1732,11 @@ GET /api/fichas-epi/colaborador/:colaboradorId/posse-atual
 ```
 
 ### **10.6. Assinar Entrega**
-
 ```http
 PUT /api/fichas-epi/entregas/:entregaId/assinar
 ```
 
 **Body:**
-
 ```json
 {
   "assinaturaColaborador": "base64_signature",
@@ -1922,13 +1749,11 @@ PUT /api/fichas-epi/entregas/:entregaId/assinar
 ## **11. Fichas EPI - Devoluções**
 
 ### **11.1. Processar Devolução**
-
 ```http
 POST /api/fichas-epi/entregas/:entregaId/devolucao
 ```
 
 **Body:**
-
 ```json
 {
   "itensParaDevolucao": [
@@ -1945,13 +1770,11 @@ POST /api/fichas-epi/entregas/:entregaId/devolucao
 ```
 
 **Condições do Item:**
-
 - `BOM`: Item em boas condições
 - `DANIFICADO`: Item danificado
 - `PERDIDO`: Item perdido
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -1983,13 +1806,11 @@ POST /api/fichas-epi/entregas/:entregaId/devolucao
 ```
 
 ### **11.2. Validar Devolução**
-
 ```http
 POST /api/fichas-epi/entregas/:entregaId/devolucao/validar
 ```
 
 **Body:**
-
 ```json
 {
   "itemIds": ["uuid1", "uuid2"]
@@ -1997,13 +1818,11 @@ POST /api/fichas-epi/entregas/:entregaId/devolucao/validar
 ```
 
 ### **11.3. Cancelar Devolução**
-
 ```http
 POST /api/fichas-epi/entregas/:entregaId/devolucao/cancelar
 ```
 
 **Body:**
-
 ```json
 {
   "itensParaCancelar": ["uuid1", "uuid2"],
@@ -2012,13 +1831,11 @@ POST /api/fichas-epi/entregas/:entregaId/devolucao/cancelar
 ```
 
 ### **11.4. Histórico de Devoluções**
-
 ```http
 GET /api/fichas-epi/devolucoes/historico
 ```
 
 **Query Parameters:**
-
 - `colaboradorId`: ID do colaborador (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `dataInicio`: Data inicial (date, opcional)
@@ -2027,7 +1844,6 @@ GET /api/fichas-epi/devolucoes/historico
 - `limit`: Itens por página (number, padrão: 20, máximo: 100)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2067,13 +1883,11 @@ GET /api/fichas-epi/devolucoes/historico
 ## **12. Controllers Otimizados**
 
 ### **12.1. Listagem Otimizada de Fichas**
-
 ```http
 GET /api/fichas-epi/list-enhanced
 ```
 
 **Query Parameters:**
-
 - `page`: Página (number, padrão: 1)
 - `limit`: Itens por página (number, padrão: 20, máximo: 100)
 - `search`: Busca textual (string, opcional)
@@ -2083,7 +1897,6 @@ GET /api/fichas-epi/list-enhanced
 - `vencimentoProximo`: Próximo ao vencimento (boolean, opcional)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2119,13 +1932,11 @@ GET /api/fichas-epi/list-enhanced
 ```
 
 ### **12.2. Ficha Completa Otimizada**
-
 ```http
 GET /api/fichas-epi/:id/complete
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2228,13 +2039,11 @@ GET /api/fichas-epi/:id/complete
 ```
 
 ### **12.3. Criar Entrega Completa**
-
 ```http
 POST /api/entregas/create-complete
 ```
 
 **Body:**
-
 ```json
 {
   "fichaEpiId": "uuid",
@@ -2249,7 +2058,6 @@ POST /api/entregas/create-complete
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2270,13 +2078,11 @@ POST /api/entregas/create-complete
 ```
 
 ### **12.4. Processar Devoluções em Lote**
-
 ```http
 POST /api/devolucoes/process-batch
 ```
 
 **Body:**
-
 ```json
 {
   "devolucoes": [
@@ -2290,7 +2096,6 @@ POST /api/devolucoes/process-batch
 ```
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2310,19 +2115,16 @@ POST /api/devolucoes/process-batch
 **Base Route:** `/api/relatorios`
 
 ### **13.1. Dashboard Principal**
-
 ```http
 GET /api/relatorios/dashboard
 ```
 
 **Query Parameters:**
-
 - `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `periodo`: Período de análise (string: "7d", "30d", "90d", "365d")
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2371,57 +2173,23 @@ GET /api/relatorios/dashboard
 ```
 
 ### **13.2. Estatísticas de Entregas**
-
 ```http
 GET /api/relatorios/dashboard/estatisticas-entregas
 ```
 
 ### **13.3. Vencimentos Próximos**
-
 ```http
 GET /api/relatorios/dashboard/vencimentos-proximos
 ```
 
-### **13.4. Relatório de Conformidade**
 
-```http
-GET /api/relatorios/conformidade
-```
-
-**Query Parameters:**
-
-- `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
-- `colaboradorId`: ID do colaborador (string, opcional)
-- `incluirVencidos`: Incluir itens vencidos (boolean, padrão: true)
-- `incluirProximosVencimento`: Incluir próximos ao vencimento (boolean, padrão: true)
-- `diasAvisoVencimento`: Dias para alerta de vencimento (number, padrão: 30)
-- `dataInicio`: Data inicial (date, opcional)
-- `dataFim`: Data final (date, opcional)
-
-### **13.5. Relatório de Uso de EPIs**
-
-```http
-GET /api/relatorios/uso-epis
-```
-
-**Query Parameters:**
-
-- `colaboradorId`: ID do colaborador (string, opcional)
-- `tipoEpiId`: ID do tipo de EPI (string, opcional)
-- `unidadeNegocioId`: ID da unidade de negócio (string, opcional)
-- `incluirDevolvidos`: Incluir itens devolvidos (boolean, padrão: true)
-- `incluirPerdidos`: Incluir itens perdidos (boolean, padrão: true)
-- `dataInicio`: Data inicial (date, opcional)
-- `dataFim`: Data final (date, opcional)
 
 ### **13.6. Relatório de Movimentações**
-
 ```http
 GET /api/relatorios/movimentacoes
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `tipoMovimentacao`: Tipo da movimentação (enum, opcional)
@@ -2432,7 +2200,6 @@ GET /api/relatorios/movimentacoes
 - `limit`: Itens por página (number)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2469,19 +2236,16 @@ GET /api/relatorios/movimentacoes
 ```
 
 ### **13.7. Saúde do Sistema**
-
 ```http
 GET /api/relatorios/saude-sistema
 ```
 
 **Query Parameters:**
-
 - `incluirAlertas`: Incluir alertas do sistema (boolean, padrão: true)
 - `incluirEstatisticas`: Incluir estatísticas (boolean, padrão: true)
 - `incluirPerformance`: Incluir métricas de performance (boolean, padrão: false)
 
 **Resposta:**
-
 ```json
 {
   "success": true,
@@ -2520,13 +2284,11 @@ GET /api/relatorios/saude-sistema
 ```
 
 ### **13.8. Relatório de Descartes**
-
 ```http
 GET /api/relatorios/descartes
 ```
 
 **Query Parameters:**
-
 - `almoxarifadoId`: ID do almoxarifado (string, opcional)
 - `tipoEpiId`: ID do tipo de EPI (string, opcional)
 - `contratadaId`: ID da contratada (string, opcional)
@@ -2535,19 +2297,16 @@ GET /api/relatorios/descartes
 - `responsavelId`: ID do responsável (string, opcional)
 
 ### **13.9. Estatísticas de Descartes**
-
 ```http
 GET /api/relatorios/descartes/estatisticas
 ```
 
 ### **13.10. Relatório de Auditoria**
-
 ```http
 GET /api/relatorios/auditoria
 ```
 
 **Query Parameters:**
-
 - `usuarioId`: ID do usuário (string, opcional)
 - `acao`: Ação auditada (string, opcional)
 - `dataInicio`: Data inicial (date, opcional)
@@ -2558,7 +2317,6 @@ GET /api/relatorios/auditoria
 ## **14. Códigos de Erro Comuns**
 
 ### **14.1. Erros de Validação (400)**
-
 ```json
 {
   "success": false,
@@ -2575,7 +2333,6 @@ GET /api/relatorios/auditoria
 ```
 
 ### **14.2. Recurso Não Encontrado (404)**
-
 ```json
 {
   "success": false,
@@ -2591,7 +2348,6 @@ GET /api/relatorios/auditoria
 ```
 
 ### **14.3. Regra de Negócio (409)**
-
 ```json
 {
   "success": false,
@@ -2612,7 +2368,6 @@ GET /api/relatorios/auditoria
 ## **15. Schemas de Dados Importantes**
 
 ### **15.1. ID Customizados**
-
 - **Entregas:** `E` + 5 caracteres alfanuméricos (ex: E4U302)
 - **EstoqueItems:** `I` + 5 caracteres alfanuméricos (ex: I7XK91)
 - **TipoEPI:** `C` + 5 caracteres alfanuméricos (ex: C2MN58)
@@ -2621,30 +2376,25 @@ GET /api/relatorios/auditoria
 ### **15.2. Status Enums**
 
 **StatusEstoqueItem:**
-
 - `DISPONIVEL`: Item disponível para entrega
 - `AGUARDANDO_INSPECAO`: Item aguardando inspeção
 - `QUARENTENA`: Item em quarentena
 
 **StatusFichaEPI:**
-
 - `ATIVA`: Ficha ativa e operacional
 - `INATIVA`: Ficha inativa
 - `SUSPENSA`: Ficha suspensa temporariamente
 
 **StatusEntrega:**
-
 - `PENDENTE_ASSINATURA`: Aguardando assinatura
 - `ASSINADA`: Entrega assinada e confirmada
 - `CANCELADA`: Entrega cancelada
 
 **StatusEntregaItem:**
-
 - `COM_COLABORADOR`: Item com o colaborador
 - `DEVOLVIDO`: Item devolvido ao estoque
 
 **TipoMovimentacao:**
-
 - `ENTRADA_NOTA`: Entrada via nota de movimentação
 - `SAIDA_ENTREGA`: Saída para entrega
 - `ENTRADA_DEVOLUCAO`: Entrada por devolução
@@ -2655,7 +2405,6 @@ GET /api/relatorios/auditoria
 - `AJUSTE_NEGATIVO`: Ajuste negativo
 
 ### **15.3. Campos de Data**
-
 - **Formato ISO 8601:** `2025-07-07T14:30:00.000Z`
 - **Timezone:** UTC
 - **Campos de Data:**
@@ -2670,31 +2419,26 @@ GET /api/relatorios/auditoria
 ## **16. Observações Importantes**
 
 ### **16.1. Política de Dados Reais**
-
 - **PROIBIÇÃO ABSOLUTA DE MOCKS** (exceto headers da aplicação)
 - Todos os dados vêm de fontes reais: PostgreSQL e Redis
 - Testes devem usar dados reais do banco de testes
 
 ### **16.2. Rastreabilidade Unitária**
-
 - Cada item físico de EPI = 1 registro em `EntregaItens`
 - Cada movimentação = quantidade 1
 - Preserva histórico completo de cada unidade
 
 ### **16.3. Transações Atômicas**
-
 - Todas as operações de escrita são transacionais
 - Garantia de consistência dos dados
 - Rollback automático em caso de erro
 
 ### **16.4. Performance**
-
 - Operações em lote quando possível
 - Paginação em todas as listagens
 - Cache Redis para configurações
 
 ### **16.5. Validação**
-
 - Zod schemas como Single Source of Truth
 - Validação de entrada e saída
 - Tipos TypeScript derivados dos schemas

@@ -10,10 +10,11 @@
   } from 'flowbite-svelte-icons';
   import { onMount } from 'svelte';
   import { writable, derived } from 'svelte/store';
-  import { api } from '$lib/services/core/apiClient';
+  import { dashboardAdapter } from '$lib/services/reporting/dashboardAdapter';
+  import type { DashboardData, ActivityItem } from '$lib/services/reporting/dashboardAdapter';
   
   // Dashboard data store
-  const dashboardData = writable<any>(null);
+  const dashboardData = writable<DashboardData | null>(null);
   const loading = writable(true);
   const error = writable<string | null>(null);
   
@@ -26,122 +27,68 @@
       loading.set(true);
       error.set(null);
       
-      const response = await api.get('/dashboard/metrics');
-      dashboardData.set(response);
+      // ✅ Usar novo adapter que conecta ao backend real
+      const data = await dashboardAdapter.getDashboardData();
+      dashboardData.set(data);
       
-      // Update metrics array
-      if (response?.data) {
-        const data = response.data;
-        metrics = [
-          {
-            title: 'Fichas Ativas',
-            value: data.fichasAtivas?.toString() || '0',
-            icon: FileDocOutline,
-            color: 'blue',
-            change: data.fichasAtivasChange || '0%',
-            changeType: 'positive'
-          },
-          {
-            title: 'EPIs Entregues',
-            value: data.episEntregues?.toString() || '0',
-            icon: CheckCircleOutline,
-            color: 'green',
-            change: data.episEntreguesChange || '0%',
-            changeType: 'positive'
-          },
-          {
-            title: 'EPIs Vencendo',
-            value: data.episVencendo?.toString() || '0',
-            icon: ExclamationCircleOutline,
-            color: 'yellow',
-            change: data.episVencendoChange || '0%',
-            changeType: 'negative'
-          },
-          {
-            title: 'Estoque Baixo',
-            value: data.estoqueBaixo?.toString() || '0',
-            icon: ArchiveOutline,
-            color: 'red',
-            change: data.estoqueBaixoChange || '0%',
-            changeType: 'positive'
-          }
-        ];
-      }
-      
-      console.log('📊 Dashboard metrics carregadas do backend:', response);
-    } catch (err) {
-      console.error('❌ Erro ao carregar dashboard:', err);
-      error.set(err instanceof Error ? err.message : 'Erro desconhecido');
-      
-      // Fallback para dados mockados se API falhar
-      dashboardData.set({
-        success: true,
-        data: {
-          fichasAtivas: 150,
-          episEntregues: 1245,
-          episVencendo: 23,
-          estoqueBaixo: 12,
-          fichasAtivasChange: '+12%',
-          episEntreguesChange: '+8%',
-          episVencendoChange: '-5%',
-          estoqueBaixoChange: '+3%'
-        }
-      });
-      
-      // Update metrics with fallback data
+      // Update metrics array com dados reais
       metrics = [
         {
           title: 'Fichas Ativas',
-          value: '150',
+          value: data.metrics.fichasAtivas.toString(),
           icon: FileDocOutline,
           color: 'blue',
-          change: '+12%',
+          change: data.metrics.fichasAtivasChange || '0%',
           changeType: 'positive'
         },
         {
           title: 'EPIs Entregues',
-          value: '1245',
+          value: data.metrics.episEntregues.toString(),
           icon: CheckCircleOutline,
           color: 'green',
-          change: '+8%',
+          change: data.metrics.episEntreguesChange || '0%',
           changeType: 'positive'
         },
         {
           title: 'EPIs Vencendo',
-          value: '23',
+          value: data.metrics.episVencendo.toString(),
           icon: ExclamationCircleOutline,
           color: 'yellow',
-          change: '-5%',
+          change: data.metrics.episVencendoChange || '0%',
           changeType: 'negative'
         },
         {
           title: 'Estoque Baixo',
-          value: '12',
+          value: data.metrics.estoqueBaixo.toString(),
           icon: ArchiveOutline,
           color: 'red',
-          change: '+3%',
+          change: data.metrics.estoqueBaixoChange || '0%',
           changeType: 'positive'
         }
       ];
+      
+      // Atualizar activities store com dados reais
+      activitiesStore.set(data.activities);
+      
+      // Atualizar quick stats store com dados reais
+      quickStatsStore.set(data.quickStats);
+      
+      console.log('📊 Dashboard carregado com sucesso:', data);
+    } catch (err) {
+      console.error('❌ Erro ao carregar dashboard:', err);
+      error.set(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       loading.set(false);
     }
   }
   
-  // Mock data stores para atividades (mantém mock conforme solicitado)
-  const activitiesStore = writable([
-    { id: 1, type: 'entrega', description: 'EPI entregue para João Silva', time: 'há 2 horas', equipment: 'Capacete de Segurança' },
-    { id: 2, type: 'devolucao', description: 'EPI devolvido por Maria Santos', time: 'há 4 horas', equipment: 'Luvas de Proteção' },
-    { id: 3, type: 'entrada', description: 'Nova entrada de estoque', time: 'há 6 horas', equipment: 'Óculos de Proteção - 50 unidades' },
-    { id: 4, type: 'vencimento', description: 'EPI próximo ao vencimento', time: 'há 1 dia', equipment: 'Máscara PFF2 - Pedro Oliveira' },
-    { id: 5, type: 'ficha', description: 'Nova ficha EPI criada', time: 'há 1 dia', equipment: 'Ana Costa - Administrativa' }
-  ]);
-  
+  // Stores para atividades e stats rápidas (preenchidas com dados reais)
+  const activitiesStore = writable<ActivityItem[]>([]);
   const quickStatsStore = writable({
-    totalColaboradores: 342,
-    fichasVencidas: 8,
-    estoqueTotal: 2840,
-    entregasHoje: 15
+    totalColaboradores: 0,
+    fichasVencidas: 0,
+    estoqueTotal: 0,
+    entregasHoje: 0
   });
   
   // Derived stores para computações reativas otimizadas
