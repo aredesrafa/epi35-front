@@ -337,19 +337,8 @@
       
       console.log('📤 Enviando payload para criação de ficha:', payload);
       
-      const response = await fetch('/api/fichas-epi', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
+      // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+      const result = await api.post('/fichas-epi', payload);
       console.log('📥 Resposta da API ao criar ficha:', result);
       
       if (result.success) {
