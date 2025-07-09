@@ -937,27 +937,64 @@ export function createAdvancedPaginatedStore<T>(
     }
   }
 
-  // Mock data para filterOptions baseado nas contratadas reais
-  const mockFilterOptions = {
-    contratadas: [
-      {
-        id: "751c35a3-09dd-42bc-bc96-58ca036525fd",
-        nome: "Beta Serviços e Construções S.A.",
-      },
-      {
-        id: "70e382b6-7cdb-41f6-acc8-80dfc4110861",
-        nome: "Claude Test Company LTDA",
-      },
-      {
-        id: "610921f5-2579-4f2a-9a9c-8544f95fdbad",
-        nome: "Empresa Contratada Alpha LTDA",
-      },
-      {
-        id: "fbbcd5fc-2bd8-4a38-a54b-46d90cb696b8",
-        nome: "Gamma Engenharia e Consultoria",
-      },
-    ],
+  // Função para carregar contratadas reais do backend
+  async function loadContratadas(): Promise<any[]> {
+    try {
+      console.log('🏢 Carregando contratadas do backend...');
+      
+      // Importar dinamicamente o contratadasAdapter
+      const { contratadasAdapter } = await import('../services/entity/contratadasAdapter');
+      
+      const response = await contratadasAdapter.getContratadas({
+        page: 1,
+        limit: 100 // Carregar todas as contratadas para filtro
+      });
+      
+      console.log('✅ Contratadas carregadas:', response.data?.length || 0);
+      return response.data || [];
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar contratadas, usando fallback:', error);
+      // Fallback para dados mockados em caso de erro
+      return [
+        {
+          id: "751c35a3-09dd-42bc-bc96-58ca036525fd",
+          nome: "Beta Serviços e Construções S.A.",
+        },
+        {
+          id: "70e382b6-7cdb-41f6-acc8-80dfc4110861",
+          nome: "Claude Test Company LTDA",
+        },
+        {
+          id: "610921f5-2579-4f2a-9a9c-8544f95fdbad",
+          nome: "Empresa Contratada Alpha LTDA",
+        },
+        {
+          id: "fbbcd5fc-2bd8-4a38-a54b-46d90cb696b8",
+          nome: "Gamma Engenharia e Consultoria",
+        },
+      ];
+    }
+  }
+
+  // Inicializar filterOptions com dados reais
+  let filterOptions = {
+    contratadas: [] as any[],
   };
+
+  // Carregar contratadas quando necessário
+  if (config.filterEndpoints?.contratadas) {
+    loadContratadas().then(contratadas => {
+      filterOptions.contratadas = contratadas;
+      // Forçar atualização do estado para componentes que dependem dos filterOptions
+      derivedState = {
+        ...derivedState,
+        filterOptions: { ...filterOptions }
+      };
+      
+      // Notificar mudança para subscribers
+      console.log('🔄 FilterOptions atualizadas:', filterOptions);
+    });
+  }
 
   // Derivar estado compatível
   let derivedState = {
@@ -969,7 +1006,7 @@ export function createAdvancedPaginatedStore<T>(
       totalPages: 0,
     } as PaginationState,
     filters: currentFilters as FilterState,
-    filterOptions: mockFilterOptions,
+    filterOptions: filterOptions,
   };
 
   // Manter estado sincronizado com baseStore
@@ -983,7 +1020,7 @@ export function createAdvancedPaginatedStore<T>(
         totalPages: state.totalPages,
       },
       filters: currentFilters,
-      filterOptions: mockFilterOptions,
+      filterOptions: filterOptions,
     };
 
     console.log("🔄 Store state updated:", {
