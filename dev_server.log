@@ -478,3 +478,5 @@
 11:07:58 AM [vite] page reload .svelte-kit/generated/server/internal.js
 11:12:34 AM [vite] page reload src/routes/+page.svelte
 11:13:10 AM [vite] page reload src/routes/+page.svelte
+11:16:13 AM [vite] page reload src/lib/components/presenters/NotesDetailDrawer.svelte
+🚀 Inicializando aplicação - SSR mode

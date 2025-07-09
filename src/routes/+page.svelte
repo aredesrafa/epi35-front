@@ -10,6 +10,7 @@
   } from 'flowbite-svelte-icons';
   import { onMount } from 'svelte';
   import { writable, derived } from 'svelte/store';
+  import { base } from '$app/paths';
   import { dashboardAdapter } from '$lib/services/reporting/dashboardAdapter';
   import type { DashboardData, ActivityItem } from '$lib/services/reporting/dashboardAdapter';
   
@@ -208,10 +209,10 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Recent Activities - Expandido para ocupar 2/3 -->
     <div class="lg:col-span-2">
-      <Card size="sm" class="rounded-sm">
+      <Card size="sm" class="rounded-sm w-full max-w-none">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Atividades Recentes</h3>
-          <Button size="xs" color="alternative" class="rounded-sm">Ver todas</Button>
+          <Button size="xs" color="alternative" class="rounded-sm" href="{base}/fichas">Ver Fichas</Button>
         </div>
         
         <div class="space-y-3">

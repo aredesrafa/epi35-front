@@ -7,7 +7,7 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { Drawer, Badge, Button, Input, Textarea, Label, Radio, Alert } from 'flowbite-svelte';
+  import { Drawer, Badge, Button, Input, Textarea, Label, Radio, Select, Alert } from 'flowbite-svelte';
   import { 
     CheckOutline, 
     FloppyDiskOutline, 
