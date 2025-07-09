@@ -10,6 +10,7 @@
   import { createPaginatedStore } from '$lib/stores/paginatedStore';
   import AuditoriaTablePresenter from '$lib/components/presenters/AuditoriaTablePresenter.svelte';
   import { notify } from '$lib/stores';
+  import { api } from '$lib/services/core/apiClient';
   import type { RelatorioMovimentacaoDTO, RelatorioMovimentacoesParams } from '$lib/types/serviceTypes';
   
   // 🚀 MIGRADO: Imports para service adapters
@@ -149,12 +150,9 @@
     console.log('📋 Buscando movimentações:', `/api/relatorios/movimentacoes?${searchParams}`);
     
     try {
-      const response = await fetch(`/api/relatorios/movimentacoes?${searchParams}`);
-      if (!response.ok) {
-        throw new Error(`Backend retornou ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
+      // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+      const endpoint = `/relatorios/movimentacoes?${searchParams}`;
+      const result = await api.get(endpoint);
       console.log('✅ Dados recebidos do backend:', result);
       console.log('📊 Estrutura dos dados:', {
         success: result.success,

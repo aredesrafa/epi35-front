@@ -8,6 +8,7 @@
 import { writable, type Readable } from "svelte/store";
 import type { PaginationState, FilterState } from "$lib/types";
 import { isValidCPF, isValidCNPJ } from "$lib/utils/validation";
+import { api } from "$lib/services/core/apiClient";
 
 /**
  * Resposta paginada esperada do backend
@@ -510,21 +511,11 @@ export function createAdvancedPaginatedStore<T>(
           queryParams.append("ativa", String(params.ativo));
         }
 
-        const url = `/api/contratadas?${queryParams.toString()}`;
-        console.log("🌐 Fetching contratadas from:", url);
+        const endpoint = `/contratadas?${queryParams.toString()}`;
+        console.log("🌐 Fetching contratadas from:", `/api${endpoint}`);
 
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.get(endpoint);
         console.log("📦 Contratadas response:", result);
         console.log("📦 Data array:", result.data);
         console.log("📦 Data length:", result.data?.length);
@@ -572,21 +563,11 @@ export function createAdvancedPaginatedStore<T>(
           queryParams.append("ativo", String(params.ativo));
         }
 
-        const url = `/api/colaboradores?${queryParams.toString()}`;
-        console.log("🌐 Fetching colaboradores from:", url);
+        const endpoint = `/colaboradores?${queryParams.toString()}`;
+        console.log("🌐 Fetching colaboradores from:", `/api${endpoint}`);
 
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.get(endpoint);
         console.log("📦 Colaboradores response:", result);
 
         if (!result.success) {
@@ -798,19 +779,8 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("🆕 Criando contratada:", data);
 
-        const response = await fetch("/api/contratadas", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.post('/contratadas', data);
         console.log("✅ Contratada criada:", result);
 
         if (!result.success) {
@@ -854,19 +824,8 @@ export function createAdvancedPaginatedStore<T>(
           cpf: colaboradorData.cpf ? colaboradorData.cpf.replace(/\D/g, '') : undefined,
         };
 
-        const response = await fetch("/api/colaboradores", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.post('/colaboradores', payload);
         console.log("✅ Colaborador criado:", result);
 
         if (!result.success) {
@@ -891,19 +850,8 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("✏️ Atualizando contratada:", id, data);
 
-        const response = await fetch(`/api/contratadas/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.put(`/contratadas/${id}`, data);
         console.log("✅ Contratada atualizada:", result);
 
         if (!result.success) {
@@ -922,19 +870,8 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("✏️ Atualizando colaborador:", id, data);
 
-        const response = await fetch(`/api/colaboradores/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.put(`/colaboradores/${id}`, data);
         console.log("✅ Colaborador atualizado:", result);
 
         if (!result.success) {
@@ -959,18 +896,8 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("🗑️ Excluindo contratada:", id);
 
-        const response = await fetch(`/api/contratadas/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.delete(`/contratadas/${id}`);
         console.log("✅ Contratada excluída:", result);
 
         if (!result.success) {
@@ -989,18 +916,8 @@ export function createAdvancedPaginatedStore<T>(
       try {
         console.log("🗑️ Excluindo colaborador:", id);
 
-        const response = await fetch(`/api/colaboradores/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
+        // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+        const result = await api.delete(`/colaboradores/${id}`);
         console.log("✅ Colaborador excluído:", result);
 
         if (!result.success) {

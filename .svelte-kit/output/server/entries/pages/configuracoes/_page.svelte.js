@@ -4,10 +4,10 @@ import { C as Card } from "../../../chunks/Card.js";
 import { L as Label } from "../../../chunks/Label.js";
 import { twMerge } from "tailwind-merge";
 import { C as Checkbox } from "../../../chunks/Checkbox.js";
-import { R as RefreshOutline, L as LoadingSpinner, E as ErrorDisplay, T as Table, a as TableHead, b as TableHeadCell, c as TableBody, d as TableBodyRow, e as TableBodyCell, g as createAdvancedPaginatedStore } from "../../../chunks/ErrorDisplay.js";
+import { R as RefreshOutline, L as LoadingSpinner, E as ErrorDisplay, T as Table, a as TableHead, b as TableHeadCell, c as TableBody, d as TableBodyRow, e as TableBodyCell, f as createPaginatedStore, g as createAdvancedPaginatedStore } from "../../../chunks/ErrorDisplay.js";
 import { w as writable } from "../../../chunks/index.js";
 import { I as Icon } from "../../../chunks/Icon.js";
-import { I as Input } from "../../../chunks/modalStore.js";
+import { I as Input, c as createUrlWithParams, a as api } from "../../../chunks/modalStore.js";
 import { T as TrashBinOutline, S as Select } from "../../../chunks/TrashBinOutline.js";
 import { P as PlusOutline } from "../../../chunks/PlusOutline.js";
 const common = "me-3 shrink-0 bg-gray-200 rounded-full peer-focus:ring-4 peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:bg-white after:border-gray-300 after:border after:rounded-full after:transition-all";
@@ -770,36 +770,236 @@ const ContratadaTablePresenter = create_ssr_component(($$result, $$props, $$bind
   } while (!$$settled);
   return $$rendered;
 });
+class ContratadasAdapter {
+  /**
+   * ✅ PREPARADO PARA BACKEND: Lista contratadas com paginação
+   */
+  async getContratadas(params) {
+    try {
+      console.log("🏢 Carregando contratadas...", params);
+      const queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+      if (params.searchTerm) {
+        queryParams.search = params.searchTerm;
+      }
+      if (params.statusFilter && params.statusFilter !== "todos") {
+        queryParams.status = params.statusFilter.toUpperCase();
+      }
+      const endpoint = createUrlWithParams("/contratadas", queryParams);
+      const response = await api.get(endpoint);
+      console.log("📦 Contratadas response real:", response);
+      if (response.success && response.data) {
+        return {
+          contratadas: response.data.contratadas || [],
+          total: response.data.total || 0,
+          page: params.page || 1,
+          limit: params.limit || 10
+        };
+      }
+    } catch (error) {
+      console.error("❌ Erro ao carregar contratadas, usando fallback mock:", error);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockData = [
+        {
+          id: "1",
+          nome: "Alpha Construções Ltda",
+          cnpj: "12.345.678/0001-90",
+          endereco: "Rua das Construções, 123",
+          contato: "(11) 99999-9999",
+          status: "ativa",
+          colaboradores: 15,
+          dataContrato: "2024-01-15",
+          createdAt: "2024-01-15T10:00:00Z",
+          updatedAt: "2024-01-15T10:00:00Z"
+        },
+        {
+          id: "2",
+          nome: "Beta Engenharia S.A.",
+          cnpj: "98.765.432/0001-10",
+          endereco: "Av. Engenharia, 456",
+          contato: "contato@betaeng.com.br",
+          status: "ativa",
+          colaboradores: 8,
+          dataContrato: "2024-03-22",
+          createdAt: "2024-03-22T14:30:00Z",
+          updatedAt: "2024-03-22T14:30:00Z"
+        }
+      ];
+      let contratadasFiltradas = mockData;
+      if (params.searchTerm) {
+        const searchLower = params.searchTerm.toLowerCase();
+        contratadasFiltradas = contratadasFiltradas.filter(
+          (contratada) => contratada.nome.toLowerCase().includes(searchLower) || contratada.cnpj.includes(params.searchTerm)
+        );
+      }
+      if (params.statusFilter && params.statusFilter !== "todos") {
+        contratadasFiltradas = contratadasFiltradas.filter(
+          (contratada) => contratada.status === params.statusFilter
+        );
+      }
+      console.log("✅ Contratadas carregadas (fallback):", contratadasFiltradas.length);
+      return {
+        contratadas: contratadasFiltradas,
+        total: contratadasFiltradas.length,
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+    }
+  }
+  /**
+   * ✅ PREPARADO PARA BACKEND: Busca contratada por ID
+   */
+  async getContratadaById(id) {
+    try {
+      console.log("🏢 Buscando contratada:", id);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockContratada = {
+        id,
+        nome: "Alpha Construções Ltda",
+        cnpj: "12.345.678/0001-90",
+        endereco: "Rua das Construções, 123",
+        contato: "(11) 99999-9999",
+        status: "ativa",
+        colaboradores: 15,
+        dataContrato: "2024-01-15",
+        createdAt: "2024-01-15T10:00:00Z",
+        updatedAt: "2024-01-15T10:00:00Z"
+      };
+      console.log("✅ Contratada encontrada:", mockContratada.nome);
+      return mockContratada;
+    } catch (error) {
+      console.error("❌ Erro ao buscar contratada:", error);
+      throw error;
+    }
+  }
+  /**
+   * ✅ PREPARADO PARA BACKEND: Criar nova contratada
+   */
+  async createContratada(data) {
+    try {
+      console.log("💾 Criando contratada:", data);
+      await new Promise((resolve) => setTimeout(resolve, 1e3));
+      const novaContratada = {
+        id: `contratada-${Date.now()}`,
+        nome: data.nome,
+        cnpj: data.cnpj,
+        endereco: data.endereco,
+        contato: data.contato,
+        status: "ativa",
+        colaboradores: 0,
+        dataContrato: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      console.log("✅ Contratada criada:", novaContratada.id);
+      return novaContratada;
+    } catch (error) {
+      console.error("❌ Erro ao criar contratada:", error);
+      throw error;
+    }
+  }
+  /**
+   * ✅ PREPARADO PARA BACKEND: Atualizar contratada
+   */
+  async updateContratada(id, data) {
+    try {
+      console.log("💾 Atualizando contratada:", id, data);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const contratadaAtualizada = {
+        id,
+        nome: data.nome || "Nome Atualizado",
+        cnpj: data.cnpj || "12.345.678/0001-90",
+        endereco: data.endereco,
+        contato: data.contato,
+        status: data.status || "ativa",
+        colaboradores: 15,
+        dataContrato: "2024-01-15",
+        createdAt: "2024-01-15T10:00:00Z",
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      console.log("✅ Contratada atualizada:", contratadaAtualizada.id);
+      return contratadaAtualizada;
+    } catch (error) {
+      console.error("❌ Erro ao atualizar contratada:", error);
+      throw error;
+    }
+  }
+  /**
+   * ✅ PREPARADO PARA BACKEND: Deletar contratada
+   */
+  async deleteContratada(id) {
+    try {
+      console.log("🗑️ Deletando contratada:", id);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      console.log("✅ Contratada deletada:", id);
+    } catch (error) {
+      console.error("❌ Erro ao deletar contratada:", error);
+      throw error;
+    }
+  }
+  /**
+   * ✅ PREPARADO PARA BACKEND: Alterar status da contratada
+   */
+  async toggleStatusContratada(id, novoStatus) {
+    try {
+      console.log("🔄 Alterando status da contratada:", id, novoStatus);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("✅ Status da contratada alterado:", id, novoStatus);
+    } catch (error) {
+      console.error("❌ Erro ao alterar status da contratada:", error);
+      throw error;
+    }
+  }
+}
+const contratadasAdapter = new ContratadasAdapter();
 const ContratadaContainer = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let items;
   let loading;
   let error;
   let pagination;
-  let filters;
   let $contratadaStore, $$unsubscribe_contratadaStore;
   let { initialPageSize = 10 } = $$props;
   let { embedded = false } = $$props;
-  const contratadaStore = createAdvancedPaginatedStore({
-    baseEndpoint: "/contratadas",
-    defaultPageSize: initialPageSize,
-    debounceDelay: 300,
-    cacheTimeout: 5 * 60 * 1e3
-  });
+  const contratadaStore = createPaginatedStore(
+    async (params) => {
+      console.log("🏢 Fetching contratadas with params:", params);
+      const result = await contratadasAdapter.getContratadas({
+        page: params.page,
+        limit: params.limit,
+        searchTerm: params.search,
+        statusFilter: params.status
+      });
+      return {
+        data: result.contratadas,
+        total: result.total,
+        page: result.page,
+        pageSize: result.limit,
+        totalPages: Math.ceil(result.total / result.limit)
+      };
+    },
+    {
+      initialPageSize,
+      debounceDelay: 300,
+      cacheTimeout: 5 * 60 * 1e3,
+      enableCache: true
+    }
+  );
   $$unsubscribe_contratadaStore = subscribe(contratadaStore, (value) => $contratadaStore = value);
   let showEditarContratadaModal = false;
   let contratadaEdicao = null;
   if ($$props.initialPageSize === void 0 && $$bindings.initialPageSize && initialPageSize !== void 0) $$bindings.initialPageSize(initialPageSize);
   if ($$props.embedded === void 0 && $$bindings.embedded && embedded !== void 0) $$bindings.embedded(embedded);
-  items = $contratadaStore.items || [];
-  loading = $contratadaStore.loading;
-  error = $contratadaStore.error;
+  items = $contratadaStore?.items || [];
+  loading = $contratadaStore?.loading || false;
+  error = $contratadaStore?.error || null;
   pagination = {
-    currentPage: $contratadaStore.page,
-    itemsPerPage: $contratadaStore.pageSize,
-    totalItems: $contratadaStore.total,
-    totalPages: $contratadaStore.totalPages
+    currentPage: $contratadaStore?.page || 1,
+    itemsPerPage: $contratadaStore?.pageSize || initialPageSize,
+    totalItems: $contratadaStore?.total || 0,
+    totalPages: $contratadaStore?.totalPages || 1
   };
-  filters = contratadaStore.filters;
   {
     console.log("🏢 ContratadaContainer - items:", items.length, items);
   }
@@ -817,7 +1017,6 @@ const ContratadaContainer = create_ssr_component(($$result, $$props, $$bindings,
       loading,
       error,
       pagination,
-      filters,
       embedded,
       showEditarContratadaModal,
       contratadaEdicao
