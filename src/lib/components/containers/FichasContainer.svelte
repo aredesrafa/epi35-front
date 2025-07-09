@@ -243,31 +243,27 @@
       loadingColaboradores = true;
       console.log('🔄 Carregando colaboradores para contratada:', contratadaId);
       
-      // Usar endpoint dedicado de colaboradores com filtro por contratada
-      const response = await fetch(`/api/colaboradores?contratadaId=${contratadaId}&limit=100`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
+      // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
+      const result = await api.get(`/colaboradores?contratadaId=${contratadaId}&limit=100`);
       
       console.log('📦 Raw API response for colaboradores:', result);
       console.log('📦 result.data structure:', result.data);
       
       if (result.success && result.data) {
-        // Backend retorna: { success: true, data: [...], pagination: {...} }
+        // ✅ CORREÇÃO: Backend retorna { success: true, data: [...], pagination: {...} }
         const colaboradoresArray = result.data;
+        
+        console.log('📋 Colaboradores encontrados:', colaboradoresArray.length);
         
         if (Array.isArray(colaboradoresArray)) {
           colaboradores = colaboradoresArray.map((colaborador: any) => ({
             value: colaborador.id,
             label: colaborador.nome,
             empresa: contratadaId,
-            cpf: colaborador.cpf || colaborador.cpfFormatado,
-            cargo: colaborador.cargo,
-            matricula: colaborador.matricula,
-            setor: colaborador.setor
+            cpf: colaborador.cpfFormatado || colaborador.cpf, // ✅ CORREÇÃO: priorizar formatado
+            cargo: colaborador.cargo || '-',
+            matricula: colaborador.matricula || '-',
+            setor: colaborador.setor || '-'
           }));
           
           console.log('✅ Colaboradores carregados da API:', colaboradores.length);
