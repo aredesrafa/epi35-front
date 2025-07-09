@@ -22,8 +22,9 @@
   import { notify } from '$lib/stores';
   import InventoryTablePresenter from '../presenters/InventoryTablePresenter.svelte';
   import MovementModalPresenter from '../presenters/MovementModalPresenter.svelte';
-  import HistoryModalPresenter from '../presenters/HistoryModalPresenter.svelte';
+  import HistoryModal from '../presenters/HistoryModal.svelte';
   import NotesDetailDrawer from '../presenters/NotesDetailDrawer.svelte';
+  import { kardexAdapter } from '$lib/services/entity/kardexAdapter';
   import type { 
     ItemEstoqueDTO, 
     NovaMovimentacaoForm,
@@ -31,6 +32,7 @@
     TipoEPIDTO,
     AlmoxarifadoDTO 
   } from '$lib/types/serviceTypes';
+  import type { KardexData } from '$lib/services/entity/kardexAdapter';
   
   // ==================== PROPS ====================
   
@@ -58,8 +60,7 @@
   let movementLoading = false;
   let historyLoading = false;
   let historyError: string | null = null;
-  let movimentacoes: MovimentacaoEstoqueDTO[] = [];
-  let historyPeriod = '30';
+  let kardexData: KardexData | null = null;
   
   // Dados auxiliares
   let tiposEPI: TipoEPIDTO[] = [];
@@ -202,42 +203,39 @@
   }
 
   /**
-   * Carrega histórico de movimentações do item
+   * Carrega histórico de movimentações do item usando kardexAdapter
    */
-  async function loadItemHistory(): Promise<void> {
+  async function loadItemHistory(dataInicio?: string, dataFim?: string): Promise<void> {
     if (!selectedItemForHistory) return;
     
     historyLoading = true;
     historyError = null;
+    kardexData = null;
     
     try {
-      const history = await inventoryCommandAdapter.getItemMovementHistory(
-        selectedItemForHistory.id,
-        { 
-          limit: 100,
-          // Filtrar por período se necessário
-          dataInicio: getDateFromPeriod(historyPeriod)
-        }
-      );
+      // Verificar se o item tem os dados necessários
+      if (!selectedItemForHistory.almoxarifadoId || !selectedItemForHistory.tipoEpiId) {
+        throw new Error('Item não possui dados necessários para buscar histórico');
+      }
+
+      const params = {
+        almoxarifadoId: selectedItemForHistory.almoxarifadoId,
+        tipoEpiId: selectedItemForHistory.tipoEpiId,
+        dataInicio,
+        dataFim
+      };
+
+      console.log('📊 Buscando kardex com parâmetros:', params);
       
-      movimentacoes = history;
-      console.log(`📊 Carregado histórico: ${history.length} movimentações`);
+      kardexData = await kardexAdapter.obterKardex(params);
+      
+      console.log(`📊 Kardex carregado: ${kardexData.movimentacoes.length} movimentações`);
     } catch (error) {
       console.error('❌ Erro ao carregar histórico:', error);
       historyError = error instanceof Error ? error.message : 'Erro desconhecido';
     } finally {
       historyLoading = false;
     }
-  }
-
-  /**
-   * Calcula data inicial baseada no período selecionado
-   */
-  function getDateFromPeriod(period: string): string {
-    const now = new Date();
-    const days = parseInt(period);
-    const pastDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
-    return pastDate.toISOString().split('T')[0];
   }
   
   /**
@@ -291,7 +289,7 @@
   function handleHistoryClose(): void {
     showHistoryModal = false;
     selectedItemForHistory = null;
-    movimentacoes = [];
+    kardexData = null;
     historyError = null;
     console.log('❌ Modal de histórico fechado');
   }
@@ -299,10 +297,10 @@
   /**
    * Handler para mudança de período no histórico
    */
-  async function handleHistoryPeriodChange(event: CustomEvent<{ period: string }>): Promise<void> {
-    historyPeriod = event.detail.period;
-    await loadItemHistory();
-    console.log('📅 Período do histórico alterado:', historyPeriod);
+  async function handleHistoryPeriodChange(event: CustomEvent<{ period: string; dataInicio?: string; dataFim?: string }>): Promise<void> {
+    const { period, dataInicio, dataFim } = event.detail;
+    await loadItemHistory(dataInicio, dataFim);
+    console.log('📅 Período do histórico alterado:', period);
   }
   
   /**
@@ -453,14 +451,14 @@
 {/if}
 
 {#if showHistoryModal}
-  <HistoryModalPresenter
+  <HistoryModal
+    showModal={showHistoryModal}
     item={selectedItemForHistory}
-    {movimentacoes}
+    {kardexData}
     loading={historyLoading}
     error={historyError}
-    show={showHistoryModal}
     on:close={handleHistoryClose}
-    on:filterChange={handleHistoryPeriodChange}
+    on:periodFilter={handleHistoryPeriodChange}
   />
 {/if}
 

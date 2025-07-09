@@ -346,21 +346,56 @@
     saveLoading = true;
     
     try {
-      // Preparar dados para salvar com formato correto da API
-      const notaData = {
+      // Preparar dados para salvar com formato correto da API baseado no tipo de nota
+      const notaData: any = {
         tipo_nota: formData.tipo_nota,
-        almoxarifado_origem_id: formData.almoxarifado_origem_id,
-        almoxarifado_destino_id: formData.almoxarifado_destino_id || undefined,
-        data_documento: formData.data_documento,
-        observacoes: formData.observacoes || undefined
+        data_documento: formData.data_documento
       };
+
+      // Adicionar observacoes apenas se existir (evitar null)
+      if (formData.observacoes && formData.observacoes.trim() !== '') {
+        notaData.observacoes = formData.observacoes.trim();
+      }
+
+      // Adicionar campos específicos baseados no tipo de nota
+      if (formData.tipo_nota === 'ENTRADA') {
+        // Para ENTRADA: apenas almoxarifado de destino
+        if (formData.almoxarifado_destino_id) {
+          notaData.almoxarifado_destino_id = formData.almoxarifado_destino_id;
+        }
+      } else if (formData.tipo_nota === 'TRANSFERENCIA') {
+        // Para TRANSFERENCIA: tanto origem quanto destino
+        if (formData.almoxarifado_origem_id) {
+          notaData.almoxarifado_origem_id = formData.almoxarifado_origem_id;
+        }
+        if (formData.almoxarifado_destino_id) {
+          notaData.almoxarifado_destino_id = formData.almoxarifado_destino_id;
+        }
+      } else if (formData.tipo_nota === 'DESCARTE') {
+        // Para DESCARTE: apenas almoxarifado de origem
+        if (formData.almoxarifado_origem_id) {
+          notaData.almoxarifado_origem_id = formData.almoxarifado_origem_id;
+        }
+      }
+
 
       let notaId: string;
 
       if (mode === 'create') {
         // Criar nova nota
         const response = await notasMovimentacaoAdapter.criarNota(notaData);
-        notaId = response.id;
+        console.log('📝 Resposta da criação da nota:', response);
+        console.log('🔍 Estrutura completa da resposta:', JSON.stringify(response, null, 2));
+        
+        // Extrair ID de forma mais defensiva
+        notaId = response?.data?.id || response?.id || response?.data?.uuid || response?.uuid;
+        
+        if (!notaId) {
+          console.error('❌ Não foi possível extrair o ID da nota criada:', response);
+          throw new Error('Erro: ID da nota não encontrado na resposta do servidor');
+        }
+        
+        console.log('✅ Nota criada com ID:', notaId);
         
         // Adicionar itens se existirem
         if (itens.length > 0) {

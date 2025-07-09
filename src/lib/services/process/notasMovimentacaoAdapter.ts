@@ -198,28 +198,50 @@ class NotasMovimentacaoAdapter {
       }
 
       // Mapear campos conforme documentação da API (linha 774)
-      const backendData = {
+      const backendData: any = {
         tipo: data.tipo_nota,
-        almoxarifadoOrigemId: data.almoxarifado_origem_id,
-        almoxarifadoDestinoId: data.almoxarifado_destino_id,
         // usuarioId não é enviado na criação - será inferido pelo backend
-        observacoes: data.observacoes,
       };
+
+      // Adicionar observacoes apenas se existir (evitar null)
+      if (data.observacoes && data.observacoes.trim() !== '') {
+        backendData.observacoes = data.observacoes.trim();
+      }
+
+      // Adicionar campos apenas se existirem
+      if (data.almoxarifado_origem_id) {
+        backendData.almoxarifadoOrigemId = data.almoxarifado_origem_id;
+      }
+      if (data.almoxarifado_destino_id) {
+        backendData.almoxarifadoDestinoId = data.almoxarifado_destino_id;
+      }
 
       console.log("📤 Dados para backend:", backendData);
 
       const response = await api.post<any>(this.baseEndpoint, backendData);
 
       console.log("✅ Nota criada:", response);
+      console.log("🔍 Estrutura da resposta para debug:", JSON.stringify(response, null, 2));
 
       // API retorna no formato padrão
-      if (response.success) {
+      if (response.success && response.data) {
+        console.log("✅ Retornando dados com sucesso:", response.data);
         return {
           success: response.success,
           data: response.data,
         };
+      } else if (response.data) {
+        console.log("✅ Retornando apenas dados:", response.data);
+        return {
+          success: true,
+          data: response.data,
+        };
       } else {
-        return response;
+        console.log("✅ Retornando resposta completa:", response);
+        return {
+          success: true,
+          data: response,
+        };
       }
     } catch (error) {
       console.error("❌ Erro ao criar nota:", error);
@@ -284,8 +306,12 @@ class NotasMovimentacaoAdapter {
       const backendItemData = {
         tipoEpiId: item.tipo_epi_id,
         quantidade: Number(item.quantidade),
-        observacoes: item.observacoes || null,
       };
+
+      // Adicionar observacoes apenas se existir (backend valida null como erro)
+      if (item.observacoes && item.observacoes.trim() !== '') {
+        backendItemData.observacoes = item.observacoes;
+      }
 
       console.log("📤 Dados do item para backend:", backendItemData);
 

@@ -99,6 +99,11 @@ export function formatarPeriodoRelativo(
 }
 
 /**
+ * Alias para formatarData para compatibilidade com o modal
+ */
+export const formatDate = formatarData;
+
+/**
  * Verifica se uma data está vencida
  * @param date - Data para verificar
  * @returns true se a data estiver vencida
