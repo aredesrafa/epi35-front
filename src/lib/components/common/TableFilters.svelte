@@ -58,6 +58,12 @@
   function handleCheckboxChange(key: string, checked: boolean): void {
     dispatch('checkboxChange', { key, checked });
   }
+
+  // Função auxiliar para eventos de checkbox - compatível com Svelte
+  function handleCheckboxEvent(key: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    handleCheckboxChange(key, target.checked);
+  }
   
   function handleClearFilters(): void {
     dispatch('clearFilters');
@@ -95,7 +101,7 @@
       <div class="flex items-center">
         <Checkbox 
           checked={checkboxFilter.checked}
-          on:change={(e) => handleCheckboxChange(checkboxFilter.key, e.target.checked)}
+          on:change={(e) => handleCheckboxEvent(checkboxFilter.key, e)}
           class="text-sm"
         >
           {checkboxFilter.label}

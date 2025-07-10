@@ -132,6 +132,12 @@
   function handleItemsPerPageChange(value: string): void {
     dispatch('itemsPerPageChange', parseInt(value));
   }
+
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleSelectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    handleItemsPerPageChange(target.value);
+  }
   
   function handleSalvarContratada(): void {
     const dados = { ...formData };
@@ -351,7 +357,7 @@
             </div>
             <Select
               value={pagination.itemsPerPage.toString()}
-              on:change={(e) => handleItemsPerPageChange(e.target.value)}
+              on:change={(e) => handleSelectChange(e)}
               items={itemsPerPageOptions}
               size="sm"
               class="w-36 rounded-sm"

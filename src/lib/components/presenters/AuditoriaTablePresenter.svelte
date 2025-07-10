@@ -153,6 +153,18 @@
   function handleFilterInput(key: string, value: any): void {
     dispatch('filterChange', { key, value });
   }
+
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleSelectChange(key: string, event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    handleFilterInput(key, target.value);
+  }
+
+  // Função auxiliar para eventos de input - compatível com Svelte
+  function handleInputChange(key: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    handleFilterInput(key, target.value);
+  }
   
   function handlePageClick(page: number): void {
     dispatch('pageChange', page);
@@ -160,6 +172,12 @@
   
   function handleItemsPerPageChange(value: string): void {
     dispatch('itemsPerPageChange', parseInt(value));
+  }
+
+  // Função auxiliar para eventos de paginação - compatível com Svelte
+  function handlePaginationSelectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    handleItemsPerPageChange(target.value);
   }
   
   function handleMovementClick(movement: RelatorioMovimentacaoDTO): void {
@@ -231,7 +249,7 @@
         <Select
           id="filtro-tipo-epi"
           value={filters.tipoEpiId || ''}
-          on:change={(e) => handleFilterInput('tipoEpiId', (e.target as HTMLSelectElement).value)}
+          on:change={(e) => handleSelectChange('tipoEpiId', e)}
           size="sm"
           class="rounded-sm"
         >
@@ -248,7 +266,7 @@
         <Select
           id="filtro-tipo-movimentacao"
           value={filters.tipoMovimentacao || ''}
-          on:change={(e) => handleFilterInput('tipoMovimentacao', (e.target as HTMLSelectElement).value)}
+          on:change={(e) => handleSelectChange('tipoMovimentacao', e)}
           size="sm"
           class="rounded-sm"
         >
@@ -264,7 +282,7 @@
         <Select
           id="filtro-usuario"
           value={filters.usuarioId || ''}
-          on:change={(e) => handleFilterInput('usuarioId', (e.target as HTMLSelectElement).value)}
+          on:change={(e) => handleSelectChange('usuarioId', e)}
           size="sm"
           class="rounded-sm"
         >
@@ -282,7 +300,7 @@
           id="filtro-data-inicio"
           type="date"
           value={filters.dataInicio || ''}
-          on:input={(e) => handleFilterInput('dataInicio', e.target.value)}
+          on:input={(e) => handleInputChange('dataInicio', e)}
           size="sm"
           class="rounded-sm"
         />
@@ -295,7 +313,7 @@
           id="filtro-data-fim"
           type="date"
           value={filters.dataFim || ''}
-          on:input={(e) => handleFilterInput('dataFim', e.target.value)}
+          on:input={(e) => handleInputChange('dataFim', e)}
           size="sm"
           class="rounded-sm"
         />
@@ -457,7 +475,7 @@
             </div>
             <Select
               value={pagination.pageSize.toString()}
-              on:change={(e) => handleItemsPerPageChange(e.target.value)}
+              on:change={(e) => handlePaginationSelectChange(e)}
               size="sm"
               class="w-40 rounded-sm"
             >

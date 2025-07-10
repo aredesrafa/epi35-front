@@ -35,6 +35,7 @@ export interface ApiListResponse<T = any> {
     total: number;
     totalPages: number;
   };
+  message?: string;
 }
 
 /**
@@ -807,7 +808,7 @@ export function createAdvancedPaginatedStore<T>(
         console.log("🆕 Criando contratada:", data);
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.post('/contratadas', data);
+        const result = await api.post('/contratadas', data) as ApiResponse<any>;
         console.log("✅ Contratada criada:", result);
 
         if (!result.success) {
@@ -852,7 +853,7 @@ export function createAdvancedPaginatedStore<T>(
         };
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.post('/colaboradores', payload);
+        const result = await api.post('/colaboradores', payload) as ApiResponse<any>;
         console.log("✅ Colaborador criado:", result);
 
         if (!result.success) {
@@ -878,7 +879,7 @@ export function createAdvancedPaginatedStore<T>(
         console.log("✏️ Atualizando contratada:", id, data);
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.put(`/contratadas/${id}`, data);
+        const result = await api.put(`/contratadas/${id}`, data) as ApiResponse<any>;
         console.log("✅ Contratada atualizada:", result);
 
         if (!result.success) {
@@ -898,7 +899,7 @@ export function createAdvancedPaginatedStore<T>(
         console.log("✏️ Atualizando colaborador:", id, data);
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.put(`/colaboradores/${id}`, data);
+        const result = await api.put(`/colaboradores/${id}`, data) as ApiResponse<any>;
         console.log("✅ Colaborador atualizado:", result);
 
         if (!result.success) {
@@ -924,7 +925,7 @@ export function createAdvancedPaginatedStore<T>(
         console.log("🗑️ Excluindo contratada:", id);
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.delete(`/contratadas/${id}`);
+        const result = await api.delete(`/contratadas/${id}`) as ApiResponse<any>;
         console.log("✅ Contratada excluída:", result);
 
         if (!result.success) {
@@ -944,7 +945,7 @@ export function createAdvancedPaginatedStore<T>(
         console.log("🗑️ Excluindo colaborador:", id);
 
         // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
-        const result = await api.delete(`/colaboradores/${id}`);
+        const result = await api.delete(`/colaboradores/${id}`) as ApiResponse<any>;
         console.log("✅ Colaborador excluído:", result);
 
         if (!result.success) {
@@ -977,8 +978,8 @@ export function createAdvancedPaginatedStore<T>(
         limit: 100 // Carregar todas as contratadas para filtro
       });
       
-      console.log('✅ Contratadas carregadas:', response.data?.length || 0);
-      return response.data || [];
+      console.log('✅ Contratadas carregadas:', response.contratadas?.length || 0);
+      return response.contratadas || [];
     } catch (error) {
       console.warn('⚠️ Erro ao carregar contratadas, usando fallback:', error);
       // Fallback para dados mockados em caso de erro

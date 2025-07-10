@@ -119,6 +119,18 @@
   function handleFilterInput(key: string, value: any): void {
     dispatch('filterChange', { key, value });
   }
+
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleSelectChange(key: string, event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    handleFilterInput(key, target.value);
+  }
+
+  // Função auxiliar para eventos de input - compatível com Svelte
+  function handleInputChange(key: string, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    handleFilterInput(key, target.value);
+  }
   
   function handlePageClick(page: number): void {
     dispatch('pageChange', page);
@@ -212,7 +224,7 @@
         <Input
           id="filtro-nome"
           value={filters.search || ''}
-          on:input={(e) => handleFilterInput('search', e.target.value)}
+          on:input={(e) => handleInputChange('search', e)}
           placeholder="Digite o nome do colaborador..."
           size="sm"
           class="rounded-sm"
@@ -224,7 +236,7 @@
         <Select
           id="filtro-contratada"
           value={filters.contratadaId || ''}
-          on:change={(e) => handleFilterInput('contratadaId', e.target.value)}
+          on:change={(e) => handleSelectChange('contratadaId', e)}
           size="sm"
           class="rounded-sm"
         >

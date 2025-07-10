@@ -90,6 +90,12 @@
     itensSelecionados = itensSelecionados.filter((_, i) => i !== index);
   }
 
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleEPISelectChange(index: number, event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    atualizarEPI(index, target.value);
+  }
+
   function atualizarEPI(index: number, episDisponivelId: string): void {
     const epiSelecionado = episDisponiveis.find(epi => epi.id === episDisponivelId);
     if (epiSelecionado) {
@@ -298,7 +304,7 @@
                       id="epi-{index}"
                       items={episOptions}
                       bind:value={item.episDisponivelId}
-                      on:change={(e) => atualizarEPI(index, e.target.value)}
+                      on:change={(e) => handleEPISelectChange(index, e)}
                       class="rounded-sm {errors[`item-${index}`] ? 'border-red-500' : ''}"
                       disabled={loading}
                     />

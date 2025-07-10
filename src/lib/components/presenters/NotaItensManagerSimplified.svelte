@@ -145,6 +145,12 @@
     console.log('➖ Item removido:', item?.temp_id);
   }
 
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleSelectChangeForItem(index: number, campo: string, event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    atualizarItem(index, campo, target.value);
+  }
+
   function atualizarItem(index: number, campo: string, valor: any): void {
     const item = itens[index];
     if (!item) return;
@@ -340,7 +346,7 @@
                 value={usaTiposEpi ? item.tipo_epi_id : item.estoque_item_id}
                 disabled={readonly}
                 class="rounded-sm text-sm"
-                on:change={(e) => atualizarItem(index, usaTiposEpi ? 'tipo_epi_id' : 'estoque_item_id', e.target.value)}
+                on:change={(e) => handleSelectChangeForItem(index, usaTiposEpi ? 'tipo_epi_id' : 'estoque_item_id', e)}
               >
                 <option value="">Selecione...</option>
                 {#each usaTiposEpi ? tipoEpiOptions : estoqueItensOptions as option}

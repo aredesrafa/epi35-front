@@ -129,6 +129,12 @@
       dispatch('select', { category: newSelected });
     }
   }
+
+  // Função auxiliar para eventos de select - compatível com Svelte
+  function handleSelectEvent(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    handleSingleSelect(target.value);
+  }
   
   function handleMultipleSelect(category: CategoriaEPIEnum) {
     const isSelected = selectedMultiple.includes(category);
@@ -175,7 +181,7 @@
   {#if variant === 'select'}
     <Select
       bind:value={selectedValue}
-      on:change={(e) => handleSingleSelect(e.target.value)}
+      on:change={(e) => handleSelectEvent(e)}
       {placeholder}
       {disabled}
       {required}
