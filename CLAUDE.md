@@ -2,6 +2,12 @@
 
 Este arquivo fornece instruções básicas para desenvolvimento no frontend Svelte do DataLife EPI.
 
+Sobre a versao flowbite svelte que usamos acesse
+ /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/flowbite-svelte-doc-our-version.md
+
+ Sobre a API uma documentacao completa em .md voce pode acessar aqui /Users/rafaelaredes/Documents/DataLife-EPI/frontend-svelt/API-P0719h.md
+
+
 ## Regras Fundamentais
 
 ### ❌ NÃO usar dados mockados
@@ -101,3 +107,6 @@ src/
 - ✅ **Backend PostgreSQL**: Integração funcional
 - ⚠️ **Arquitetura**: Transição para Container/Presenter (30% migrado)
 - ⚠️ **Build**: Erros TypeScript pendentes de correção
+
+
+Em caso de problemas persistentes use o mcp deep-code-reasoning

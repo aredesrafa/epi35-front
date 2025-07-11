@@ -141,7 +141,7 @@ async function fetchContratadaData(
     };
 
     // Chamar endpoint de contratadas
-    const response = await api.get("/contratadas", backendParams);
+    const response = await api.get("/contratadas") as any;
 
     // Transformar response para formato do paginatedStore
     if (response.success && response.data) {

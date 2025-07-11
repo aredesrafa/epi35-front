@@ -93,7 +93,7 @@
   // Configurações
   export let showFilters = true;
   export let showPagination = true;
-  export let itemsPerPage = 10;
+  export const itemsPerPage = 10;
   export let maxHeight = '600px';
   export let highlightEstornos = true;
   export let showQuantityFlow = true;
@@ -327,10 +327,10 @@
             
             <!-- Período -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="period-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Período
               </label>
-              <Select bind:value={selectedPeriod} on:change={handleFiltersChange}>
+              <Select id="period-select" bind:value={selectedPeriod} on:change={handleFiltersChange}>
                 {#each periodOptions as option}
                   <option value={option.value}>{option.label}</option>
                 {/each}
@@ -356,10 +356,10 @@
             
             <!-- Tipo de Movimentação -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="tipo-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tipo de Movimentação
               </label>
-              <Select bind:value={selectedTipo} on:change={handleFiltersChange}>
+              <Select id="tipo-select" bind:value={selectedTipo} on:change={handleFiltersChange}>
                 {#each tipoOptions as option}
                   <option value={option.value}>{option.label}</option>
                 {/each}
@@ -368,20 +368,22 @@
             
             <!-- Opções adicionais -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Opções
-              </label>
-              <div class="space-y-2">
-                <label class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    bind:checked={filters.apenasEstornos}
-                    on:change={handleFiltersChange}
-                    class="mr-2"
-                  />
-                  Apenas estornos
-                </label>
-              </div>
+              <fieldset>
+                <legend class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Opções
+                </legend>
+                <div class="space-y-2">
+                  <label class="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      bind:checked={filters.apenasEstornos}
+                      on:change={handleFiltersChange}
+                      class="mr-2"
+                    />
+                    Apenas estornos
+                  </label>
+                </div>
+              </fieldset>
             </div>
           </div>
         </div>
@@ -554,15 +556,21 @@
 
 <style>
   .movement-history-log {
-    @apply w-full;
+    width: 100%;
   }
   
   /* Timeline */
   .timeline {
-    @apply relative space-y-4 px-2;
+    position: relative;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
-  /* Separador de data */
+  .timeline > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Separador de data - usando classes Tailwind */
   .date-separator {
     @apply flex items-center my-6;
   }
@@ -576,7 +584,7 @@
            bg-gray-100 dark:bg-gray-800 rounded-full;
   }
   
-  /* Item da timeline */
+  /* Item da timeline - usando classes Tailwind */
   .timeline-item {
     @apply relative flex items-start space-x-4 p-4 
            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
@@ -587,7 +595,7 @@
     @apply border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20;
   }
   
-  /* Ícone da timeline */
+  /* Ícone da timeline - usando classes Tailwind */
   .timeline-icon {
     @apply flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
            text-white font-bold text-lg;

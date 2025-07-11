@@ -93,7 +93,7 @@ class TiposEpiAdapter {
       console.error("❌ Erro ao listar tipos de EPI:", error);
 
       // Se for timeout, usar dados de fallback temporariamente
-      if (error.name === "AbortError" || error.message?.includes("timeout")) {
+      if (error instanceof Error && (error.name === "AbortError" || error.message?.includes("timeout"))) {
         console.warn(
           "⚠️ Backend indisponível, usando dados de fallback para tipos EPI",
         );
@@ -191,15 +191,15 @@ class TiposEpiAdapter {
         console.log("🔍 Campos disponíveis:", Object.keys(tipo));
         console.log("🔍 nome_equipamento:", tipo.nome_equipamento);
         console.log("🔍 nomeEquipamento:", tipo.nomeEquipamento);
-        console.log("🔍 nome:", tipo.nome);
-        console.log("🔍 name:", tipo.name);
+        console.log("🔍 nome:", (tipo as any).nome);
+        console.log("🔍 name:", (tipo as any).name);
 
         // Backend returns camelCase fields (confirmed via API test)
         const nomeEquipamento =
           tipo.nomeEquipamento ||
           tipo.nome_equipamento ||
-          tipo.nome ||
-          tipo.name ||
+          (tipo as any).nome ||
+          (tipo as any).name ||
           "Nome não identificado";
 
         const numeroCA =
@@ -334,8 +334,8 @@ class TiposEpiAdapter {
         const nomeEquipamento =
           tipo.nomeEquipamento ||
           tipo.nome_equipamento ||
-          tipo.nome ||
-          tipo.name ||
+          (tipo as any).nome ||
+          (tipo as any).name ||
           "Nome não identificado";
 
         const numeroCA =
@@ -438,8 +438,8 @@ class TiposEpiAdapter {
         const nomeEquipamento =
           tipo.nomeEquipamento ||
           tipo.nome_equipamento ||
-          tipo.nome ||
-          tipo.name ||
+          (tipo as any).nome ||
+          (tipo as any).name ||
           "Nome não identificado";
 
         const numeroCA =

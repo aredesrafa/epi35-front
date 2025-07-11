@@ -12,7 +12,8 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { Modal, Button, Input, Textarea, Label, Select, Tabs, TabItem, Badge, Alert } from 'flowbite-svelte';
   import { ArrowRightOutline, ArrowLeftOutline, CheckOutline, FloppyDiskOutline, FileDocOutline } from 'flowbite-svelte-icons';
-  import NotaItensManager, { type NotaItem } from './NotaItensManager.svelte';
+  import NotaItensManager from './NotaItensManager.svelte';
+  import type { NotaItem } from './NotaItensManager.svelte';
   import { almoxarifadosAdapter } from '$lib/services/entity/almoxarifadosAdapter';
   import { notasMovimentacaoAdapter } from '$lib/services/process/notasMovimentacaoAdapter';
   import { tiposEpiAdapter } from '$lib/services/entity/tiposEpiAdapter';
@@ -112,12 +113,12 @@
         // Mapear campos da nota baseado na documentação API (linha 855-885)
         // Estrutura: { success: true, data: { id, numero, tipo, status, observacoes, createdAt, itens } }
         formData = {
-          tipo_nota: nota.tipo || nota.tipo_nota || 'ENTRADA',
-          almoxarifado_origem_id: nota.almoxarifadoOrigemId || nota.almoxarifado_origem_id || nota.almoxarifado_id,
-          almoxarifado_destino_id: nota.almoxarifadoDestinoId || nota.almoxarifado_destino_id,
-          numero_documento: nota.numero || nota.numero_documento || nota.numeroDocumento || '',
-          data_documento: nota.dataDocumento || nota.data_documento || nota.createdAt?.split('T')[0] || '',
-          observacoes: nota.observacoes || nota.observacao || ''
+          tipo_nota: nota.tipo || (nota as any).tipo_nota || 'ENTRADA',
+          almoxarifado_origem_id: nota.almoxarifadoOrigemId || (nota as any).almoxarifado_origem_id || (nota as any).almoxarifado_id,
+          almoxarifado_destino_id: nota.almoxarifadoDestinoId || (nota as any).almoxarifado_destino_id,
+          numero_documento: nota.numero || (nota as any).numero_documento || (nota as any).numeroDocumento || '',
+          data_documento: (nota as any).dataDocumento || (nota as any).data_documento || nota.createdAt?.split('T')[0] || '',
+          observacoes: nota.observacoes || (nota as any).observacao || ''
         };
 
         console.log('✅ FormData mapeada:', formData);
