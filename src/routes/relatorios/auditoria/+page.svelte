@@ -29,5 +29,4 @@
 
 <AuditoriaContainer 
   initialPageSize={10}
-  autoRefresh={false}
 />

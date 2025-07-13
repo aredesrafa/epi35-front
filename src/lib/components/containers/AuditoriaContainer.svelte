@@ -14,120 +14,18 @@
   import type { RelatorioMovimentacaoDTO, RelatorioMovimentacoesParams } from '$lib/types/serviceTypes';
   
   // 🚀 MIGRADO: Imports para service adapters
-  import { fichaQueryAdapter } from '$lib/services/process';
+  import { fichaQueryAdapter } from '$lib/services/process/queries/fichaQueryAdapter';
   import { inventoryQueryAdapter } from '$lib/services/inventory/inventoryQueryAdapter';
   import { catalogAdapter } from '$lib/services/entity/catalogAdapter';
   
   // ==================== PROPS ====================
   
   export let initialPageSize = 10;
-  export const autoRefresh = false;
   
-  // ==================== ENTREGA CORRELATION ====================
+  // ==================== BACKEND INTEGRATION ====================
   
-  // Cache de entregas para correlação eficiente
-  let entregasCache = new Map<string, string>(); // timestamp -> entregaId
-  let colaboradoresCache = new Map<string, string>(); // entregaId -> colaboradorNome
-  let cacheExpiry = 0;
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-  
-  /**
-   * Busca entregas de fichas para correlação com movimentações
-   */
-  async function loadEntregasForCorrelation(): Promise<void> {
-    if (Date.now() < cacheExpiry) return; // Cache válido
-    
-    try {
-      console.log('🔗 Carregando entregas para correlação...');
-      
-      // 🚀 MIGRADO: Buscar fichas ativas usando novo adapter
-      const fichasData = await fichaQueryAdapter.getFichasWithColaboradores({
-        page: 1,
-        limit: 100
-      });
-      entregasCache.clear();
-      
-      // ✅ CORREÇÃO: A resposta de fichas vem em data diretamente, não data.items
-      const fichas = fichasData.data || [];
-      console.log(`🔍 Fichas encontradas para correlação: ${fichas.length}`);
-      
-      // Para cada ficha, buscar entregas e popular cache
-      for (const ficha of fichas) {
-        try {
-          // 🚀 MIGRADO: Buscar entregas usando fallback temporário
-          // TODO: Implementar getEntregasByFicha no fichaQueryAdapter
-          const entregasData = await fichaQueryAdapter.getFichaById(ficha.id);
-            
-            // ✅ CORREÇÃO: A resposta de entregas vem em data diretamente como array
-            const entregas = entregasData.data || [];
-            console.log(`📦 Ficha ${ficha.id.substring(0, 8)}: ${entregas.length} entregas encontradas`);
-            
-            for (const entrega of entregas) {
-              // Criar chaves de timestamp com tolerância ampla de 10 segundos
-              const timestamp = new Date(entrega.dataEntrega).getTime();
-              
-              // ✅ NOVA ESTRATÉGIA: Criar chaves por segundo completo, não por millisegundo
-              // Isso resolve o problema de diferenças pequenas entre entrega e movimentação
-              const segundoBase = Math.floor(timestamp / 1000) * 1000; // Arredondar para o segundo
-              
-              for (let i = -10; i <= 10; i++) { // ±10 segundos
-                const keyTimestamp = segundoBase + (i * 1000);
-                const key = keyTimestamp.toString();
-                entregasCache.set(key, entrega.id);
-              }
-              
-              // ✅ NOVO: Cache do nome do colaborador por entregaId
-              if (entrega.fichaEPI?.colaborador?.nome) {
-                colaboradoresCache.set(entrega.id, entrega.fichaEPI.colaborador.nome);
-                console.log(`👤 Colaborador ${entrega.fichaEPI.colaborador.nome} associado à entrega ${entrega.id.substring(0, 8)}`);
-              } else if (ficha.colaborador?.nome) {
-                // Fallback: usar dados da ficha se a entrega não trouxer os dados do colaborador
-                colaboradoresCache.set(entrega.id, ficha.colaborador.nome);
-                console.log(`👤 Colaborador ${ficha.colaborador.nome} associado à entrega ${entrega.id.substring(0, 8)} (via ficha)`);
-              }
-              
-              console.log(`✅ Entrega ${entrega.id.substring(0, 8)} adicionada ao cache (${entrega.dataEntrega}) - timestamp base: ${segundoBase}`);
-            }
-        } catch (error) {
-          console.warn(`⚠️ Erro ao buscar entregas da ficha ${ficha.id}:`, error);
-        }
-      }
-      
-      cacheExpiry = Date.now() + CACHE_DURATION;
-      console.log(`✅ Cache de entregas carregado: ${entregasCache.size} entradas de timestamp, ${colaboradoresCache.size} colaboradores`);
-    } catch (error) {
-      console.error('❌ Erro ao carregar entregas para correlação:', error);
-    }
-  }
-  
-  /**
-   * Correlaciona movimentação com entrega e colaborador baseado no timestamp
-   */
-  function correlacionarEntrega(movimentacao: any): { entregaId: string | null; colaboradorNome: string | null } {
-    if (movimentacao.tipoMovimentacao !== 'SAIDA_ENTREGA') {
-      return { entregaId: null, colaboradorNome: null };
-    }
-    
-    const timestamp = new Date(movimentacao.data).getTime();
-    const segundoBase = Math.floor(timestamp / 1000) * 1000; // Arredondar para o segundo
-    
-    console.log(`🔍 Tentando correlacionar movimentação ${movimentacao.id.substring(0, 8)} (${movimentacao.data}) - timestamp base: ${segundoBase}`);
-    
-    // ✅ MESMA ESTRATÉGIA: Buscar por segundo completo com tolerância
-    for (let i = -10; i <= 10; i++) { // ±10 segundos
-      const keyTimestamp = segundoBase + (i * 1000);
-      const key = keyTimestamp.toString();
-      const entregaId = entregasCache.get(key);
-      if (entregaId) {
-        const colaboradorNome = colaboradoresCache.get(entregaId) || null;
-        console.log(`✅ Correlação encontrada: movimentação ${movimentacao.id.substring(0, 8)} → entrega ${entregaId.substring(0, 8)} → colaborador ${colaboradorNome || 'N/A'} (diferença: ${i}s)`);
-        return { entregaId, colaboradorNome };
-      }
-    }
-    
-    console.log(`❌ Nenhuma correlação encontrada para movimentação ${movimentacao.id.substring(0, 8)} (timestamp base: ${segundoBase})`);
-    return { entregaId: null, colaboradorNome: null };
-  }
+  // ✅ Backend agora implementou includeDeliveryData
+  // Os campos entregaId e colaboradorNome vêm diretamente do backend
 
   // ==================== ADVANCED PAGINATED STORE ====================
   
@@ -147,12 +45,21 @@
     if (params.dataInicio) searchParams.set('dataInicio', params.dataInicio);
     if (params.dataFim) searchParams.set('dataFim', params.dataFim);
     
+    // ✅ NEW: Incluir dados de entrega quando necessário
+    searchParams.set('includeDeliveryData', 'true');
+    
     console.log('📋 Buscando movimentações:', `/relatorios/movimentacoes?${searchParams}`);
     
     try {
       // ✅ CORREÇÃO: Usar apiClient para compatibilidade local/GitHub Pages
       const endpoint = `/relatorios/movimentacoes?${searchParams}`;
-      const result = await api.get(endpoint);
+      const result = await api.get(endpoint) as { 
+        success: boolean; 
+        data?: { 
+          movimentacoes?: any[]; 
+          resumo?: { totalMovimentacoes?: number }; 
+        } 
+      };
       console.log('✅ Dados recebidos do backend:', result);
       console.log('📊 Estrutura dos dados:', {
         success: result.success,
@@ -168,37 +75,44 @@
       const movimentacoes = result.data.movimentacoes || [];
       const total = result.data.resumo?.totalMovimentacoes || 0;
       
-      // Carregar cache de entregas para correlação
-      await loadEntregasForCorrelation();
+      // ✅ Backend agora fornece entregaId e colaboradorNome diretamente
+      // Usar os dados do backend sem correlação
       
-      // Aplicar correlação de entregas e colaboradores para movimentações SAIDA_ENTREGA
-      const movimentacoesComEntrega = movimentacoes.map((mov: any) => {
-        const correlacao = correlacionarEntrega(mov);
-        return {
-          ...mov,
-          entregaId: correlacao.entregaId,
-          colaboradorNome: correlacao.colaboradorNome
-        };
-      });
-      
-      console.log('📋 Dados adaptados para o store:', {
-        data: movimentacoesComEntrega.length,
+      console.log('📋 Dados recebidos do backend:', {
+        data: movimentacoes.length,
         total: total,
         page: params.page || 1,
         pageSize: params.limit || 10,
-        entregasCorrelacionadas: movimentacoesComEntrega.filter((m: any) => m.entregaId).length,
-        colaboradoresCorrelacionados: movimentacoesComEntrega.filter((m: any) => m.colaboradorNome).length
+        entregasComDados: movimentacoes.filter((m: any) => m.entregaId).length,
+        colaboradoresComDados: movimentacoes.filter((m: any) => m.colaboradorNome).length
       });
+      
+      // 🔍 DEBUG: Verificar se backend implementou includeDeliveryData
+      const saidasEntrega = movimentacoes.filter((m: any) => m.tipoMovimentacao === 'SAIDA_ENTREGA');
+      console.log('🔍 Movimentações SAIDA_ENTREGA encontradas:', saidasEntrega.length);
+      if (saidasEntrega.length > 0) {
+        const primeira = saidasEntrega[0];
+        console.log('🔍 Primeira SAIDA_ENTREGA do backend:', {
+          id: primeira.id.substring(0, 8),
+          data: primeira.data,
+          entregaId: primeira.entregaId || 'não implementado',
+          colaboradorNome: primeira.colaboradorNome || 'não implementado'
+        });
+        
+        // 📋 Status da implementação
+        const implementado = primeira.entregaId && primeira.colaboradorNome;
+        console.log(`📋 Status includeDeliveryData: ${implementado ? '✅ IMPLEMENTADO' : '⚠️ AGUARDANDO BACKEND'}`);
+      }
       
       // Adaptar estrutura do backend para o formato esperado pelo store
       return {
-        data: movimentacoesComEntrega,
+        data: movimentacoes,
         total: total,
         page: params.page || 1,
         pageSize: params.limit || 10,
         totalPages: Math.ceil(total / (params.limit || 10))
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao buscar movimentações:', error);
       throw error;
     }
@@ -245,7 +159,7 @@
           limit: 100
         });
         const almoxarifadosUnicos = new Map();
-        estoqueData.data.items.forEach((item: any) => {
+        (estoqueData.data as any).items?.forEach((item: any) => {
             if (item.almoxarifado) {
               almoxarifadosUnicos.set(item.almoxarifado.id, {
                 id: item.almoxarifado.id,
@@ -255,7 +169,7 @@
           });
           almoxarifados = Array.from(almoxarifadosUnicos.values());
           console.log('✅ Almoxarifados carregados:', almoxarifados.length);
-      } catch (error) {
+      } catch (error: any) {
         console.warn('⚠️ Erro ao carregar almoxarifados, usando fallback:', error);
         // Fallback: usar dados padrão ou buscar de outro endpoint
         almoxarifados = [
@@ -286,7 +200,7 @@
           nome: item.nome
         }));
         console.log('✅ Usuários carregados:', usuarios.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error('⚠️ Erro ao carregar opções de filtros:', error);
     }
   }
@@ -302,7 +216,7 @@
         auditoriaStore.fetchPage({ page: 1, limit: initialPageSize })
       ]);
       console.log('✅ Container de auditoria inicializado com dados reais');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao carregar dados iniciais:', error);
     }
   });

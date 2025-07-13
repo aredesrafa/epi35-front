@@ -13,6 +13,56 @@ import type {
 // Re-export for external use
 export type { PaginatedResponse, PaginationParams };
 
+// ==================== MISSING TYPES (CICLO 2 FIX) ====================
+
+export interface InventoryItemDTO {
+  id: string;
+  tipoEpiId: string;
+  estoqueId: string;
+  quantidade: number;
+  quantidadeMinima?: number;
+  numeroLote?: string;
+  dataFabricacao?: string;
+  dataValidade?: string;
+  custoUnitario?: number;
+  fornecedor?: string;
+  notaFiscal?: string;
+  status: "DISPONIVEL" | "INDISPONIVEL" | "VENCIDO" | "BAIXO_ESTOQUE";
+  observacoes?: string;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MovementHistoryDTO {
+  id: string;
+  itemEstoqueId: string;
+  tipoMovimentacao: "ENTRADA" | "SAIDA" | "AJUSTE" | "TRANSFERENCIA" | "DEVOLUCAO";
+  quantidade: number;
+  quantidadeAnterior: number;
+  quantidadeAtual: number;
+  responsavel: string;
+  motivo?: string;
+  observacoes?: string;
+  dataMovimentacao: string;
+  createdAt: string;
+}
+
+export interface ConsolidatedStockDTO {
+  tipoEpiId: string;
+  nomeEquipamento: string;
+  numeroCA: string;
+  categoria: string;
+  quantidadeTotal: number;
+  quantidadeDisponivel: number;
+  quantidadeMinima: number;
+  estoques: Array<{
+    estoqueId: string;
+    nomeEstoque: string;
+    quantidade: number;
+  }>;
+}
+
 // ==================== ENTITY DTOs ====================
 
 export interface ContratadaDTO {
@@ -35,6 +85,7 @@ export interface ColaboradorDTO {
   email?: string;
   telefone?: string;
   cargo: string;
+  matricula?: string;
   dataAdmissao: string;
   dataDesligamento?: string;
   contratadaId: string;
@@ -70,7 +121,10 @@ export interface AlmoxarifadoDTO {
   codigo: string;
   descricao?: string;
   endereco?: string;
+  localizacao?: string;
   responsavel?: string;
+  unidadeNegocioId?: string;
+  isPrincipal?: boolean;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -102,6 +156,8 @@ export interface ItemEstoqueDTO {
   dataUltimaMovimentacao: string;
   createdAt: string;
   updatedAt: string;
+  // Propriedade alias para compatibilidade com código legacy
+  tipoEpiId?: string;
   // Dados expandidos (populados pelo backend quando solicitado)
   tipoEPI?: TipoEPIDTO;
   almoxarifado?: AlmoxarifadoDTO;
@@ -119,6 +175,8 @@ export interface MovimentacaoEstoqueDTO {
   dataMovimentacao: string;
   usuarioId: string;
   createdAt: string;
+  // Propriedade faltante identificada nos erros TS
+  estoqueItemId?: string;
   // Dados expandidos
   tipoEPI?: TipoEPIDTO;
   almoxarifado?: AlmoxarifadoDTO;
@@ -189,6 +247,9 @@ export interface FichaEPIDTO {
   ativo?: boolean;
   criadoEm: string;
   atualizadoEm: string;
+  // Propriedades faltantes identificadas nos erros TS
+  totalEpisAtivos?: number;
+  totalEpisVencidos?: number;
   // Dados expandidos do colaborador
   colaborador: {
     id: string;
@@ -215,6 +276,8 @@ export interface FichaEPIDTO {
       tipoEpiNome: string;
       quantidade: number;
     }>;
+    // Propriedade faltante identificada nos erros TS
+    totalEpisComColaborador: number;
   };
   // Dados legados para compatibilidade
   entregas?: EntregaDTO[];
@@ -366,6 +429,7 @@ export interface RelatorioMovimentacoesParams {
   dataFim?: string; // YYYY-MM-DD
   page?: number;
   limit?: number;
+  includeDeliveryData?: boolean; // ✅ NEW: Include entregaId and colaboradorNome for SAIDA_ENTREGA movements
 }
 
 export interface RelatorioDescartesDTO {
@@ -434,6 +498,11 @@ export interface AjusteEstoqueForm {
   novaQuantidade: number;
   quantidadeAnterior: number;
   motivo: string;
+  // Propriedades faltantes identificadas nos erros TS
+  tipoEpiId: string;
+  almoxarifadoId: string;
+  quantidade: number;
+  responsavelId: string;
 }
 
 export interface TransferenciaEstoqueForm {
@@ -533,6 +602,26 @@ export type PaginatedColaboradores = PaginatedResponse<ColaboradorDTO>;
 export type PaginatedTiposEPI = PaginatedResponse<TipoEPIDTO>;
 export type PaginatedFichasEPI = PaginatedResponse<FichaEPIDTO>;
 export type PaginatedEntregas = PaginatedResponse<EntregaDTO>;
+
+// ==================== RESPONSE WRAPPERS (Missing Properties Fix) ====================
+
+// Interface para respostas que contêm arrays de items
+export interface ItemsResponse<T> {
+  items: T[];
+  total?: number;
+}
+
+// Interface para respostas específicas de tipos EPI
+export interface TiposEPIResponse {
+  items: TipoEPIDTO[];
+  total: number;
+}
+
+// Interface para respostas de inventário
+export interface InventoryResponse {
+  items: InventoryItemDTO[];
+  total: number;
+}
 
 // ==================== ERROR TYPES ====================
 
