@@ -38,7 +38,7 @@
   export let mode: 'create' | 'edit' | 'view' = 'create';
   export let tipo: TipoNotaEnum = 'ENTRADA';
   export let nota: NotaMovimentacao | null = null;
-  export const loading = false;
+  export let loading = false;
 
   // ==================== EVENT DISPATCHER ====================
   
@@ -67,7 +67,7 @@
     almoxarifado_destino_id: '', 
     observacoes: '',
     data_documento: new Date().toISOString().split('T')[0],
-    itens: []
+    itens: [] as NotaItem[]
   };
 
   // Itens state
@@ -166,7 +166,7 @@
         }
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar dados do formulário:', error);
       
       // Fallback para dados básicos em caso de erro
@@ -211,7 +211,12 @@
 
       // Mapear itens se existirem - verificar tanto itens quanto _itens
       const itemsArray = nota.itens || nota._itens || [];
-      console.log('🔍 Items do backend para processar:', itemsArray);
+      console.log('🔍 Items do backend para processar:', {
+        total: itemsArray.length,
+        nota_id: nota.id,
+        fonte: nota.itens ? 'nota.itens' : nota._itens ? 'nota._itens' : 'vazio',
+        exemplo_item_raw: itemsArray[0] || null
+      });
       
       if (itemsArray && itemsArray.length > 0) {
         // Importar adapters para buscar dados dos equipamentos
@@ -221,14 +226,27 @@
         // Processar cada item e enriquecer com dados do equipamento
         const enrichedItens = await Promise.all(
           itemsArray.map(async (item) => {
-            console.log('🔍 Processando item:', item);
+            console.log('🔍 Processando item do backend:', {
+              id: item.id,
+              custo_original: item.custo_unitario,
+              custo_tipo: typeof item.custo_unitario,
+              quantidade: item.quantidade
+            });
+            
+            const custoConvertido = item.custo_unitario != null ? Number(item.custo_unitario) : undefined;
+            console.log('💰 Conversão de custo:', {
+              original: item.custo_unitario,
+              convertido: custoConvertido,
+              tipo_convertido: typeof custoConvertido
+            });
             
             const baseItem = {
               temp_id: `existing_${item.id}`,
               tipo_epi_id: (item as any).tipoEpiId || item.tipo_epi_id,
               estoque_item_id: item.estoque_item_id,
               quantidade: item.quantidade,
-              custo_unitario: item.custo_unitario || 0,
+              // 🔧 CORREÇÃO: Preservar custo unitário válido, incluindo zeros
+              custo_unitario: custoConvertido,
               equipamento_nome: 'Equipamento não identificado',
               categoria: '',
               numero_ca: 'Não informado'
@@ -280,10 +298,19 @@
         );
         
         itens = enrichedItens;
-        console.log('✅ Itens enriquecidos processados:', itens.length);
+        console.log('✅ Itens enriquecidos processados:', {
+          quantidade: itens.length,
+          exemplos: itens.slice(0, 2).map(item => ({
+            temp_id: item.temp_id,
+            equipamento: item.equipamento_nome,
+            quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario,
+            custo_tipo: typeof item.custo_unitario
+          }))
+        });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar dados da nota:', error);
     }
   }
@@ -373,7 +400,11 @@
 
     // Validar se todos os itens têm custo (para entradas)
     if (formData.tipo_nota === 'ENTRADA') {
-      const itensSemCusto = itens.filter(item => !item.custo_unitario || item.custo_unitario <= 0);
+      // 🔧 CORREÇÃO: Garantir que a validação trata strings e numbers corretamente
+      const itensSemCusto = itens.filter(item => {
+        const custo = Number(item.custo_unitario);
+        return !custo || custo <= 0;
+      });
       if (itensSemCusto.length > 0) {
         itemValidationErrors = [`${itensSemCusto.length} ${itensSemCusto.length === 1 ? 'item não possui' : 'itens não possuem'} custo unitário válido`];
         return false;
@@ -494,7 +525,7 @@
       // Emitir evento de sucesso
       dispatch('salvar', { notaId, modo });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar nota:', error);
       throw error;
     } finally {
@@ -539,7 +570,8 @@
   $: totalItens = itens.length;
   
   $: valorTotal = itens.reduce((total, item) => {
-    const custo = typeof item.custo_unitario === 'number' ? item.custo_unitario : 0;
+    // 🔧 CORREÇÃO: Preservar custos válidos, incluindo zero
+    const custo = (item.custo_unitario != null && typeof item.custo_unitario === 'number') ? item.custo_unitario : 0;
     return total + (item.quantidade * custo);
   }, 0);
 
@@ -715,7 +747,7 @@
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             Itens da Nota
             {#if totalItens > 0}
-              <Badge color="gray" class="ml-2 rounded-sm">{totalItens}</Badge>
+              <Badge color="dark" class="ml-2 rounded-sm">{totalItens}</Badge>
             {/if}
           </h3>
           
@@ -828,7 +860,7 @@
               <Select
                 id="tipo_nota"
                 bind:value={formData.tipo_nota}
-                disabled={mode === 'view'}
+                disabled={false}
                 class="rounded-sm {formErrors.tipo_nota ? 'border-red-500' : ''}"
               >
                 <option value="ENTRADA">Entrada</option>
@@ -848,7 +880,7 @@
                 type="date"
                 size="md"
                 bind:value={formData.data_documento}
-                disabled={mode === 'view'}
+                disabled={false}
                 class="rounded-sm h-10 text-sm {formErrors.data_documento ? 'border-red-500' : ''}"
               />
               {#if formErrors.data_documento}
@@ -870,7 +902,7 @@
                         name="almoxarifado_destino_id"
                         value={option.value}
                         bind:group={formData.almoxarifado_destino_id}
-                        disabled={mode === 'view'}
+                        disabled={false}
                         class="text-primary-600 focus:ring-primary-500"
                       />
                       <Label class="ml-2 text-sm text-gray-900 dark:text-white">
@@ -899,7 +931,7 @@
                         name="almoxarifado_origem_id"
                         value={option.value}
                         bind:group={formData.almoxarifado_origem_id}
-                        disabled={mode === 'view'}
+                        disabled={false}
                         class="text-primary-600 focus:ring-primary-500"
                       />
                       <Label class="ml-2 text-sm text-gray-900 dark:text-white">
@@ -928,7 +960,7 @@
                         name="almoxarifado_destino_id"
                         value={option.value}
                         bind:group={formData.almoxarifado_destino_id}
-                        disabled={mode === 'view'}
+                        disabled={false}
                         class="text-primary-600 focus:ring-primary-500"
                       />
                       <Label class="ml-2 text-sm text-gray-900 dark:text-white">
@@ -956,9 +988,9 @@
             <Textarea
               id="observacoes"
               bind:value={formData.observacoes}
-              disabled={mode === 'view'}
+              disabled={false}
               placeholder="Observações sobre a movimentação..."
-              rows="3"
+              rows={3}
               class="rounded-sm {formErrors.observacoes ? 'border-red-500' : ''}"
             />
             {#if formErrors.observacoes}
@@ -973,7 +1005,7 @@
             bind:itens
             tipo={formData.tipo_nota}
             almoxarifadoId={formData.tipo_nota === 'ENTRADA' ? formData.almoxarifado_destino_id : formData.almoxarifado_origem_id}
-            readonly={mode === 'view'}
+            readonly={false}
             on:itensChanged={handleItensChange}
             on:validationError={handleItensValidationChange}
           />

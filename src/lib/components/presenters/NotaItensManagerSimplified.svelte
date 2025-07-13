@@ -14,6 +14,7 @@
   import { PlusOutline, TrashBinOutline } from 'flowbite-svelte-icons';
   import { tiposEpiAdapter } from '$lib/services/entity/tiposEpiAdapter';
   import { estoqueItensAdapter } from '$lib/services/entity/estoqueItensAdapter';
+  import { notasMovimentacaoAdapter } from '$lib/services/process/notasMovimentacaoAdapter';
   import type { TipoNotaEnum } from '$lib/services/process/notasMovimentacaoTypes';
   import type { TipoEpiSelectOption } from '$lib/services/entity/tiposEpiAdapter';
   import type { EstoqueItemOption } from '$lib/services/entity/estoqueItensAdapter';
@@ -39,6 +40,7 @@
   export let almoxarifadoId: string;
   export let itens: NotaItem[] = [];
   export let readonly = false;
+  export let currentNotaId: string = ''; // Para salvar custos de itens existentes
 
   // ==================== EVENT DISPATCHER ====================
 
@@ -97,7 +99,7 @@
         console.log('📦 Itens de estoque carregados:', estoqueItensOptions.length);
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar opções:', error);
       dispatch('validationError', 'Erro ao carregar opções disponíveis');
     } finally {
@@ -156,7 +158,7 @@
     if (!item) return;
 
     // Atualizar campo
-    item[campo] = valor;
+    (item as any)[campo] = valor;
 
     // Se mudou o EPI/item, buscar informações
     if (campo === 'tipo_epi_id' && valor) {
@@ -245,6 +247,56 @@
     return erros;
   }
 
+  // Funções auxiliares para eventos - compatível com Svelte
+  function handleQuantidadeInputChange(event: Event, index: number): void {
+    const target = event.currentTarget as HTMLInputElement;
+    atualizarItem(index, 'quantidade', parseInt(target.value) || 1);
+  }
+
+  async function handleCustoInputChange(event: Event, index: number): Promise<void> {
+    const target = event.currentTarget as HTMLInputElement;
+    const novoCusto = target.value ? parseFloat(target.value) : 0;
+    
+    console.log('💰 HandleCustoInputChange:', {
+      valor_input: target.value,
+      novo_custo: novoCusto,
+      index: index,
+      item_id: itens[index]?.temp_id
+    });
+    
+    if (novoCusto < 0) {
+      const item = itens[index];
+      if (item) {
+        validationErrors[item.temp_id] = 'Custo unitário deve ser maior ou igual a zero';
+      }
+      return;
+    }
+
+    const item = itens[index];
+    if (!item) return;
+
+    // Se é item existente com ID, salvar no backend
+    if (item.id && currentNotaId && item.tipo_epi_id) {
+      try {
+        await notasMovimentacaoAdapter.atualizarCustoUnitario(
+          currentNotaId,
+          item.tipo_epi_id,
+          novoCusto
+        );
+        
+        // Limpar erro de validação
+        delete validationErrors[item.temp_id];
+      } catch (error: any) {
+        validationErrors[item.temp_id] = 'Erro ao salvar custo unitário';
+        console.error('Erro ao atualizar custo unitário:', error);
+        return;
+      }
+    }
+
+    // Atualizar localmente
+    atualizarItem(index, 'custo_unitario', novoCusto);
+  }
+
   // Adicionar primeiro item automaticamente
   $: if (itens.length === 0 && !readonly && (tipoEpiOptions.length > 0 || estoqueItensOptions.length > 0)) {
     adicionarItem();
@@ -258,7 +310,7 @@
     <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
       Itens da Nota
       {#if itens.length > 0}
-        <Badge color="gray" class="ml-2 rounded-sm">{itens.length}</Badge>
+        <Badge color="dark" class="ml-2 rounded-sm">{itens.length}</Badge>
       {/if}
     </h4>
     
@@ -372,7 +424,7 @@
                 disabled={readonly}
                 placeholder="Qtd"
                 class="rounded-sm text-sm"
-                on:input={(e) => atualizarItem(index, 'quantidade', parseInt(e.target.value) || 1)}
+                on:input={(e) => handleQuantidadeInputChange(e, index)}
               />
             </div>
 
@@ -387,11 +439,11 @@
                   type="number"
                   min="0"
                   step="0.01"
-                  value={item.custo_unitario}
+                  value={item.custo_unitario ?? ''}
                   disabled={readonly}
                   placeholder="Custo unitário (R$)"
                   class="rounded-sm text-sm"
-                  on:input={(e) => atualizarItem(index, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                  on:input={(e) => handleCustoInputChange(e, index)}
                 />
               </div>
             {/if}

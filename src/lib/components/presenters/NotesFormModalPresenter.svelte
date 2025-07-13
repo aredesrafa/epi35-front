@@ -98,7 +98,7 @@
       loadingOptions = true;
       almoxarifadoOptions = await almoxarifadosAdapter.obterOpcoesSelectComCache();
       console.log('✅ Almoxarifados carregados:', almoxarifadoOptions.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao carregar almoxarifados:', error);
       almoxarifadoOptions = [];
     } finally {
@@ -256,6 +256,13 @@
   function handleItensChanged(event: CustomEvent<NotaItem[]>): void {
     itensTemp = event.detail;
     console.log('📦 Itens atualizados:', itensTemp.length);
+    console.log('📦 Detalhes dos itens:', itensTemp.map(item => ({
+      temp_id: item.temp_id,
+      tipo_epi_id: item.tipo_epi_id,
+      quantidade: item.quantidade,
+      custo_unitario: item.custo_unitario,
+      custo_tipo: typeof item.custo_unitario
+    })));
   }
 
   function handleValidationError(event: CustomEvent<string>): void {
@@ -308,7 +315,7 @@
 
     try {
       await sincronizarNotaComItens('rascunho');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao salvar rascunho:', error);
       validationMessage = 'Erro ao salvar rascunho';
     }
@@ -325,7 +332,7 @@
 
     try {
       await sincronizarNotaComItens('concluida');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao concluir nota:', error);
       validationMessage = 'Erro ao concluir nota';
     }
@@ -368,7 +375,7 @@
         const notaCompleta = await notasMovimentacaoAdapter.obterNota(notaId);
         itensExistentes = notaCompleta.itens || [];
         console.log('📦 Itens existentes carregados:', itensExistentes.length);
-      } catch (error) {
+      } catch (error: any) {
         console.warn('Aviso: não foi possível carregar itens existentes:', error);
         itensExistentes = [];
       }
@@ -411,10 +418,15 @@
           tipo_epi_id: temp.tipo_epi_id,
           estoque_item_id: temp.estoque_item_id,
           quantidade: Number(temp.quantidade),
-          custo_unitario: temp.custo_unitario ? Number(temp.custo_unitario) : undefined
+          custo_unitario: temp.custo_unitario != null && temp.custo_unitario !== '' ? Number(temp.custo_unitario) : undefined
         };
         
-        console.log('📦 Dados do item para envio:', itemData);
+        console.log('📦 Dados do item para envio:', {
+          ...itemData,
+          custo_original: temp.custo_unitario,
+          custo_tipo: typeof temp.custo_unitario,
+          custo_valido: temp.custo_unitario != null && temp.custo_unitario !== ''
+        });
         
         await notasMovimentacaoAdapter.adicionarItem(notaId, itemData);
       }
@@ -461,7 +473,7 @@
       });
       
       console.log('✅ Itens enriquecidos:', itensTemp);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao enriquecer itens:', error);
       // Continuar mesmo se falhar - dados básicos já estão disponíveis
     }
@@ -479,6 +491,37 @@
   $: canProceedToDados = itensTemp.length > 0 && !!almoxarifadoRequerido;
   $: canSaveRascunho = !!almoxarifadoRequerido;
   $: canConcluir = canProceedToDados && !!formData.data_documento;
+
+  // Funções auxiliares para eventos - compatível com Svelte
+  function handleTipoNotaChange(event: Event): void {
+    const target = event.currentTarget as HTMLSelectElement;
+    handleInputChange('tipo_nota', target.value);
+  }
+
+  function handleAlmoxarifadoDestinoChange(event: Event): void {
+    const target = event.currentTarget as HTMLSelectElement;
+    handleInputChange('almoxarifado_destino_id', target.value);
+  }
+
+  function handleAlmoxarifadoOrigemChange(event: Event): void {
+    const target = event.currentTarget as HTMLSelectElement;
+    handleInputChange('almoxarifado_origem_id', target.value);
+  }
+
+  function handleNumeroDocumentoInput(event: Event): void {
+    const target = event.currentTarget as HTMLInputElement;
+    handleInputChange('numero_documento', target.value);
+  }
+
+  function handleDataDocumentoInput(event: Event): void {
+    const target = event.currentTarget as HTMLInputElement;
+    handleInputChange('data_documento', target.value);
+  }
+
+  function handleObservacoesInput(event: Event): void {
+    const target = event.currentTarget as HTMLTextAreaElement;
+    handleInputChange('observacoes', target.value);
+  }
 
 </script>
 
@@ -521,7 +564,7 @@
                   bind:value={formData.tipo_nota}
                   disabled={loading}
                   class="rounded-sm"
-                  on:change={(e) => handleInputChange('tipo_nota', (e.target as HTMLSelectElement).value)}
+                  on:change={handleTipoNotaChange}
                 >
                   <option value="ENTRADA">Entrada</option>
                   <option value="TRANSFERENCIA">Transferência</option>
@@ -548,7 +591,7 @@
                   bind:value={formData.almoxarifado_destino_id}
                   disabled={isReadonly || loading || loadingOptions}
                   class="rounded-sm {errors.almoxarifado_destino_id ? 'border-red-500' : ''}"
-                  on:change={(e) => handleInputChange('almoxarifado_destino_id', (e.target as HTMLSelectElement).value)}
+                  on:change={handleAlmoxarifadoDestinoChange}
                 >
                   <option value="">Selecione o almoxarifado de destino</option>
                   {#each almoxarifadoOptions as option}
@@ -570,7 +613,7 @@
                   bind:value={formData.almoxarifado_origem_id}
                   disabled={isReadonly || loading || loadingOptions}
                   class="rounded-sm {errors.almoxarifado_origem_id ? 'border-red-500' : ''}"
-                  on:change={(e) => handleInputChange('almoxarifado_origem_id', (e.target as HTMLSelectElement).value)}
+                  on:change={handleAlmoxarifadoOrigemChange}
                 >
                   <option value="">Selecione o almoxarifado de origem</option>
                   {#each almoxarifadoOptions as option}
@@ -590,7 +633,7 @@
                   bind:value={formData.almoxarifado_destino_id}
                   disabled={isReadonly || loading || loadingOptions}
                   class="rounded-sm {errors.almoxarifado_destino_id ? 'border-red-500' : ''}"
-                  on:change={(e) => handleInputChange('almoxarifado_destino_id', (e.target as HTMLSelectElement).value)}
+                  on:change={handleAlmoxarifadoDestinoChange}
                 >
                   <option value="">Selecione o almoxarifado de destino</option>
                   {#each almoxarifadoOptions as option}
@@ -614,7 +657,7 @@
                   bind:value={formData.almoxarifado_origem_id}
                   disabled={isReadonly || loading || loadingOptions}
                   class="rounded-sm {errors.almoxarifado_origem_id ? 'border-red-500' : ''}"
-                  on:change={(e) => handleInputChange('almoxarifado_origem_id', (e.target as HTMLSelectElement).value)}
+                  on:change={handleAlmoxarifadoOrigemChange}
                 >
                   <option value="">Selecione o almoxarifado de origem</option>
                   {#each almoxarifadoOptions as option}
@@ -633,6 +676,7 @@
             tipo={formData.tipo_nota}
             almoxarifadoId={almoxarifadoRequerido || ''}
             almoxarifadoDestinoId={formData.almoxarifado_destino_id || ''}
+            currentNotaId={nota?.id || ''}
             bind:itens={itensTemp}
             readonly={isReadonly}
             on:itensChanged={handleItensChanged}
@@ -664,7 +708,7 @@
                 bind:value={formData.numero_documento}
                 disabled={isReadonly || loading}
                 class="rounded-sm"
-                on:input={(e) => handleInputChange('numero_documento', (e.target as HTMLInputElement).value)}
+                on:input={handleNumeroDocumentoInput}
               />
               <p class="text-sm text-gray-500 mt-1">
                 Nota fiscal, código interno, etc.
@@ -682,7 +726,7 @@
                 bind:value={formData.data_documento}
                 disabled={isReadonly || loading}
                 class="rounded-sm {errors.data_documento ? 'border-red-500' : ''}"
-                on:input={(e) => handleInputChange('data_documento', e.currentTarget.value)}
+                on:input={handleDataDocumentoInput}
               />
               {#if errors.data_documento}
                 <p class="text-red-500 text-sm mt-1">{errors.data_documento}</p>
@@ -698,11 +742,11 @@
             <Textarea
               id="observacoes"
               placeholder="Observações sobre a nota de movimentação..."
-              rows="4"
+              rows={4}
               bind:value={formData.observacoes}
               disabled={isReadonly || loading}
               class="rounded-sm"
-              on:input={(e) => handleInputChange('observacoes', e.currentTarget.value)}
+              on:input={handleObservacoesInput}
             />
           </div>
 
