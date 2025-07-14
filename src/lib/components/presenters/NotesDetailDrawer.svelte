@@ -17,8 +17,8 @@
   } from 'flowbite-svelte-icons';
   
   import DrawerHeader from '$lib/components/common/DrawerHeader.svelte';
-  import NotaItensManager from './NotaItensManager.svelte';
-  import type { NotaItem } from './NotaItensManager.svelte';
+  import NotaItensManagerSimplified from './NotaItensManagerSimplified.svelte';
+  import type { NotaItem } from './NotaItensManagerSimplified.svelte';
   import LoadingSpinner from '$lib/components/common/LoadingSpinner.svelte';
   import ErrorDisplay from '$lib/components/common/ErrorDisplay.svelte';
   
@@ -1007,7 +1007,7 @@
 
         <!-- Itens Manager -->
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <NotaItensManager
+          <NotaItensManagerSimplified
             bind:itens
             tipo={formData.tipo_nota}
             almoxarifadoId={formData.tipo_nota === 'ENTRADA' ? formData.almoxarifado_destino_id : formData.almoxarifado_origem_id}
