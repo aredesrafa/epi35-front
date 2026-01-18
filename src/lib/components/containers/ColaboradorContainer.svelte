@@ -25,7 +25,7 @@
       console.log('👥 Fetching colaboradores with params:', params);
       try {
         // Usar endpoint real de colaboradores
-        const response = await fetch(`https://epi-backend-s14g.onrender.com/api/colaboradores?page=${params.page || 1}&limit=${params.limit || 10}`, {
+        const response = await fetch(`https://epi-backend.onrender.com/api/colaboradores?page=${params.page || 1}&limit=${params.limit || 10}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -86,7 +86,7 @@
       loadingContratadas = true;
       console.log('🏢 Carregando contratadas...');
       
-      const response = await fetch('https://epi-backend-s14g.onrender.com/api/contratadas', {
+      const response = await fetch('https://epi-backend.onrender.com/api/contratadas', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

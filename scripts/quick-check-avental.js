@@ -7,7 +7,7 @@
 
 import https from 'https';
 
-const API_BASE = 'https://epi-backend-s14g.onrender.com/api';
+const API_BASE = 'https://epi-backend.onrender.com/api';
 
 async function makeRequest(url) {
   return new Promise((resolve, reject) => {
@@ -142,7 +142,7 @@ async function checkAventalConsistency() {
   } catch (error) {
     console.error('❌ ERRO:', error.message);
     console.log('\n🔧 VERIFICAÇÕES:');
-    console.log('1. Backend está rodando? https://epi-backend-s14g.onrender.com/health');
+    console.log('1. Backend está rodando? https://epi-backend.onrender.com/health');
     console.log('2. Dados foram importados corretamente?');
     console.log('3. Proxy está configurado? (npm run dev)');
   }

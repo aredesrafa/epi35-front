@@ -7,7 +7,7 @@ export default defineConfig({
     host: true,
     proxy: {
       "/api": {
-        target: "https://epi-backend-s14g.onrender.com",
+        target: "https://epi-backend.onrender.com",
         changeOrigin: true,
         secure: true,
         configure: (proxy, options) => {

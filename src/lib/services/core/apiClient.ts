@@ -12,7 +12,7 @@ import { browser } from "$app/environment";
 export const API_BASE_URL = (() => {
   if (typeof window === "undefined") {
     // SSR - usar URL direta sempre
-    return "https://epi-backend-s14g.onrender.com/api";
+    return "https://epi-backend.onrender.com/api";
   }
   
   const isLocal = window.location.hostname === "localhost" || 
@@ -25,11 +25,11 @@ export const API_BASE_URL = (() => {
   //   return "/api";
   // } else {
   //   // Produção, GitHub Pages ou qualquer outro ambiente - URL direta
-  //   return "https://epi-backend-s14g.onrender.com/api";
+  //   return "https://epi-backend.onrender.com/api";
   // }
   
   // URL direta sempre (contornando proxy problemático)
-  return "https://epi-backend-s14g.onrender.com/api";
+  return "https://epi-backend.onrender.com/api";
 })();
 
 // Interfaces para request unificado
