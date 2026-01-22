@@ -1,0 +1,14 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+!.env.production
+.svelte-kit
+build
+test-results
+.hive-mind
+.roo
+.roomodes
+.claude
+dist

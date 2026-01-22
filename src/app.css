@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom theme CSS variables for primary colors and font */
+@layer base {
+  :root {
+    --color-primary-50: 239 240 254;
+    --color-primary-100: 226 227 253;
+    --color-primary-200: 197 200 252;
+    --color-primary-300: 168 173 251;
+    --color-primary-400: 138 146 249;
+    --color-primary-500: 103 115 247;
+    --color-primary-600: 67 87 244;
+    --color-primary-700: 28 61 227;
+    --color-primary-800: 16 40 159;
+    --color-primary-900: 6 20 97;
+    --color-primary-950: 3 11 67;
+  }
+
+  /* Apply Roboto font globally */
+  * {
+    font-family:
+      "Roboto",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Arial,
+      "Noto Sans",
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol",
+      "Noto Color Emoji";
+  }
+}
+
+/* Custom scrollbar - Minimalist */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.5);
+  }
+}
+
+/* Form elements styling */
+@layer components {
+  .form-input-sm {
+    @apply text-sm !important;
+  }
+
+  .badge-auto-size {
+    @apply w-fit;
+  }
+
+  .table-responsive {
+    @apply overflow-x-auto scrollbar-thin;
+  }
+}
